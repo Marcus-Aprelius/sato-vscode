@@ -1,0 +1,6 @@
+{
+  "name": "sato-vscode",
+  "image": "node:26",
+  "remoteUser": "root",
+  "postCreateCommand": "npm install && npm run build"
+}

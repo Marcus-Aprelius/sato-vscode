@@ -1,0 +1,111 @@
+{
+  "name": "sato-vscode",
+  "displayName": "SATO",
+  "description": "Browse KeePass (.kdbx) vaults directly inside VS Code.",
+  "publisher": "MarcusApreliusAntoninus",
+  "version": "0.0.2",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Marcus-Aprelius/sato-vscode.git"
+  },
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "keepass",
+    "kdbx",
+    "secrets",
+    "password",
+    "vault"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "sato.kdbxViewer",
+        "displayName": "SATO Vault Viewer",
+        "selector": [
+          {
+            "filenamePattern": "*.kdbx"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      {
+        "command": "sato.openKdbx",
+        "title": "SATO: Open KeePass Vault"
+      },
+      {
+        "command": "sato.lockVault",
+        "title": "SATO: Lock Vault"
+      },
+      {
+        "command": "sato.reloadVault",
+        "title": "SATO: Reload Vault"
+      }
+    ],
+    "configuration": {
+      "title": "SATO",
+      "properties": {
+        "sato.autoLockTimeout": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 240,
+          "description": "Auto-lock vault after N minutes of inactivity (0 = disabled)."
+        },
+        "sato.clipboardClearTimeout": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 600,
+          "description": "Clear clipboard N seconds after copying a secret (0 = disabled)."
+        },
+        "sato.passwordGeneratorLength": {
+          "type": "number",
+          "default": 20,
+          "minimum": 4,
+          "maximum": 128,
+          "description": "Default password length used by the generator."
+        },
+        "sato.confirmBeforeDelete": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask for confirmation before deleting entries or folders."
+        },
+        "sato.showPasswordsByDefault": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reveal passwords automatically in the entry details pane."
+        },
+        "sato.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the vault statistics bar at the bottom of the editor."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "watch": "tsc -p . --watch",
+    "vscode:prepublish": "npm run build",
+    "package": "npx @vscode/vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "@types/vscode": "^1.100.0",
+    "@vscode/vsce": "^3.9.2",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "hash-wasm": "^4.12.0",
+    "kdbxweb": "^2.1.1"
+  }
+}

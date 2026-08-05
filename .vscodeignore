@@ -1,0 +1,11 @@
+.vscode/**
+.devcontainer/**
+src/**
+**/*.map
+**/*.ts
+!dist/**/*.js
+!node_modules/**
+tsconfig.json
+package-lock.json
+*.vsix
+*.kdbx
