@@ -14,6 +14,7 @@ import {
     type VaultStats
 } from "./vault";
 import { renderError, renderLocked, renderVault, type Settings } from "./webview";
+import { APP_VERSION, GIT_COMMIT } from "./buildInfo";
 
 interface KdbxDocument extends vscode.CustomDocument {
     db?: kdbxweb.Kdbx;
@@ -92,7 +93,13 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
         document: KdbxDocument,
         panel: vscode.WebviewPanel
     ): Promise<void> {
-        panel.webview.options = { enableScripts: true };
+        panel.webview.options = {
+            enableScripts: true,
+            localResourceRoots: [
+                vscode.Uri.joinPath(this.context.extensionUri, "assets")
+            ]
+        };
+
 
         const editor: ActiveEditor = {
             document,
@@ -484,7 +491,24 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
         const stats: VaultStats = computeStats(db);
         const settings = this.readSettings();
         if (initialLoad) {
-            panel.webview.html = renderVault(panel.webview, document.uri, tree, stats, settings);
+            const codiconsCssUri = vscode.Uri.joinPath(this.context.extensionUri, "assets", "codicons", "codicon.css");
+            const logoUri = vscode.Uri.joinPath(
+                this.context.extensionUri,
+                "assets",
+                "sato2.png"
+            );
+
+            panel.webview.html = renderVault(
+                panel.webview,
+                document.uri,
+                tree,
+                stats,
+                settings,
+                logoUri,
+                codiconsCssUri,
+                APP_VERSION,
+                GIT_COMMIT
+            );
         } else {
             panel.webview.postMessage({ type: "vaultState", state: { tree, stats, settings } });
         }
