@@ -2,5 +2,12 @@
   "name": "sato-vscode",
   "image": "node:26",
   "remoteUser": "root",
-  "postCreateCommand": "npm install && npm run build"
+  "postCreateCommand": "npm install && npm run build",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "MarcusApreliusAntoninus.sato-vscode-ext"
+      ]
+    }
+  }
 }

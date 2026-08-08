@@ -1,10 +1,15 @@
 {
-  "name": "sato-vscode",
-  "displayName": "SATO",
+  "name": "sato-vscode-ext",
+  "displayName": "SATO Secrets",
   "description": "Browse KeePass (.kdbx) vaults directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "license": "MIT",
+  "icon": "assets/sato.png",
+  "bugs": {
+    "url": "https://github.com/Marcus-Aprelius/sato-vscode/issues"
+  },
+  "homepage": "https://github.com/Marcus-Aprelius/sato-vscode#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/Marcus-Aprelius/sato-vscode.git"
@@ -39,15 +44,18 @@
     "commands": [
       {
         "command": "sato.openKdbx",
-        "title": "SATO: Open KeePass Vault"
+        "title": "SATO: Open KeePass Vault",
+        "category": "SATO"
       },
       {
         "command": "sato.lockVault",
-        "title": "SATO: Lock Vault"
+        "title": "SATO: Lock Vault",
+        "category": "SATO"
       },
       {
         "command": "sato.reloadVault",
-        "title": "SATO: Reload Vault"
+        "title": "SATO: Reload Vault",
+        "category": "SATO"
       }
     ],
     "configuration": {
@@ -93,10 +101,11 @@
     }
   },
   "scripts": {
-    "build": "tsc -p .",
-    "watch": "tsc -p . --watch",
+    "build": "npm run build-info && tsc -p .",
+    "build-info": "node scripts/write-build-info.cjs",
+    "watch": "npm run build-info && tsc -p . --watch",
     "vscode:prepublish": "npm run build",
-    "package": "npx @vscode/vsce package"
+    "package": "npx @vscode/vsce package --out files/"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",
@@ -105,7 +114,9 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
+    "@vscode/codicons": "^0.0.46-24",
     "hash-wasm": "^4.12.0",
     "kdbxweb": "^2.1.1"
-  }
+  },
+  "overrides": { "@xmldom/xmldom": "0.7.5" }
 }

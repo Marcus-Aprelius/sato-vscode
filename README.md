@@ -2,9 +2,13 @@
 
 # SATO - Secure Access Task Operator for VS Code
 
-Open, edit and manage KeePass `.kdbx` (KDBX 3 (AES-KDF)) vaults directly inside VS Code (v>`1.100.0`).
+Open, edit and manage KeePass `.kdbx` (KDBX 3, KDBX 4) vaults directly inside VS Code (v>`1.100.0`).
 
-> **Status:** first release. Full CRUD support for KDBX 3 vaults with a master password. Argon2 (KDBX 4) is not yet supported.
+> **Status:** In Development, use in production environment at your own risk!
+
+---
+
+<img src="assets/sato-vscode.png" alt="sato-vscode">
 
 ---
 
@@ -38,17 +42,17 @@ Commands (Ctrl/Cmd+Shift+P):
 ## Development
 Open folder `.devcontainer` in VSCode and use commands:
 * compile TypeScript to dist/
-    ```bash
-    npm install
-    ```
+  ```bash
+  npm install
+  ```
 * run project build
-    ```bash
-    npm run build
-    ```
+  ```bash
+  npm run build
+  ```
 * produce sato-vscode-<version>.vsix
-    ```
-    npm run package     
-    ```
+  ```bash
+  npm run package
+  ```
 
 Press **F5** to launch an Extension Development Host.
 
@@ -56,15 +60,13 @@ Press **F5** to launch an Extension Development Host.
 
 ## Security
 
-- The master password is only held in memory while the editor tab is open.
-- The `.kdbx` file is re-encrypted with the same credentials on every save.
-- Report vulnerabilities via GitHub issues on the [repository](https://github.com/Marcus-Aprelius/sato-vscode).
+- The master password is only held in memory while the editor tab is open
+- The `.kdbx` file is re-encrypted with the same credentials on every save
+- Report vulnerabilities via GitHub issues on the [repository](https://github.com/Marcus-Aprelius/sato-vscode)
 
 ---
 
-## License
-
-MIT — see [LICENSE](LICENSE).
+[MIT LICENSE](LICENSE)
 
 ---
 

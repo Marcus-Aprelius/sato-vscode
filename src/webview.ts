@@ -17,7 +17,13 @@ export function renderError(webview: vscode.Webview, message: string): string {
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline';">
+        content="
+            default-src 'none';
+            img-src ${webview.cspSource} https:;
+            style-src ${webview.cspSource} 'unsafe-inline';
+            font-src ${webview.cspSource};
+            script-src 'nonce-${n}';
+        ">
     <title>SATO Vault</title>
     <style nonce="${n}">
         body { font-family: var(--vscode-font-family); padding: 16px; color: var(--vscode-errorForeground); }
@@ -38,7 +44,13 @@ export function renderLocked(webview: vscode.Webview, uri: vscode.Uri): string {
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${n}';">
+        content="
+        default-src 'none';
+        img-src ${webview.cspSource} data: https:;
+        style-src ${webview.cspSource} 'unsafe-inline';
+        font-src ${webview.cspSource};
+        script-src 'nonce-${n}';
+    ">
     <title>SATO – ${escapeHtml(name)}</title>
     <style nonce="${n}">
         body {
@@ -82,19 +94,33 @@ export function renderVault(
     uri: vscode.Uri,
     root: GroupView,
     stats: VaultStats,
-    settings: Settings
+    settings: Settings,
+    logoUri: vscode.Uri,
+    codiconsCssUri: vscode.Uri,
+    appVersion = "0.0.0",
+    gitCommit = ""
 ): string {
     const n = nonce();
     const name = uri.path.split("/").pop() ?? "vault.kdbx";
-    const initialState = JSON.stringify({ tree: root, stats, settings });
+    const logoSrc = webview.asWebviewUri(logoUri).toString();
+    const codiconsCssSrc = webview.asWebviewUri(codiconsCssUri).toString();
+    const initialState = safeScriptJson(JSON.stringify({ tree: root, stats, settings }));
+    const versionLabel = gitCommit
+        ? `${appVersion} [${gitCommit}]`
+        : appVersion;
 
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${n}';">
+        content="default-src 'none';
+                img-src ${webview.cspSource} data: https:;
+                style-src ${webview.cspSource} 'unsafe-inline';
+                font-src ${webview.cspSource};
+                script-src 'nonce-${n}';">
     <title>SATO – ${escapeHtml(name)}</title>
+    <link rel="stylesheet" href="${codiconsCssSrc}">
     <style nonce="${n}">${STYLES}</style>
 </head>
 <body>
@@ -103,10 +129,16 @@ export function renderVault(
             <div class="brand">${escapeHtml(name)}</div>
             <button class="btn" id="btn-database" title="Database">Database ▾</button>
             <button class="btn primary" id="btn-add" title="Add entry or folder">+ Add ▾</button>
-            <button class="btn" id="btn-generate">Generate Password</button>
-            <button class="btn" id="btn-refresh" title="Reload vault from disk">Refresh</button>
-            <button class="btn" id="btn-settings" title="Settings">⚙ Settings</button>
-            <input id="search" type="search" placeholder="Search title, username, URL, notes…" />
+            <button class="btn" id="btn-generate" title="Generate Password">Generate Password</button>
+            <button class="btn" id="btn-settings" title="Settings">
+                <span class="codicon codicon-settings-gear" aria-hidden="true">
+            </span>
+            <span>Settings</span>
+            </button>            
+                <div class="search-box">
+                    <span class="codicon codicon-search search-icon" aria-hidden="true"></span>
+                    <input id="search" type="search" placeholder="Search title, username, URL, notes…" />
+                </div>
         </header>
 
         <main class="layout">
@@ -207,6 +239,61 @@ export function renderVault(
                 <button type="button" class="btn primary" id="dbinfo-close">Close</button>
             </div>
         </div>
+        <div
+            class="modal"
+            id="about-modal"
+            style="width:380px;"
+        >
+            <div class="modal-title">
+                About SATO
+            </div>
+
+            <div
+                class="modal-body"
+                style="
+                    align-items:center;
+                    text-align:center;
+                    gap:8px;
+                    padding:16px;
+                "
+            >
+            <img class="about-logo" src="${logoSrc}" alt="SATO logo" />
+                <h2>SATO</h2>
+
+                <div>
+                    Version: ${escapeHtml(versionLabel)}
+                </div>
+
+                <div>
+                    KDBX Integration for VS Code
+                </div>
+
+                <div style="margin-top:12px;">
+                    © 2026
+                    <a
+                        href="https://github.com/Marcus-Aprelius/sato-vscode"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style="
+                            color: var(--vscode-textLink-foreground);
+                            text-decoration: none;
+                        "
+                    >
+                        Marcus-Aprelius
+                    </a>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn primary"
+                    id="about-close"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
     </div>
 
     <script nonce="${n}">
@@ -220,6 +307,65 @@ export function renderVault(
 const STYLES = `
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
+
+.toolbar .search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 120px;
+}
+
+.toolbar .search-box .search-icon {
+    position: absolute;
+    left: 10px;
+    color: var(--vscode-input-placeholderForeground);
+    pointer-events: none;
+    font-size: 20px;
+    z-index: 1;
+}
+
+.toolbar .search-box input[type=search] {
+    width: 100%;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, transparent);
+    padding: 4px 8px 4px 36px;
+    font: inherit;
+    min-width: 120px;
+}
+
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 22px;
+    padding: 0;
+    margin-left: auto;
+    background: transparent;
+    color: var(--vscode-icon-foreground);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.icon-btn:hover {
+    background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+}
+
+.icon-btn .codicon {
+    font-size: 20px;
+}
+
+
+.about-logo {
+    display: block;
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+    margin: 0 auto 8px auto;
+}
 body {
     font-family: var(--vscode-font-family);
     color: var(--vscode-foreground);
@@ -234,15 +380,7 @@ body {
     background: var(--vscode-editor-background);
 }
 .brand { font-weight: 600; margin-right: 8px; }
-.toolbar input[type=search] {
-    flex: 1;
-    background: var(--vscode-input-background);
-    color: var(--vscode-input-foreground);
-    border: 1px solid var(--vscode-input-border, transparent);
-    padding: 4px 8px;
-    font: inherit;
-    min-width: 120px;
-}
+
 .btn {
     background: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);
@@ -257,6 +395,8 @@ body {
 .btn.primary { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
 .btn.primary:hover { background: var(--vscode-button-hoverBackground); }
 .btn.danger { background: var(--vscode-errorForeground); color: var(--vscode-editor-background); }
+
+#btn-settings .codicon { font-size: 12px; line-height: 1; transform: translateY(1px); }
 
 .layout {
     display: grid;
@@ -409,7 +549,9 @@ body {
 .modal-body .row input[type=text], .modal-body .row input[type=password] { flex: 1; }
 .modal-footer {
     padding: 10px 14px;
-    display: flex; justify-content: flex-end; gap: 8px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
     border-top: 1px solid var(--vscode-panel-border);
 }
 
@@ -744,6 +886,10 @@ function showMenu(x, y, items) {
         const el = document.createElement('div');
         el.className = 'ctx-item';
         el.textContent = it.label;
+
+        if (it.title) {
+            el.title = it.title;
+        }
         el.addEventListener('click', (ev) => { ev.stopPropagation(); closeMenu(); it.action(); });
         ctxMenu.appendChild(el);
     }
@@ -995,17 +1141,45 @@ document.getElementById('btn-add').addEventListener('click', (e) => {
 });
 document.getElementById('btn-database').addEventListener('click', (e) => {
     e.stopPropagation();
+
     openDropdown(e.currentTarget, [
-        { label: 'Show Info', action: () => {
-            document.getElementById('dbinfo-body').innerHTML = '<div class="empty">Loading…</div>';
-            openModal('dbinfo-modal');
-            vscode.postMessage({ type: 'getDbInfo' });
-        } }
+        {
+            label: 'Show Info',
+            title: 'Show current DB info',
+            action: () => {
+                document.getElementById('dbinfo-body').innerHTML =
+                    '<div class="empty">Loading…</div>';
+                openModal('dbinfo-modal');
+                vscode.postMessage({ type: 'getDbInfo' });
+            }
+        },
+
+        {
+            label: 'Refresh',
+            title: 'Reload DB file from disk',
+            action: () => {
+                vscode.postMessage({ type: 'reload' });
+            }
+        },
+
+        {
+            sep: true
+        },
+
+        {
+            label: 'About SATO',
+            title: 'Get information about SATO',
+            action: () => {
+                openModal('about-modal');
+            }
+        }
+
     ]);
 });
-document.getElementById('dbinfo-close').addEventListener('click', closeModal);
 
-document.getElementById('btn-refresh').addEventListener('click', () => vscode.postMessage({ type: 'reload' }));
+document.getElementById('dbinfo-close').addEventListener('click', closeModal);
+document.getElementById('about-close').addEventListener('click', closeModal);
+
 document.getElementById('search').addEventListener('input', (e) => {
     searchQuery = e.target.value.trim();
     renderEntries();
@@ -1014,6 +1188,7 @@ document.getElementById('search').addEventListener('input', (e) => {
 function renderDbInfo(info) {
     const body = document.getElementById('dbinfo-body');
     body.innerHTML = '';
+
     const rows = [
         ['Name', info.name || '(unnamed)'],
         ['Description', info.desc || '(empty)'],
@@ -1025,17 +1200,64 @@ function renderDbInfo(info) {
         ['Entries', String(info.entryCount)],
         ['Recycle bin', info.recycleBinEnabled ? 'enabled' : 'disabled']
     ];
+
     const table = document.createElement('table');
     table.className = 'dbinfo-table';
+
     for (const [k, v] of rows) {
         const tr = document.createElement('tr');
-        const tdK = document.createElement('td'); tdK.className = 'label'; tdK.textContent = k;
-        const tdV = document.createElement('td'); tdV.textContent = v;
-        tr.appendChild(tdK); tr.appendChild(tdV);
+
+        const tdK = document.createElement('td');
+        tdK.className = 'label';
+        tdK.textContent = k;
+
+        const tdV = document.createElement('td');
+
+        if (k === 'File') {
+            const wrap = document.createElement('div');
+            wrap.style.display = 'flex';
+            wrap.style.alignItems = 'center';
+            wrap.style.width = '100%';
+            wrap.style.gap = '8px';
+
+            const span = document.createElement('span');
+            span.textContent = v;
+            span.style.flex = '1';
+
+            const copy = document.createElement('button');
+            copy.className = 'icon-btn';
+            copy.title = 'Copy';
+            copy.setAttribute('aria-label', 'Copy');
+
+            const copyIcon = document.createElement('span');
+            copyIcon.className = 'codicon codicon-copy';
+
+            copy.appendChild(copyIcon);
+
+            copy.addEventListener('click', () => {
+                vscode.postMessage({
+                    type: 'copyText',
+                    text: v
+                });
+            });
+
+            wrap.appendChild(span);
+            wrap.appendChild(copy);
+
+            tdV.appendChild(wrap);
+        } else {
+            tdV.textContent = v;
+        }
+
+        tr.appendChild(tdK);
+        tr.appendChild(tdV);
+
         table.appendChild(tr);
     }
+
     body.appendChild(table);
 }
+
 
 // ---- inbound messages ----
 window.addEventListener('message', (ev) => {
@@ -1073,6 +1295,15 @@ function nonce(): string {
         s += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
     }
     return s;
+}
+
+function safeScriptJson(value: string): string {
+    return value
+        .replace(/</g, "\\u003c")
+        .replace(/>/g, "\\u003e")
+        .replace(/&/g, "\\u0026")
+        .replace(/\u2028/g, "\\u2028")
+        .replace(/\u2029/g, "\\u2029");
 }
 
 function escapeHtml(value: string): string {
