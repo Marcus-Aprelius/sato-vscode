@@ -1,6 +1,7 @@
 .vscode/**
 .devcontainer/**
 
+
 src/**
 test/**
 tests/**
@@ -11,9 +12,13 @@ scripts/**
 **/*.ts
 **/*.map
 
+*-code-dump.txt
 tsconfig.json
 package-lock.json
 *.vsix
+
+tools/
+todo/
 
 .env
 .env.*

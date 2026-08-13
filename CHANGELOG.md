@@ -1,5 +1,20 @@
 # Change Log
 
+# 0.0.4
+
+## Changed:
+  * file `devcontainer.json` updated (extention `onlyutkarsh.vsix-viewer`)
+  * file `webview.ts` refactored
+  * READMEs files updated
+  * password prompt window
+
+## Added:
+  * button `Open DB` added 
+  * buttons `Lock DB`/`Unlock DB`
+  * columns resizing
+
+---
+
 ## 0.0.3
 
 * changed:

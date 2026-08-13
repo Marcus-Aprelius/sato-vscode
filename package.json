@@ -3,7 +3,7 @@
   "displayName": "SATO Secrets",
   "description": "Browse KeePass (.kdbx) vaults directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
