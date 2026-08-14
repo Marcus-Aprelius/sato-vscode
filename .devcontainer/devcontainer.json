@@ -6,7 +6,8 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "MarcusApreliusAntoninus.sato-vscode-ext"
+        "MarcusApreliusAntoninus.sato-vscode-ext",
+        "onlyutkarsh.vsix-viewer"
       ]
     }
   }

@@ -8,9 +8,18 @@ Open, edit and manage KeePass `.kdbx` (KDBX 3, KDBX 4) vaults directly inside VS
 
 ---
 
-<img src="assets/sato-vscode.png" alt="sato-vscode">
+<img src="assets/sato-vscode2.gif" alt="sato-vscode">
 
 ---
+
+## Security
+
+- The master password is only held in memory while the editor tab is open
+- The `.kdbx` file is re-encrypted with the same credentials on every save
+- Report vulnerabilities via GitHub issues on the [repository](https://github.com/Marcus-Aprelius/sato-vscode)
+
+---
+
 
 ## Features
 
@@ -49,20 +58,12 @@ Open folder `.devcontainer` in VSCode and use commands:
   ```bash
   npm run build
   ```
-* produce sato-vscode-<version>.vsix
+* build file sato-vscode-<version>.vsix
   ```bash
   npm run package
   ```
 
 Press **F5** to launch an Extension Development Host.
-
----
-
-## Security
-
-- The master password is only held in memory while the editor tab is open
-- The `.kdbx` file is re-encrypted with the same credentials on every save
-- Report vulnerabilities via GitHub issues on the [repository](https://github.com/Marcus-Aprelius/sato-vscode)
 
 ---
 
