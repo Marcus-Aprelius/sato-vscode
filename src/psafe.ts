@@ -501,9 +501,11 @@ function computePsafeStats(root: GroupView): VaultStats {
             }
 
             if (entry.hasPassword) {
+                const key = entry.passwordLength + ":" + entry.title;
+
                 passwordCounts.set(
-                    entry.passwordLength + ":" + entry.title,
-                    (passwordCounts.get(entry.passwordLength + ":" + entry.title) ?? 0) + 1
+                    key,
+                    (passwordCounts.get(key) ?? 0) + 1
                 );
             }
         }

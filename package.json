@@ -1,9 +1,9 @@
 {
   "name": "sato-vscode-ext",
   "displayName": "SATO Secrets",
-  "description": "Browse KeePass (.kdbx) vaults directly inside VS Code.",
+  "description": "Browse KeePass, Password Safe and crypto files (.crt, .key, .csr, .p12, .pfx, .jks) inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
@@ -27,7 +27,14 @@
     "password-safe",
     "secrets",
     "password",
-    "vault"
+    "vault",
+    "certificate",
+    "csr",
+    "private-key",
+    "pkcs12",
+    "p12",
+    "pfx",
+    "jks"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -36,9 +43,36 @@
         "viewType": "sato.kdbxViewer",
         "displayName": "SATO Vault Viewer",
         "selector": [
-          {"filenamePattern": "*.kdbx"},
-          {"filenamePattern": "*.psafe3"},
-          {"filenamePattern": "*.ibak"}
+          {
+            "filenamePattern": "*.kdbx"
+          },
+          {
+            "filenamePattern": "*.psafe3"
+          },
+          {
+            "filenamePattern": "*.ibak"
+          },
+          {
+            "filenamePattern": "*.crt"
+          },
+          {
+            "filenamePattern": "*.pem"
+          },
+          {
+            "filenamePattern": "*.csr"
+          },
+          {
+            "filenamePattern": "*.key"
+          },
+          {
+            "filenamePattern": "*.p12"
+          },
+          {
+            "filenamePattern": "*.pfx"
+          },
+          {
+            "filenamePattern": "*.jks"
+          }
         ],
         "priority": "default"
       }
@@ -46,7 +80,7 @@
     "commands": [
       {
         "command": "sato.openKdbx",
-        "title": "SATO: Open Password Vault",
+        "title": "SATO: Open Vault or Crypto File",
         "category": "SATO"
       },
       {
@@ -103,9 +137,10 @@
     }
   },
   "scripts": {
-    "build": "npm run build-info && tsc -p .",
+    "build": "npm run build-info && npm run build:webview && tsc -p .",
     "build-info": "node scripts/write-build-info.cjs",
-    "watch": "npm run build-info && tsc -p . --watch",
+    "build:webview": "node esbuild.webview.cjs",
+    "watch": "npm run build-info && concurrently \"node esbuild.webview.cjs --watch\" \"tsc -p . --watch\"",
     "vscode:prepublish": "npm run build",
     "package": "npx @vscode/vsce package --out files/"
   },
@@ -113,6 +148,8 @@
     "@types/node": "^22.20.1",
     "@types/vscode": "^1.100.0",
     "@vscode/vsce": "^3.9.2",
+    "concurrently": "^10.0.5",
+    "esbuild": "^0.28.2",
     "typescript": "^7.0.2"
   },
   "dependencies": {

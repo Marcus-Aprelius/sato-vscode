@@ -1,0 +1,97 @@
+import { byId } from "./dom";
+import { renderStatus } from "./status";
+import { renderDetails } from "./details";
+import { renderEntries } from "./entries";
+import { openGroupMenu } from "./contextMenu";
+import { updateMainActionButton } from "./buttons";
+import { app, groupIndex, resetCryptoUiState } from "./state";
+
+import type { GroupView } from "../../vault";
+
+export function renderTree(): void {
+    const treeEl = byId<HTMLElement>("tree");
+
+    treeEl.innerHTML = "";
+    treeEl.appendChild(renderGroupNode(app.state.tree, 0));
+}
+
+function renderGroupNode(group: GroupView, depth: number): HTMLElement {
+    const wrap = document.createElement("div");
+    const row = document.createElement("div");
+
+    row.className = "group-node" + (group.id === app.selectedGroupId ? " active" : "");
+    row.style.paddingLeft = 6 + depth * 10 + "px";
+    row.dataset.groupId = group.id;
+
+    const caret = document.createElement("span");
+    caret.className = "group-caret";
+    caret.textContent = group.groups.length ? "▸" : "";
+    row.appendChild(caret);
+
+    const label = document.createElement("span");
+    label.className = "group-label";
+    label.textContent = group.name;
+    row.appendChild(label);
+
+    const count = document.createElement("span");
+    count.className = "group-count";
+    count.textContent = group.entries.length ? String(group.entries.length) : "";
+    row.appendChild(count);
+
+    row.addEventListener("click", (event) => {
+        event.stopPropagation();
+        selectGroup(group.id);
+    });
+
+    row.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        selectGroup(group.id);
+        openGroupMenu(event.clientX, event.clientY, group.id);
+    });
+
+    wrap.appendChild(row);
+
+    if (group.groups.length) {
+        const ul = document.createElement("ul");
+
+        for (const child of group.groups) {
+            const li = document.createElement("li");
+            li.appendChild(renderGroupNode(child, depth + 1));
+            ul.appendChild(li);
+        }
+
+        wrap.appendChild(ul);
+    }
+
+    return wrap;
+}
+
+export function selectGroup(groupId: string): void {
+    if (app.vaultLocked) {
+        return;
+    }
+
+    app.selectedGroupId = groupId;
+
+    const group = groupIndex.get(groupId);
+
+    if (group && group.entries.length > 0) {
+        app.selectedEntryId = group.entries[0].id;
+    } else {
+        app.selectedEntryId = null;
+    }
+
+    resetCryptoUiState();
+    app.showVaultEmptyValues = true;
+
+    renderTree();
+    renderEntries();
+    renderDetails();
+    renderStatus();
+
+    updateMainActionButton();
+        
+
+}

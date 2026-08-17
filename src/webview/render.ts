@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import { STYLES } from "./styles";
-import { CLIENT_SCRIPT } from "./clientScript";
 import type { GroupView, VaultStats } from "../vault";
 
 export interface Settings {
@@ -107,15 +106,26 @@ export function renderVault(
     stats: VaultStats,
     settings: Settings,
     logoUri: vscode.Uri,
+    toolbarLogoUri: vscode.Uri,
     codiconsCssUri: vscode.Uri,
+    webviewClientUri: vscode.Uri,
     appVersion = "0.0.0",
-    gitCommit = ""
+    gitCommit = "",
+    selectedEntryId: string | null = null
 ): string {
+
     const n = nonce();
     const name = uri.path.split("/").pop() ?? "vault.kdbx";
     const logoSrc = webview.asWebviewUri(logoUri).toString();
+    const toolbarLogoSrc = webview.asWebviewUri(toolbarLogoUri).toString();
     const codiconsCssSrc = webview.asWebviewUri(codiconsCssUri).toString();
-    const initialState = safeScriptJson(JSON.stringify({tree: root, stats, settings}));
+    const webviewClientSrc = webview.asWebviewUri(webviewClientUri).toString();
+    const initialState = safeScriptJson(JSON.stringify({
+        tree: root,
+        stats,
+        settings,
+        selectedEntryId
+    }));
     const versionLabel = gitCommit ? `${appVersion} [${gitCommit}]` : appVersion;
 
     return `<!DOCTYPE html>
@@ -137,28 +147,85 @@ export function renderVault(
 <body>
     <div class="app">
         <header class="toolbar">
-            <div class="brand">${escapeHtml(name)}</div>
+            <img
+                class="toolbar-logo"
+                src="${toolbarLogoSrc}"
+                alt="SATO"
+                title="SATO by Marcus Aprelius"
+            />
 
-            <button class="btn" id="btn-database" title="Database">Database ▾</button>
-
-            <button class="btn primary" id="btn-add" title="Add entry or folder">+ Add ▾</button>
-
-            <button class="btn" id="btn-generate" title="Generate Password">Generate Password</button>
-
-            <button class="btn" id="btn-lock" title="Lock database">
-                <span class="codicon codicon-lock" aria-hidden="true"></span>
-                <span>Lock DB</span>
+            <button
+                class="btn"
+                id="btn-file"
+                title="File"
+            >
+                File ▾
             </button>
 
-            <button class="btn" id="btn-settings" title="Settings">
-                <span class="codicon codicon-settings-gear" aria-hidden="true"></span>
-            <span>Settings</span>
+            <button
+                class="btn"
+                id="btn-entry"
+                title="Entry"
+            >
+                Entry ▾
+            </button>
+
+            <button
+                class="btn"
+                id="btn-folder"
+                title="Folder"
+            >
+                Folder ▾
+            </button>
+
+            <button
+                class="btn"
+                id="btn-tools"
+                title="Tools"
+            >
+                Tools ▾
+            </button>
+
+            <button
+                class="btn"
+                id="btn-view"
+                title="View"
+            >
+                View ▾
+            </button>
+
+            <button
+                class="btn"
+                id="btn-settings"
+                title="Settings"
+            >
+                <span
+                    class="codicon codicon-settings-gear"
+                    aria-hidden="true"
+                ></span>
+                <span>Settings</span>
+            </button>
+
+            <button
+                class="btn"
+                id="btn-help"
+                title="Help"
+            >
+                Help ▾
             </button>
 
             <div class="search-box">
-                    <span class="codicon codicon-search search-icon" aria-hidden="true"></span>
-                    <input id="search" type="search" placeholder="Search title, username, URL, notes..." />
-                </div>
+                <span
+                    class="codicon codicon-search search-icon"
+                    aria-hidden="true"
+                ></span>
+
+                <input
+                    id="search"
+                    type="search"
+                    placeholder="Search title, username, URL, notes..."
+                />
+            </div>
         </header>
 
         <main class="layout" id="layout">
@@ -214,6 +281,63 @@ export function renderVault(
                 <div class="unlock-modal-actions">
                     <button type="button" class="btn" id="unlock-cancel">Cancel</button>
                     <button type="button" class="btn primary" id="unlock-ok">OK</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal" id="crypto-unlock-modal" style="width:360px;">
+            <div class="modal-title">Unlock Crypto Container</div>
+
+            <div class="modal-body">
+                <label>
+                    Container password
+
+                    <div class="unlock-password-field">
+                        <input
+                            type="password"
+                            id="crypto-unlock-password"
+                        />
+
+                        <span
+                            id="crypto-unlock-layout"
+                            class="keyboard-layout-indicator"
+                        >
+                            ENG
+                        </span>
+                    </div>
+                </label>
+
+                <div
+                    class="empty"
+                    id="crypto-unlock-error"
+                    style="display:none;"
+                ></div>
+            </div>
+
+            <div class="modal-footer unlock-modal-footer">
+                <div
+                    id="crypto-unlock-capslock-warning"
+                    class="capslock-warning"
+                    style="display:none;"
+                >
+                    Caps Lock is ON
+                </div>
+
+                <div class="unlock-modal-actions">
+                    <button
+                        type="button"
+                        class="btn"
+                        id="crypto-unlock-cancel"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn primary"
+                        id="crypto-unlock-ok"
+                    >
+                        OK
+                    </button>
                 </div>
             </div>
         </div>
@@ -277,7 +401,7 @@ export function renderVault(
                 </label>
                 <label class="checkbox"><input type="checkbox" id="s-confirmdel"> Confirm before delete</label>
                 <label class="checkbox"><input type="checkbox" id="s-showpw"> Show passwords by default</label>
-                <label class="checkbox"><input type="checkbox" id="s-showstatusbar"> Show status bar</label>
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn" id="s-cancel">Cancel</button>
@@ -286,7 +410,7 @@ export function renderVault(
         </div>
 
         <div class="modal" id="dbinfo-modal">
-            <div class="modal-title">Database Info</div>
+            <div class="modal-title" id="dbinfo-title">Database Info</div>
             <div class="modal-body" id="dbinfo-body">
                 <div class="empty">Loading…</div>
             </div>
@@ -308,7 +432,10 @@ export function renderVault(
             <img class="about-logo" src="${logoSrc}" alt="SATO logo" />
                 Secure Access Task Operator
 
-                <div>VS Code extention for KeePass KDBX DB integration</div>
+                <div>VS Code extension for secure vault and crypto file viewing</div>
+                <div style="font-size: 12px; color: var(--vscode-descriptionForeground); line-height: 1.5;">
+                    Supports: .kdbx, .psafe3, .ibak, .crt, .csr, .key, .pem, .p12, .pfx, .jks
+                </div>
 
                 <div style="margin-top:12px;">
                     See 
@@ -318,7 +445,7 @@ export function renderVault(
                         rel="noopener noreferrer"
                         style="color: var(--vscode-textLink-foreground); text-decoration: none;"
                     >
-                        sato Linux command line tool >>>
+                        sato Linux command line tool &gt;&gt;&gt;
                     </a>
                 </div>
                 <div class="about-spacer"></div>
@@ -350,9 +477,9 @@ export function renderVault(
     </div>
 
     <script nonce="${n}">
-        const initialState = ${initialState};
-        ${CLIENT_SCRIPT}
+        window.initialState = ${initialState};
     </script>
+    <script nonce="${n}" src="${webviewClientSrc}"></script>
 </body>
 </html>`;
 }
