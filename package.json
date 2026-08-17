@@ -3,7 +3,7 @@
   "displayName": "SATO Secrets",
   "description": "Browse KeePass (.kdbx) vaults directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
@@ -23,6 +23,8 @@
   "keywords": [
     "keepass",
     "kdbx",
+    "psafe3",
+    "password-safe",
     "secrets",
     "password",
     "vault"
@@ -34,9 +36,9 @@
         "viewType": "sato.kdbxViewer",
         "displayName": "SATO Vault Viewer",
         "selector": [
-          {
-            "filenamePattern": "*.kdbx"
-          }
+          {"filenamePattern": "*.kdbx"},
+          {"filenamePattern": "*.psafe3"},
+          {"filenamePattern": "*.ibak"}
         ],
         "priority": "default"
       }
@@ -44,7 +46,7 @@
     "commands": [
       {
         "command": "sato.openKdbx",
-        "title": "SATO: Open KeePass Vault",
+        "title": "SATO: Open Password Vault",
         "category": "SATO"
       },
       {
@@ -116,7 +118,10 @@
   "dependencies": {
     "@vscode/codicons": "^0.0.46-24",
     "hash-wasm": "^4.12.0",
-    "kdbxweb": "^2.1.1"
+    "kdbxweb": "^2.1.1",
+    "password-safe": "^0.0.3"
   },
-  "overrides": { "@xmldom/xmldom": "0.7.5" }
+  "overrides": {
+    "@xmldom/xmldom": "0.7.5"
+  }
 }

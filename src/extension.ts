@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as kdbxweb from "kdbxweb";
 import { argon2d, argon2id } from "hash-wasm";
+import { SUPPORTED_VAULT_FILTERS } from "./constants";
 import { KdbxEditorProvider } from "./KdbxEditorProvider";
 
 // hash-wasm implements Argon2 v1.3 only; KDBX 4 files created by KeePass 2.35+ use v1.3.
@@ -36,7 +37,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand("sato.openKdbx", async (uri?: vscode.Uri) => {
             const target = uri ?? (await vscode.window.showOpenDialog({
                 canSelectMany: false,
-                filters: { "KeePass vault": ["kdbx"] }
+                filters: SUPPORTED_VAULT_FILTERS
             }))?.[0];
 
             if (!target) {

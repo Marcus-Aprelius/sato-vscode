@@ -15,14 +15,15 @@ scripts/**
 *-code-dump.txt
 tsconfig.json
 package-lock.json
-*.vsix
 
 tools/
 todo/
 
+files/*
 .env
 .env.*
-*.kdbx
+tests/
+tests/*
 
 .git/**
 .github/**

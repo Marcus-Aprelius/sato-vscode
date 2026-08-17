@@ -1,5 +1,24 @@
 # Change Log
 
+# 0.0.5
+## Changed:
+  * code refactored
+  * documentation updated
+  * `.gitignore` and `.vscodeignore` files
+  * context menu behaviour
+
+## Added:
+  * Button `Go` - to open external link in URL field
+  * `.psafe3` files support
+    * `.ibak` files (backup of `.psafe3`) support
+  * Menu items for `.psafe3`/`.ibak` files:
+    * `Create entry`
+    * `Update entry`
+    * `Duplicate entry`
+    * `Delete entry`
+
+---
+
 # 0.0.4
 
 ## Changed:
