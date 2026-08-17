@@ -1,0 +1,41 @@
+import type * as vscode from "vscode";
+import type * as kdbxweb from "kdbxweb";
+import type { Settings } from "./webview";
+import type { PsafeVault } from "./psafe";
+import type { EntryFields } from "./vault";
+
+export interface VaultDocument extends vscode.CustomDocument {
+    db?: kdbxweb.Kdbx;
+    credentials?: kdbxweb.Credentials;
+    psafe?: PsafeVault;
+}
+
+export type FromWebview =
+    | { type: "unlock" }
+    | { type: "reload" }
+    | { type: "lock" }
+    | { type: "openDb" }
+    | { type: "unlockWithPassword"; password: string }
+    | { type: "revealSecret"; entryId: string; field: string }
+    | { type: "copySecret"; entryId: string; field: string }
+    | { type: "copyText"; text: string }
+    | { type: "openUrl"; url: string }
+    | { type: "getEntryDetail"; entryId: string }
+    | { type: "createEntry"; groupId: string; fields: EntryFields }
+    | { type: "updateEntry"; entryId: string; fields: EntryFields }
+    | { type: "deleteEntry"; entryId: string }
+    | { type: "duplicateEntry"; entryId: string }
+    | { type: "createGroup"; parentId: string }
+    | { type: "renameGroup"; groupId: string }
+    | { type: "deleteGroup"; groupId: string }
+    | { type: "updateSettings"; settings: Settings }
+    | { type: "getDbInfo" };
+
+export interface ActiveEditor {
+    document: VaultDocument;
+    panel: vscode.WebviewPanel;
+    unlock: () => Promise<void>;
+    lock: () => void;
+    reload: () => Promise<void>;
+    autoLockTimer?: ReturnType<typeof setTimeout>;
+}

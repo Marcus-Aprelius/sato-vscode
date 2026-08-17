@@ -1,7 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 const cp = require("child_process");
-
 const root = path.resolve(__dirname, "..");
 
 const pkg = JSON.parse(

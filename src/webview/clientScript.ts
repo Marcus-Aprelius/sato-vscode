@@ -15,6 +15,18 @@ const groupIndex = new Map();
 const entryIndex = new Map();
 const parentGroupOf = new Map();
 
+function closestElement(target, selector) {
+    if (!target) return null;
+
+    const element = target.nodeType === 1
+        ? target
+        : target.parentElement;
+
+    return element && typeof element.closest === 'function'
+        ? element.closest(selector)
+        : null;
+}
+
 function setLockButtonState(locked) {
     const btn = document.getElementById('btn-lock');
     if (!btn) return;
@@ -72,7 +84,6 @@ function openUnlockModal() {
         if (capsWarning) {
             capsWarning.style.display = 'none';
         }
-
     }
 
     if (error) {
@@ -248,6 +259,31 @@ function setupColumnResize() {
     applyColumnWidths();
 }
 
+function setupGroupsPaneContextMenu() {
+    const pane = document.querySelector('.groups-pane');
+
+    if (!pane) {
+        return;
+    }
+
+    pane.addEventListener('contextmenu', (e) => {
+        if (vaultLocked) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const row = closestElement(e.target, '.group-node');
+
+        if (row && row.dataset && row.dataset.groupId) {
+            return;
+        }
+
+        openGroupMenu(e.clientX, e.clientY, selectedGroupId);
+    });
+}
+
 function reindex() {
     groupIndex.clear();
     entryIndex.clear();
@@ -335,6 +371,8 @@ function renderGroupNode(g, depth) {
 
     row.addEventListener('contextmenu', (e) => {
         e.preventDefault();
+        e.stopPropagation();
+
         selectGroup(g.id);
         openGroupMenu(e.clientX, e.clientY, g.id);
     });
@@ -370,19 +408,42 @@ function entryMatches(entry) {
     const q = searchQuery.toLowerCase();
 
     return (entry.title + ' ' + entry.username + ' ' + entry.url + ' ' + entry.notes)
-    .toLowerCase()
-    .indexOf(q) !== -1;
+        .toLowerCase()
+        .indexOf(q) !== -1;
 }
 
 function collectMatchingEntries(g, out) {
-    for (const e of g.entries) if (entryMatches(e)) out.push(e);
+    for (const e of g.entries) {
+        if (entryMatches(e)) out.push(e);
+    }
 
-    for (const c of g.groups) collectMatchingEntries(c, out);
+    for (const c of g.groups) {
+        collectMatchingEntries(c, out);
+    }
 }
 
 function renderEntries() {
     const list = document.getElementById('entry-list');
     const titleEl = document.getElementById('entries-title');
+
+    list.oncontextmenu = (e) => {
+        if (vaultLocked) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const row = closestElement(e.target, '.entry-row');
+
+        if (row && row.dataset && row.dataset.entryId) {
+            return;
+        }
+
+        if (selectedEntryId) {
+            openEntryMenu(e.clientX, e.clientY, selectedEntryId);
+        }
+    };
 
     list.innerHTML = '';
 
@@ -444,6 +505,8 @@ function renderEntries() {
 
         row.addEventListener('contextmenu', (e) => {
             e.preventDefault();
+            e.stopPropagation();
+
             selectEntry(entry.id);
             openEntryMenu(e.clientX, e.clientY, entry.id);
         });
@@ -482,11 +545,11 @@ function renderDetails() {
     const table = document.createElement('table');
 
     const fields = [
-    'UserName',
-    'URL',
-    'Password',
-    'Notes',
-    ...entry.fields.filter(f => !['Title', 'UserName', 'URL', 'Password', 'Notes'].includes(f))
+        'UserName',
+        'URL',
+        'Password',
+        'Notes',
+        ...entry.fields.filter(f => !['Title', 'UserName', 'URL', 'Password', 'Notes'].includes(f))
     ];
 
     for (const field of fields) {
@@ -510,7 +573,7 @@ function renderDetails() {
             value.appendChild(input);
 
             const reveal = document.createElement('button');
-            reveal.className = 'btn';
+            reveal.className = 'btn field-action-btn';
             reveal.textContent = 'Show';
 
             reveal.addEventListener('click', () => {
@@ -537,6 +600,27 @@ function renderDetails() {
             const span = document.createElement('span');
             span.textContent = text || '(empty)';
             value.appendChild(span);
+
+            if (field === 'URL') {
+                const go = document.createElement('button');
+                go.className = 'btn field-action-btn';
+                go.textContent = 'Go';
+                go.disabled = !text;
+                go.title = text ? 'Open URL' : 'URL is empty';
+
+                go.addEventListener('click', () => {
+                    if (!text) {
+                        return;
+                    }
+
+                    vscode.postMessage({
+                        type: 'openUrl',
+                        url: text
+                    });
+                });
+
+                value.appendChild(go);
+            }
         }
 
         const copy = document.createElement('button');
@@ -620,18 +704,31 @@ const ctxMenu = document.getElementById('ctx-menu');
 function closeMenu() {
     ctxMenu.classList.remove('open');
     ctxMenu.innerHTML = '';
-    }
+}
 
-document.addEventListener('click', closeMenu);
+document.addEventListener('click', () => {
+    closeMenu();
+});
+
+document.addEventListener('contextmenu', (e) => {
+    const insideSatoApp = closestElement(e.target, '.app');
+
+    if (insideSatoApp) {
+        e.preventDefault();
+        closeMenu();
+    }
+});
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         closeMenu();
-        closeModal(); 
-        }
+        closeModal();
+    }
 });
 
 function showMenu(x, y, items) {
+    closeMenu();
+
     ctxMenu.innerHTML = '';
 
     for (const it of items) {
@@ -651,9 +748,9 @@ function showMenu(x, y, items) {
         }
 
         el.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        closeMenu();
-        it.action();
+            ev.stopPropagation();
+            closeMenu();
+            it.action();
         });
 
         ctxMenu.appendChild(el);
@@ -662,11 +759,16 @@ function showMenu(x, y, items) {
     ctxMenu.style.left = x + 'px';
     ctxMenu.style.top = y + 'px';
     ctxMenu.classList.add('open');
-    // clamp within viewport
+
     const rect = ctxMenu.getBoundingClientRect();
 
-    if (rect.right > window.innerWidth) ctxMenu.style.left = (window.innerWidth - rect.width - 4) + 'px';
-    if (rect.bottom > window.innerHeight) ctxMenu.style.top = (window.innerHeight - rect.height - 4) + 'px';
+    if (rect.right > window.innerWidth) {
+        ctxMenu.style.left = (window.innerWidth - rect.width - 4) + 'px';
+    }
+
+    if (rect.bottom > window.innerHeight) {
+        ctxMenu.style.top = (window.innerHeight - rect.height - 4) + 'px';
+    }
 }
 
 function openEntryMenu(x, y, entryId) {
@@ -713,7 +815,9 @@ function closeModal() {
     editingGroupId = null;
 }
 
-backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
+backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) closeModal();
+});
 
 // Entry modal
 let editingEntryId = null;
@@ -761,8 +865,13 @@ document.getElementById('ef-toggle').addEventListener('click', () => {
     const p = document.getElementById('ef-password');
     const t = document.getElementById('ef-toggle');
 
-    if (p.type === 'password') { p.type = 'text'; t.textContent = 'Hide'; }
-    else { p.type = 'password'; t.textContent = 'Show'; }
+    if (p.type === 'password') {
+        p.type = 'text';
+        t.textContent = 'Hide';
+    } else {
+        p.type = 'password';
+        t.textContent = 'Show';
+    }
 });
 
 document.getElementById('ef-password').addEventListener('input', updateEntryStrength);
@@ -1025,12 +1134,11 @@ document.getElementById('btn-database').addEventListener('click', (e) => {
     openDropdown(e.currentTarget, [
         {
             label: 'Open DB',
-            title: 'Open another KeePass database',
+            title: 'Open another password vault',
             action: () => {
                 vscode.postMessage({ type: 'openDb' });
             }
         },
-
         {
             label: vaultLocked ? 'Unlock DB' : 'Lock DB',
             title: vaultLocked ? 'Unlock current database' : 'Lock current database',
@@ -1042,11 +1150,9 @@ document.getElementById('btn-database').addEventListener('click', (e) => {
                 }
             }
         },
-
         {
             sep: true
         },
-
         {
             label: 'Show DB Info',
             title: 'Show current DB info',
@@ -1063,7 +1169,6 @@ document.getElementById('btn-database').addEventListener('click', (e) => {
                 vscode.postMessage({ type: 'getDbInfo' });
             }
         },
-
         {
             label: 'Refresh',
             title: 'Reload DB file from disk',
@@ -1071,11 +1176,9 @@ document.getElementById('btn-database').addEventListener('click', (e) => {
                 vscode.postMessage({ type: 'reload' });
             }
         },
-
         {
             sep: true
         },
-
         {
             label: 'About SATO',
             title: 'Get information about SATO',
@@ -1104,7 +1207,7 @@ function renderDbInfo(info) {
     const rows = [
         ['Name', info.name || '(unnamed)'],
         ['Description', info.desc || '(empty)'],
-        ['KDBX version', info.version],
+        ['Format version', info.version],
         ['Generator', info.generator || 'unknown'],
         ['File', info.filePath],
         ['File size', info.fileSize + ' bytes'],
@@ -1209,7 +1312,7 @@ window.addEventListener('message', (ev) => {
             input.value = msg.value;
 
             const container = input.parentElement;
-            const reveal = container ? container.querySelector('.btn') : null;
+            const reveal = container ? container.querySelector('.field-action-btn') : null;
 
             if (reveal) {
                 reveal.textContent = 'Hide';
@@ -1224,6 +1327,7 @@ window.addEventListener('message', (ev) => {
 
 reindex();
 setupColumnResize();
+setupGroupsPaneContextMenu();
 setLockButtonState(false);
 renderAll();
 `;

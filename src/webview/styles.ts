@@ -362,6 +362,14 @@ body.resizing * {
     padding-right: 12px;
 }
 
+.details .value .field-action-btn {
+    flex: 0 0 52px;
+    width: 52px;
+    min-width: 52px;
+    text-align: center;
+    justify-content: center;
+}
+
 .dbinfo-table { width: 100%; border-collapse: collapse; }
 .dbinfo-table td { padding: 4px 8px; vertical-align: top; border-bottom: 1px solid var(--vscode-panel-border); word-break: break-all; }
 .dbinfo-table td.label { color: var(--vscode-descriptionForeground); width: 130px; }

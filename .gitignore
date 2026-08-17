@@ -1,9 +1,12 @@
 node_modules/
 dist/
-files/*.vsix
 tools/*
+todo/
 todo/*
 
-*.kdbx
 *.log
 .DS_Store
+
+files/*
+tests/
+tests/*

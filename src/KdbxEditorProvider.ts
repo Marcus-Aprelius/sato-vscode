@@ -1,60 +1,37 @@
 import * as vscode from "vscode";
-import * as kdbxweb from "kdbxweb";
+import { APP_VERSION, GIT_COMMIT } from "./buildInfo";
+import { SUPPORTED_VAULT_FILTERS } from "./constants";
+import { renderVault, type Settings } from "./webview";
+import {isPsafeUri,type VaultAdapterRuntime} from "./vaultAdapters";
+import {handleKdbxMessage, unlockKdbxVault} from "./vaultAdapters/kdbxAdapter";
+import {handlePsafeMessage, unlockPsafeVault} from "./vaultAdapters/psafeAdapter";
+
 import {
-    applyEntryFields,
     buildTree,
     computeStats,
-    duplicateEntry as duplicateEntryInVault,
-    findEntry,
-    findGroup,
-    readEntryDetail,
-    readEntryField,
-    type EntryFields,
     type GroupView,
     type VaultStats
 } from "./vault";
-import { renderError, renderVault, type Settings } from "./webview";
-import { APP_VERSION, GIT_COMMIT } from "./buildInfo";
+import type {
+    ActiveEditor,
+    FromWebview,
+    VaultDocument
+} from "./types";
 
-interface KdbxDocument extends vscode.CustomDocument {
-    db?: kdbxweb.Kdbx;
-    credentials?: kdbxweb.Credentials;
-}
-
-type FromWebview =
-    | { type: "unlock" }
-    | { type: "reload" }
-    | { type: "lock" }
-    | { type: "openDb" }
-    | { type: "unlockWithPassword"; password: string }
-    | { type: "revealSecret"; entryId: string; field: string }
-    | { type: "copySecret"; entryId: string; field: string }
-    | { type: "copyText"; text: string }
-    | { type: "getEntryDetail"; entryId: string }
-    | { type: "createEntry"; groupId: string; fields: EntryFields }
-    | { type: "updateEntry"; entryId: string; fields: EntryFields }
-    | { type: "deleteEntry"; entryId: string }
-    | { type: "duplicateEntry"; entryId: string }
-    | { type: "createGroup"; parentId: string }
-    | { type: "renameGroup"; groupId: string }
-    | { type: "deleteGroup"; groupId: string }
-    | { type: "updateSettings"; settings: Settings }
-    | { type: "getDbInfo" };
-
-interface ActiveEditor {
-    document: KdbxDocument;
-    panel: vscode.WebviewPanel;
-    unlock: () => Promise<void>;
-    lock: () => void;
-    reload: () => Promise<void>;
-    autoLockTimer?: ReturnType<typeof setTimeout>;
-}
-
-export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<KdbxDocument> {
+export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<VaultDocument> {
     public static readonly viewType = "sato.kdbxViewer";
 
     private readonly editors = new Set<ActiveEditor>();
     private lastClipboardCopy: string | undefined;
+    private adapterRuntime(): VaultAdapterRuntime {
+        return {
+            readSettings: () => this.readSettings(),
+            copyToClipboard: (value, message, settings) =>
+                this.copyToClipboard(value, message, settings),
+            persist: (document, panel, successMessage) =>
+                this.persist(document, panel, successMessage)
+        };
+    }
 
     constructor(private readonly context: vscode.ExtensionContext) {
         context.subscriptions.push(
@@ -66,7 +43,10 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
                 const settings = this.readSettings();
 
                 for (const ed of this.editors) {
-                    ed.panel.webview.postMessage({ type: "settingsUpdated", settings });
+                    ed.panel.webview.postMessage({
+                        type: "settingsUpdated",
+                        settings
+                    });
 
                     this.scheduleAutoLock(ed);
                 }
@@ -84,12 +64,13 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
         return undefined;
     }
 
-    async openCustomDocument(uri: vscode.Uri): Promise<KdbxDocument> {
-        const doc: KdbxDocument = {
+    async openCustomDocument(uri: vscode.Uri): Promise<VaultDocument> {
+        const doc: VaultDocument = {
             uri,
             dispose: () => {
                 doc.db = undefined;
                 doc.credentials = undefined;
+                doc.psafe = undefined;
             }
         };
 
@@ -97,7 +78,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
     }
 
     async resolveCustomEditor(
-        document: KdbxDocument,
+        document: VaultDocument,
         panel: vscode.WebviewPanel
     ): Promise<void> {
         panel.webview.options = {
@@ -124,6 +105,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
 
             document.db = undefined;
             document.credentials = undefined;
+            document.psafe = undefined;
 
             panel.webview.postMessage({ type: "vaultLocked" });
         };
@@ -133,6 +115,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
 
             document.db = undefined;
             document.credentials = undefined;
+            document.psafe = undefined;
 
             this.renderLockedShell(document, panel, true);
         };
@@ -163,6 +146,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
 
             document.db = undefined;
             document.credentials = undefined;
+            document.psafe = undefined;
 
             this.editors.delete(editor);
         });
@@ -171,7 +155,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
     }
 
     private renderLockedShell(
-        document: KdbxDocument,
+        document: VaultDocument,
         panel: vscode.WebviewPanel,
         openUnlockModal: boolean
     ): void {
@@ -229,7 +213,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
     }
 
     private async handleMessage(
-        document: KdbxDocument,
+        document: VaultDocument,
         panel: vscode.WebviewPanel,
         msg: FromWebview,
         reload: () => Promise<void>,
@@ -248,13 +232,11 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
 
         if (msg.type === "openDb") {
             const selected = await vscode.window.showOpenDialog({
-                title: "SATO - Open KeePass Vault",
+                title: "SATO - Open Password Vault",
                 canSelectFiles: true,
                 canSelectFolders: false,
                 canSelectMany: false,
-                filters: {
-                    "KeePass databases": ["kdbx"]
-                }
+                filters: SUPPORTED_VAULT_FILTERS
             });
 
             const uri = selected?.[0];
@@ -273,273 +255,126 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
         }
 
         if (msg.type === "unlockWithPassword") {
-            let bytes: Uint8Array;
+            await this.unlockWithPassword(document, panel, msg.password, scheduleAutoLock);
+            return;
+        }
 
-            try {
-                bytes = await vscode.workspace.fs.readFile(document.uri);
-            } catch (err) {
-                panel.webview.postMessage({
-                    type: "unlockFailed",
-                    message: `Failed to read file: ${describeError(err)}`
-                });
-                return;
-            }
+        if (msg.type === "updateSettings") {
+            await this.updateSettings(msg.settings);
+            vscode.window.setStatusBarMessage("SATO: settings saved", 2000);
+            return;
+        }
 
-            const credentials = new kdbxweb.Credentials(
-                kdbxweb.ProtectedValue.fromString(msg.password)
+        if (msg.type === "openUrl") {
+            await this.openExternalUrl(msg.url);
+            return;
+        }
+
+        if (document.psafe) {
+            await handlePsafeMessage(
+                document,
+                panel,
+                msg,
+                this.adapterRuntime()
             );
+            return;
+        }
 
+        if (document.db) {
+            await handleKdbxMessage(
+                document,
+                panel,
+                msg,
+                this.adapterRuntime()
+            );
+        }
+    }
+
+    private async unlockWithPassword(
+        document: VaultDocument,
+        panel: vscode.WebviewPanel,
+        password: string,
+        scheduleAutoLock: () => void
+    ): Promise<void> {
+        let bytes: Uint8Array;
+
+        try {
+            bytes = await vscode.workspace.fs.readFile(document.uri);
+        } catch (err) {
+            panel.webview.postMessage({
+                type: "unlockFailed",
+                message: `Failed to read file: ${describeError(err)}`
+            });
+            return;
+        }
+
+        if (isPsafeUri(document.uri)) {
             try {
-                const db = await kdbxweb.Kdbx.load(toArrayBuffer(bytes), credentials);
-
-                document.db = db;
-                document.credentials = credentials;
+                await unlockPsafeVault(document, bytes, password);
 
                 this.renderState(document, panel, true);
                 scheduleAutoLock();
             } catch {
                 panel.webview.postMessage({
                     type: "unlockFailed",
-                    message: "Wrong password. Try again."
+                    message: "Wrong password or unsupported Password Safe file."
                 });
             }
 
             return;
         }
 
-        if (msg.type === "updateSettings") {
-            const cfg = vscode.workspace.getConfiguration("sato");
+        try {
+            await unlockKdbxVault(document, bytes, password);
 
-            await cfg.update("autoLockTimeout", msg.settings.autoLockTimeout, vscode.ConfigurationTarget.Global);
+            this.renderState(document, panel, true);
+            scheduleAutoLock();
+        } catch {
+            panel.webview.postMessage({
+                type: "unlockFailed",
+                message: "Wrong password. Try again."
+            });
+        }
+    }
 
-            await cfg.update("clipboardClearTimeout", msg.settings.clipboardClearTimeout, vscode.ConfigurationTarget.Global);
 
-            await cfg.update("passwordGeneratorLength", msg.settings.passwordGeneratorLength, vscode.ConfigurationTarget.Global);
+    private async updateSettings(settings: Settings): Promise<void> {
+        const cfg = vscode.workspace.getConfiguration("sato");
 
-            await cfg.update("confirmBeforeDelete", msg.settings.confirmBeforeDelete, vscode.ConfigurationTarget.Global);
+        await cfg.update("autoLockTimeout", settings.autoLockTimeout, vscode.ConfigurationTarget.Global);
+        await cfg.update("clipboardClearTimeout", settings.clipboardClearTimeout, vscode.ConfigurationTarget.Global);
+        await cfg.update("passwordGeneratorLength", settings.passwordGeneratorLength, vscode.ConfigurationTarget.Global);
+        await cfg.update("confirmBeforeDelete", settings.confirmBeforeDelete, vscode.ConfigurationTarget.Global);
+        await cfg.update("showPasswordsByDefault", settings.showPasswordsByDefault, vscode.ConfigurationTarget.Global);
+        await cfg.update("showStatusBar", settings.showStatusBar, vscode.ConfigurationTarget.Global);
+    }
 
-            await cfg.update("showPasswordsByDefault", msg.settings.showPasswordsByDefault, vscode.ConfigurationTarget.Global);
+    private async openExternalUrl(rawUrl: string): Promise<void> {
+        const value = rawUrl.trim();
 
-            await cfg.update("showStatusBar", msg.settings.showStatusBar, vscode.ConfigurationTarget.Global);
-
-            vscode.window.setStatusBarMessage("SATO: settings saved", 2000);
+        if (!value) {
             return;
         }
 
-        const db = document.db;
+        const url = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(value)
+            ? value
+            : `https://${value}`;
 
-        if (!db) {
+        let uri: vscode.Uri;
+
+        try {
+            uri = vscode.Uri.parse(url, true);
+        } catch {
+            vscode.window.showWarningMessage("SATO: invalid URL");
             return;
         }
 
-        const settings = this.readSettings();
-
-        switch (msg.type) {
-            case "copySecret": {
-                const value = readEntryField(db, msg.entryId, msg.field);
-
-                if (value === undefined) {
-                    return;
-                }
-
-                await this.copyToClipboard(value, `SATO: copied ${msg.field}`, settings);
-                return;
-            }
-
-            case "copyText": {
-                if (!msg.text) {
-                    return;
-                }
-
-                await this.copyToClipboard(msg.text, "SATO: password copied", settings);
-                return;
-            }
-
-            case "revealSecret": {
-                const value = readEntryField(db, msg.entryId, msg.field);
-
-                if (value === undefined) {
-                    return;
-                }
-
-                panel.webview.postMessage({
-                    type: "secretRevealed",
-                    entryId: msg.entryId,
-                    field: msg.field,
-                    value
-                });
-
-                return;
-            }
-
-            case "getEntryDetail": {
-                const detail = readEntryDetail(db, msg.entryId);
-
-                if (detail) {
-                    panel.webview.postMessage({ type: "entryDetail", detail });
-                }
-
-                return;
-            }
-
-            case "getDbInfo": {
-                const info = await this.collectDbInfo(document, db);
-
-                panel.webview.postMessage({ type: "dbInfo", info });
-
-                return;
-            }
-
-            case "createEntry": {
-                const group = findGroup(db, msg.groupId);
-
-                if (!group) {
-                    return;
-                }
-
-                const entry = db.createEntry(group);
-                applyEntryFields(entry, msg.fields);
-
-                await this.persist(document, panel, `Created “${msg.fields.title}”`);
-                return;
-            }
-
-            case "updateEntry": {
-                const found = findEntry(db, msg.entryId);
-
-                if (!found) {
-                    return;
-                }
-
-                applyEntryFields(found.entry, msg.fields);
-
-                await this.persist(document, panel, `Updated “${msg.fields.title}”`);
-                return;
-            }
-
-            case "deleteEntry": {
-                const found = findEntry(db, msg.entryId);
-
-                if (!found) {
-                    return;
-                }
-
-                const title = readEntryField(db, msg.entryId, "Title") || "(untitled)";
-
-                if (settings.confirmBeforeDelete) {
-                    const answer = await vscode.window.showWarningMessage(
-                        `Delete entry “${title}”?`,
-                        { modal: true },
-                        "Delete"
-                    );
-
-                    if (answer !== "Delete") {
-                        return;
-                    }
-                }
-
-                db.remove(found.entry);
-
-                await this.persist(document, panel, `Deleted “${title}”`);
-                return;
-            }
-
-            case "duplicateEntry": {
-                const copy = duplicateEntryInVault(db, msg.entryId);
-
-                if (!copy) {
-                    return;
-                }
-
-                await this.persist(document, panel, "Entry duplicated");
-                return;
-            }
-
-            case "createGroup": {
-                const parent = findGroup(db, msg.parentId);
-
-                if (!parent) {
-                    return;
-                }
-
-                const name = await vscode.window.showInputBox({
-                    title: "SATO - new folder",
-                    prompt: `Folder name (parent: ${parent.name ?? ""})`,
-                    validateInput: (v) => (v.trim() ? undefined : "Name required")
-                });
-
-                if (!name) {
-                    return;
-                }
-
-                db.createGroup(parent, name.trim());
-
-                await this.persist(document, panel, `Created folder “${name.trim()}”`);
-                return;
-            }
-
-            case "renameGroup": {
-                const group = findGroup(db, msg.groupId);
-
-                if (!group) {
-                    return;
-                }
-
-                if (!group.parentGroup) {
-                    vscode.window.showWarningMessage("SATO: cannot rename the root group");
-                    return;
-                }
-
-                const name = await vscode.window.showInputBox({
-                    title: "SATO - rename folder",
-                    prompt: "New folder name",
-                    value: group.name ?? "",
-                    validateInput: (v) => (v.trim() ? undefined : "Name required")
-                });
-
-                if (!name || name.trim() === group.name) {
-                    return;
-                }
-
-                group.name = name.trim();
-                group.times.update();
-
-                await this.persist(document, panel, `Renamed folder to “${name.trim()}”`);
-                return;
-            }
-
-            case "deleteGroup": {
-                const group = findGroup(db, msg.groupId);
-
-                if (!group) {
-                    return;
-                }
-
-                if (!group.parentGroup) {
-                    vscode.window.showWarningMessage("SATO: cannot delete the root group");
-                    return;
-                }
-
-                const label = group.name ?? "(unnamed)";
-
-                if (settings.confirmBeforeDelete) {
-                    const answer = await vscode.window.showWarningMessage(
-                        `Delete folder “${label}” and all its contents?`,
-                        { modal: true },
-                        "Delete"
-                    );
-
-                    if (answer !== "Delete") {
-                        return;
-                    }
-                }
-
-                db.remove(group);
-
-                await this.persist(document, panel, `Deleted folder “${label}”`);
-                return;
-            }
+        if (uri.scheme !== "http" && uri.scheme !== "https") {
+            vscode.window.showWarningMessage("SATO: only http and https URLs are supported");
+            return;
         }
+
+        await vscode.env.openExternal(uri);
     }
 
     private async copyToClipboard(
@@ -582,7 +417,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
     private scheduleAutoLock(editor: ActiveEditor): void {
         this.clearAutoLock(editor);
 
-        if (!editor.document.db) {
+        if (!editor.document.db && !editor.document.psafe) {
             return;
         }
 
@@ -593,7 +428,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
         }
 
         editor.autoLockTimer = setTimeout(() => {
-            if (editor.document.db) {
+            if (editor.document.db || editor.document.psafe) {
                 editor.lock();
                 vscode.window.setStatusBarMessage("SATO: vault auto-locked", 3000);
             }
@@ -620,64 +455,9 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
         };
     }
 
-    private async collectDbInfo(
-        document: KdbxDocument,
-        db: kdbxweb.Kdbx
-    ): Promise<Record<string, unknown>> {
-        let fileSize = 0;
-
-        try {
-            const stat = await vscode.workspace.fs.stat(document.uri);
-            fileSize = stat.size;
-        } catch {
-            // ignore
-        }
-
-        let groupCount = 0;
-        let entryCount = 0;
-
-        const walk = (g: kdbxweb.KdbxGroup): void => {
-            groupCount++;
-            entryCount += g.entries.length;
-
-            for (const c of g.groups) {
-                walk(c);
-            }
-        };
-
-        walk(db.getDefaultGroup());
-
-        const header = db.header as unknown as {
-            versionMajor?: number;
-            versionMinor?: number;
-        } | undefined;
-
-        const version = header?.versionMajor !== undefined
-            ? `${header.versionMajor}.${header.versionMinor ?? 0}`
-            : "unknown";
-
-        const meta = db.meta as unknown as {
-            name?: string;
-            desc?: string;
-            generator?: string;
-            recycleBinEnabled?: boolean;
-        } | undefined;
-
-        return {
-            name: meta?.name ?? "",
-            desc: meta?.desc ?? "",
-            generator: meta?.generator ?? "",
-            version,
-            filePath: document.uri.fsPath,
-            fileSize,
-            groupCount,
-            entryCount,
-            recycleBinEnabled: meta?.recycleBinEnabled ?? false
-        };
-    }
 
     private async persist(
-        document: KdbxDocument,
+        document: VaultDocument,
         panel: vscode.WebviewPanel,
         successMessage: string
     ): Promise<void> {
@@ -702,10 +482,52 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
     }
 
     private renderState(
-        document: KdbxDocument,
+        document: VaultDocument,
         panel: vscode.WebviewPanel,
         initialLoad: boolean
     ): void {
+        const settings = this.readSettings();
+
+        const codiconsCssUri = vscode.Uri.joinPath(
+            this.context.extensionUri,
+            "assets",
+            "codicons",
+            "codicon.css"
+        );
+
+        const logoUri = vscode.Uri.joinPath(
+            this.context.extensionUri,
+            "assets",
+            "sato.png"
+        );
+
+        if (document.psafe) {
+            if (initialLoad) {
+                panel.webview.html = renderVault(
+                    panel.webview,
+                    document.uri,
+                    document.psafe.tree,
+                    document.psafe.stats,
+                    settings,
+                    logoUri,
+                    codiconsCssUri,
+                    APP_VERSION,
+                    GIT_COMMIT
+                );
+            } else {
+                panel.webview.postMessage({
+                    type: "vaultState",
+                    state: {
+                        tree: document.psafe.tree,
+                        stats: document.psafe.stats,
+                        settings
+                    }
+                });
+            }
+
+            return;
+        }
+
         const db = document.db;
 
         if (!db) {
@@ -714,22 +536,8 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
 
         const tree: GroupView = buildTree(db);
         const stats: VaultStats = computeStats(db);
-        const settings = this.readSettings();
 
         if (initialLoad) {
-            const codiconsCssUri = vscode.Uri.joinPath(
-                this.context.extensionUri,
-                "assets",
-                "codicons",
-                "codicon.css"
-            );
-
-            const logoUri = vscode.Uri.joinPath(
-                this.context.extensionUri,
-                "assets",
-                "sato.png"
-            );
-
             panel.webview.html = renderVault(
                 panel.webview,
                 document.uri,
@@ -744,16 +552,14 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<K
         } else {
             panel.webview.postMessage({
                 type: "vaultState",
-                state: { tree, stats, settings }
+                state: {
+                    tree,
+                    stats,
+                    settings
+                }
             });
         }
     }
-}
-
-function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
-    const copy = new Uint8Array(bytes.byteLength);
-    copy.set(bytes);
-    return copy.buffer;
 }
 
 function describeError(err: unknown): string {

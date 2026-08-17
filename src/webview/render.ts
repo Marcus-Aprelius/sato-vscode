@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import type { GroupView, VaultStats } from "../vault";
 import { STYLES } from "./styles";
 import { CLIENT_SCRIPT } from "./clientScript";
+import type { GroupView, VaultStats } from "../vault";
 
 export interface Settings {
     autoLockTimeout: number;
