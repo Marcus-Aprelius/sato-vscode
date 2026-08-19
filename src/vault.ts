@@ -12,6 +12,9 @@ export interface EntryView {
     passwordLength: number;
     weak: boolean;
     expired: boolean;
+    values?: Record<string, string>;
+    readOnly?: boolean;
+    hasPrivateKey?: boolean;
 }
 
 export interface GroupView {

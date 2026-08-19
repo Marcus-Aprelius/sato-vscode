@@ -1,13 +1,16 @@
+
 import type * as vscode from "vscode";
 import type * as kdbxweb from "kdbxweb";
 import type { Settings } from "./webview";
 import type { PsafeVault } from "./psafe";
 import type { EntryFields } from "./vault";
+import type { CertificateVault } from "./certificates";
 
 export interface VaultDocument extends vscode.CustomDocument {
     db?: kdbxweb.Kdbx;
     credentials?: kdbxweb.Credentials;
     psafe?: PsafeVault;
+    certificate?: CertificateVault;
 }
 
 export type FromWebview =
@@ -15,8 +18,20 @@ export type FromWebview =
     | { type: "reload" }
     | { type: "lock" }
     | { type: "openDb" }
+    | { type: "openDirectory" }
+    | { type: "checkUpdate" }
     | { type: "unlockWithPassword"; password: string }
+    | {
+          type: "unlockCryptoContainer";
+          entryId: string;
+          password: string;
+      }
+    | {
+          type: "lockCryptoContainer";
+          entryId: string;
+      }
     | { type: "revealSecret"; entryId: string; field: string }
+    | { type: "revealPrivateKey"; entryId?: string }
     | { type: "copySecret"; entryId: string; field: string }
     | { type: "copyText"; text: string }
     | { type: "openUrl"; url: string }
@@ -29,7 +44,10 @@ export type FromWebview =
     | { type: "renameGroup"; groupId: string }
     | { type: "deleteGroup"; groupId: string }
     | { type: "updateSettings"; settings: Settings }
-    | { type: "getDbInfo" };
+    | {
+        type: "getDbInfo";
+        entryId?: string | null;
+    };
 
 export interface ActiveEditor {
     document: VaultDocument;

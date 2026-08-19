@@ -1,5 +1,34 @@
 # Change Log
 
+# Change Log
+
+# 0.1.0
+
+## Changed:
+  * Code refactored
+  * `About` window updated
+  * Main toolbar and menus redesigned
+  * `Show Info` moved to `File` menu
+  * `Reload from Disk` moved to `File` menu
+  * `Lock Database` and `Unlock Database` moved to `Tools` menu
+  * `Copy` buttons replaced with icon buttons
+  * Search improved for crypto file fields
+  * Empty values UX improved
+
+## Added:
+  * `.crt`, `.csr`, `.key`, `.pem` file viewer
+  * `.p12`, `.pfx`, `.jks` container viewer
+  * Password unlock for `.p12`, `.pfx`, `.jks`
+  * `Lock Container` and `Unlock Container`
+  * `Show Primary Key` and `Hide Primary Key`
+  * `Show Empty Values` and `Hide Empty Values`
+  * Empty values counter on buttons
+  * Crypto file `File Info`
+  * `Check Update` in `Help` menu
+  * Toolbar SATO icon
+
+---
+
 # 0.0.5
 ## Changed:
   * code refactored

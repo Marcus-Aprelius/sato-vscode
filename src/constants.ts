@@ -1,3 +1,3 @@
 export const VIEW_TYPE = "sato.kdbxViewer";
-export const SUPPORTED_VAULT_EXTENSIONS = ["kdbx", "psafe3", "ibak"];
-export const SUPPORTED_VAULT_FILTERS = {"Password vaults": SUPPORTED_VAULT_EXTENSIONS};
+export const SUPPORTED_VAULT_EXTENSIONS = ["kdbx", "psafe3", "ibak", "crt", "pem", "csr", "key", "pfx", "p12", "jks"];
+export const SUPPORTED_VAULT_FILTERS = {"Password vaults and crypto files": SUPPORTED_VAULT_EXTENSIONS};

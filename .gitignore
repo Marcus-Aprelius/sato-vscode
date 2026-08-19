@@ -1,12 +1,21 @@
 node_modules/
 dist/
+
+files/
+files/*
+
+tools/
 tools/*
+
 todo/
 todo/*
 
-*.log
-.DS_Store
-
-files/*
 tests/
 tests/*
+
+*.kdbx
+*.psafe3
+*.ibak
+*.plk
+*.log
+.DS_Store
