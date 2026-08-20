@@ -1,6 +1,24 @@
 # Change Log
 
-# Change Log
+# 0.1.1
+
+## Changed:
+  * `README.md` updated
+  * Crypto file menus and dialogs improved
+  * External dependency handling improved
+  * Vulnerable `@xmldom/xmldom` dependency updated to `0.8.14`
+
+## Added:
+  * `.pgp`, `.gpg`, `.asc`, `.sig` file viewer
+  * OpenPGP public and private key inspection
+  * OpenPGP encrypted message decryption
+  * Private key selection for OpenPGP decryption
+  * `Decrypt Message` and `Hide Decrypted Content` actions
+  * Automatic OpenPGP private key detection
+  * Checks for missing `OpenSSL`, `GPG` and `keytool`
+  * Clear installation notifications for missing external tools
+
+---
 
 # 0.1.0
 

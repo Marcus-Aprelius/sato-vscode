@@ -3,7 +3,6 @@ import { createButton, createCopyIconButton } from "../dom";
 import { vscode } from "../globals";
 import { app } from "../state";
 import { updateMainActionButton } from "../buttons";
-import { openCryptoContainerUnlockModal } from "../modals";
 import { renderStatus } from "../status";
 import { renderDetails } from "./index";
 
@@ -59,14 +58,23 @@ export function renderCryptoDetails(
 
     if (isCryptoContainer(entry)) {
         const containerUnlocked = isUnlockedCryptoContainer(entry);
+        const openPgp = isOpenPgpMessage(entry);
 
         const containerButton = createButton(
             containerUnlocked
                 ? "btn danger crypto-container-lock-btn"
                 : "btn primary crypto-container-lock-btn",
-            containerUnlocked
-                ? "Lock Container"
-                : "Unlock Container"
+            openPgp
+                ? (
+                    containerUnlocked
+                        ? "Hide Decrypted Content"
+                        : "Decrypt Message"
+                )
+                : (
+                    containerUnlocked
+                        ? "Lock Container"
+                        : "Unlock Container"
+                )
         );
 
         containerButton.addEventListener("click", () => {
@@ -79,7 +87,11 @@ export function renderCryptoDetails(
                 return;
             }
 
-            openCryptoContainerUnlockModal(entry.id);
+            vscode.postMessage({
+                type: "prepareCryptoUnlock",
+                entryId: entry.id
+            });
+
         });
 
         actions.appendChild(containerButton);
@@ -193,11 +205,16 @@ function isCryptoContainer(entry: ClientEntry): boolean {
         entry.readOnly === true &&
         (
             type === "PKCS#12 Container" ||
-            type === "Java KeyStore"
+            type === "Java KeyStore" ||
+            type === "OpenPGP Encrypted Message"
         )
     );
 }
 
 function isUnlockedCryptoContainer(entry: ClientEntry): boolean {
     return entry.values?.Status === "Unlocked";
+}
+
+function isOpenPgpMessage(entry: ClientEntry): boolean {
+    return entry.values?.Type === "OpenPGP Encrypted Message";
 }

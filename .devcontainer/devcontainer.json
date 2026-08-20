@@ -2,7 +2,7 @@
   "name": "sato-vscode",
   "image": "node:26",
   "remoteUser": "root",
-  "postCreateCommand": "npm install && npm run build",
+  "postCreateCommand": "apt-get update && apt-get install -y --no-install-recommends openssl gnupg default-jre-headless && rm -rf /var/lib/apt/lists/* && npm install && npm run build",
   "customizations": {
     "vscode": {
       "extensions": [

@@ -1,5 +1,12 @@
-import type { EntryView, GroupView, VaultStats } from "../../vault";
-import type { Settings } from "../render";
+import type {
+    EntryView,
+    GroupView,
+    VaultStats
+} from "../../vault";
+
+import type {
+    Settings
+} from "../render";
 
 export interface ClientInitialState {
     tree: GroupView;

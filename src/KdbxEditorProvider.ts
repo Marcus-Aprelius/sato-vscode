@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { APP_VERSION, GIT_COMMIT } from "./buildInfo";
 import { SUPPORTED_VAULT_FILTERS } from "./constants";
 import { renderVault, type Settings } from "./webview";
+import { isCommandAvailable } from "./certificates/cli";
 import { isPsafeUri, type VaultAdapterRuntime } from "./vaultAdapters";
 import { handleKdbxMessage, unlockKdbxVault } from "./vaultAdapters/kdbxAdapter";
 import { handlePsafeMessage, unlockPsafeVault } from "./vaultAdapters/psafeAdapter";
@@ -314,7 +315,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
 
             if (!files.length) {
                 vscode.window.showInformationMessage(
-                    "SATO: no .crt, .csr, .key, .pem, .p12, .pfx or .jks files found in selected directory"
+                    "SATO: no supported crypto files found in selected directory"
                 );
                 return;
             }
@@ -349,6 +350,119 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
             return;
         }
 
+        if (msg.type === "selectOpenPgpPrivateKey") {
+            const encryptedFile =
+                document.certificate?.filesByEntryId?.[msg.entryId];
+
+            if (!encryptedFile) {
+                panel.webview.postMessage({
+                    type: "cryptoContainerUnlockFailed",
+                    entryId: msg.entryId,
+                    message: "Encrypted OpenPGP file is not available."
+                });
+
+                return;
+            }
+
+            const selected = await vscode.window.showOpenDialog({
+                title: "SATO - Select OpenPGP Private Key",
+                defaultUri: vscode.Uri.file(
+                    path.dirname(encryptedFile.uri.fsPath)
+                ),
+                canSelectFiles: true,
+                canSelectFolders: false,
+                canSelectMany: false,
+                filters: {
+                    "OpenPGP private keys": [
+                        "asc",
+                        "gpg",
+                        "pgp"
+                    ],
+                    "All files": [
+                        "*"
+                    ]
+                }
+            });
+
+            const privateKeyUri = selected?.[0];
+
+            if (!privateKeyUri) {
+                return;
+            }
+
+            panel.webview.postMessage({
+                type: "openPgpPrivateKeySelected",
+                entryId: msg.entryId,
+                filePath: privateKeyUri.fsPath
+            });
+
+            return;
+        }
+
+        if (msg.type === "prepareCryptoUnlock") {
+            const file =
+                document.certificate?.filesByEntryId?.[msg.entryId];
+
+            if (!file) {
+                vscode.window.showWarningMessage(
+                    "SATO: encrypted file is not available."
+                );
+                return;
+            }
+
+            const filePath = file.uri.fsPath.toLowerCase();
+
+            if (
+                filePath.endsWith(".p12") ||
+                filePath.endsWith(".pfx")
+            ) {
+                if (!isCommandAvailable("openssl")) {
+                    const installHint = process.platform === "win32"
+                        ? "Install OpenSSL, add openssl.exe to PATH, and restart VS Code."
+                        : process.platform === "darwin"
+                            ? "Install OpenSSL with: brew install openssl"
+                            : "Install OpenSSL using your system package manager.";
+
+                    vscode.window.showWarningMessage(
+                        `SATO: OpenSSL is required to unlock PKCS#12/PFX containers. ${installHint}`
+                    );
+
+                    return;
+                }
+            } else if (filePath.endsWith(".jks")) {
+                if (!isCommandAvailable("keytool")) {
+                    vscode.window.showWarningMessage(
+                        "SATO: keytool is required to unlock Java KeyStore files. Install a Java Runtime, for example default-jre-headless, and try again."
+                    );
+                    return;
+                }
+            } else if (
+                filePath.endsWith(".gpg") ||
+                filePath.endsWith(".pgp")
+            ) {
+                if (!isCommandAvailable("gpg")) {
+                    const installHint = process.platform === "win32"
+                        ? "Install Gpg4win, add gpg.exe to PATH, and restart VS Code."
+                        : process.platform === "darwin"
+                            ? "Install GnuPG with: brew install gnupg"
+                            : "Install GnuPG using your system package manager.";
+
+                    vscode.window.showWarningMessage(
+                        `SATO: GPG is required to inspect and decrypt OpenPGP files. ${installHint}`
+                    );
+
+                    return;
+                }
+            }
+
+            panel.webview.postMessage({
+                type: "cryptoUnlockReady",
+                entryId: msg.entryId
+            });
+
+            return;
+        }
+
         if (document.certificate) {
             if (msg.type === "getDbInfo") {
                 const info = await this.collectCryptoFileInfo(
@@ -365,17 +479,64 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
             }
 
             if (msg.type === "unlockCryptoContainer") {
+                const encryptedFile =
+                    document.certificate.filesByEntryId?.[msg.entryId];
+
+                let privateKeyFile: CryptoFileInput | undefined;
+
+                if (
+                    encryptedFile &&
+                    isOpenPgpEncryptedFile(encryptedFile.uri)
+                ) {
+                    const privateKeyPath = msg.privateKeyPath?.trim();
+
+                    if (!privateKeyPath) {
+                        panel.webview.postMessage({
+                            type: "cryptoContainerUnlockFailed",
+                            entryId: msg.entryId,
+                            message: "Select an OpenPGP private key file."
+                        });
+
+                        return;
+                    }
+
+                    const privateKeyUri = vscode.Uri.file(
+                        privateKeyPath
+                    );
+
+                    try {
+                        privateKeyFile = {
+                            uri: privateKeyUri,
+                            bytes: await vscode.workspace.fs.readFile(
+                                privateKeyUri
+                            )
+                        };
+                    } catch (err) {
+                        panel.webview.postMessage({
+                            type: "cryptoContainerUnlockFailed",
+                            entryId: msg.entryId,
+                            message:
+                                `Failed to read private key: ${describeError(err)}`
+                        });
+
+                        return;
+                    }
+                }
+
                 const result = unlockCryptoContainer(
                     document.certificate,
                     msg.entryId,
-                    msg.password
+                    msg.password,
+                    privateKeyFile
                 );
 
                 if (!result.ok) {
                     panel.webview.postMessage({
                         type: "cryptoContainerUnlockFailed",
                         entryId: msg.entryId,
-                        message: result.message || "Failed to unlock crypto container."
+                        message:
+                            result.message ||
+                            "Failed to unlock encrypted file."
                     });
 
                     return;
@@ -392,7 +553,9 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
                 });
 
                 vscode.window.setStatusBarMessage(
-                    "SATO: crypto container unlocked",
+                    isOpenPgpEncryptedFile(encryptedFile?.uri)
+                        ? "SATO: OpenPGP message decrypted"
+                        : "SATO: crypto container unlocked",
                     2500
                 );
 
@@ -608,16 +771,24 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
 
             return;
         }
-
         try {
             await unlockKdbxVault(document, bytes, password);
 
             this.renderState(document, panel, true);
             scheduleAutoLock();
-        } catch {
+        } catch (err) {
+            const message = describeError(err);
+
+            console.error(
+                "SATO: failed to unlock KDBX:",
+                err
+            );
+
             panel.webview.postMessage({
                 type: "unlockFailed",
-                message: "Wrong password. Try again."
+                message: message
+                    ? `Failed to open KDBX: ${message}`
+                    : "Wrong password or unsupported KDBX file."
             });
         }
     }
@@ -1158,4 +1329,19 @@ function parseVersion(value: string): [number, number, number] {
         Number.isFinite(parts[1]) ? parts[1] : 0,
         Number.isFinite(parts[2]) ? parts[2] : 0
     ];
+}
+
+function isOpenPgpEncryptedFile(
+    uri: vscode.Uri | undefined
+): boolean {
+    if (!uri) {
+        return false;
+    }
+
+    const filePath = uri.fsPath.toLowerCase();
+
+    return (
+        filePath.endsWith(".gpg") ||
+        filePath.endsWith(".pgp")
+    );
 }

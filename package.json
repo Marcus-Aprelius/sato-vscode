@@ -3,7 +3,7 @@
   "displayName": "SATO Secrets",
   "description": "Browse KeePass, Password Safe and crypto files (.crt, .key, .csr, .p12, .pfx, .jks) inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
@@ -34,7 +34,11 @@
     "pkcs12",
     "p12",
     "pfx",
-    "jks"
+    "jks",
+    "openpgp",
+    "gpg",
+    "pgp",
+    "signature"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -43,36 +47,20 @@
         "viewType": "sato.kdbxViewer",
         "displayName": "SATO Vault Viewer",
         "selector": [
-          {
-            "filenamePattern": "*.kdbx"
-          },
-          {
-            "filenamePattern": "*.psafe3"
-          },
-          {
-            "filenamePattern": "*.ibak"
-          },
-          {
-            "filenamePattern": "*.crt"
-          },
-          {
-            "filenamePattern": "*.pem"
-          },
-          {
-            "filenamePattern": "*.csr"
-          },
-          {
-            "filenamePattern": "*.key"
-          },
-          {
-            "filenamePattern": "*.p12"
-          },
-          {
-            "filenamePattern": "*.pfx"
-          },
-          {
-            "filenamePattern": "*.jks"
-          }
+          { "filenamePattern": "*.kdbx" },
+          { "filenamePattern": "*.psafe3" },
+          { "filenamePattern": "*.ibak" },
+          { "filenamePattern": "*.crt" },
+          { "filenamePattern": "*.pem" },
+          { "filenamePattern": "*.csr" },
+          { "filenamePattern": "*.key" },
+          { "filenamePattern": "*.p12" },
+          { "filenamePattern": "*.pfx" },
+          { "filenamePattern": "*.jks" },
+          { "filenamePattern": "*.gpg" },
+          { "filenamePattern": "*.pgp" },
+          { "filenamePattern": "*.asc" },
+          { "filenamePattern": "*.sig" }
         ],
         "priority": "default"
       }
@@ -159,6 +147,6 @@
     "password-safe": "^0.0.3"
   },
   "overrides": {
-    "@xmldom/xmldom": "0.7.5"
+    "@xmldom/xmldom": "0.8.14"
   }
 }
