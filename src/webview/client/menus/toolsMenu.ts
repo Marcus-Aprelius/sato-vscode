@@ -1,31 +1,42 @@
 import { vscode } from "../globals";
-import { openDropdown } from "../contextMenu";
-import { app, getSelectedEntry, isCryptoFileView } from "../state";
-import { openCryptoContainerUnlockModal, openModal } from "../modals";
-
 import type { MenuItem } from "../types";
+import { openModal } from "../modals";
+import { openDropdown } from "../contextMenu";
+
+import { app, getSelectedEntry, isCryptoFileView } from "../state";
+
 
 export function openToolsMenu(button: HTMLElement): void {
     const crypto = isCryptoFileView();
     const entry = getSelectedEntry();
 
     const cryptoContainer = isCryptoContainer(entry);
-    const cryptoContainerUnlocked = isCryptoContainerUnlocked(entry);
+    const cryptoContainerUnlocked =
+        isCryptoContainerUnlocked(entry);
+    const openPgpMessage = isOpenPgpMessage(entry);
 
     const items: MenuItem[] = [
         {
-            label: app.vaultLocked ? "Unlock Database" : "Lock Database",
+            label: app.vaultLocked
+                ? "Unlock Database"
+                : "Lock Database",
+
             title: app.vaultLocked
                 ? "Unlock current database"
                 : "Lock current database",
+
             icon: app.vaultLocked
                 ? "codicon-unlock"
                 : "codicon-lock",
+
             iconPosition: "left",
+
             iconTone: app.vaultLocked
                 ? "locked"
                 : "unlocked",
+
             disabled: crypto,
+
             action: () => {
                 if (crypto) {
                     return;
@@ -42,23 +53,47 @@ export function openToolsMenu(button: HTMLElement): void {
             }
         },
 
-        { sep: true },
+        {
+            sep: true
+        },
 
         {
-            label: cryptoContainerUnlocked
-                ? "Lock Container"
-                : "Unlock Container",
-            title: cryptoContainerUnlocked
-                ? "Lock current crypto container"
-                : "Unlock current crypto container",
+            label: openPgpMessage
+                ? (
+                    cryptoContainerUnlocked
+                        ? "Hide Decrypted Content"
+                        : "Decrypt Message"
+                )
+                : (
+                    cryptoContainerUnlocked
+                        ? "Lock Container"
+                        : "Unlock Container"
+                ),
+
+            title: openPgpMessage
+                ? (
+                    cryptoContainerUnlocked
+                        ? "Hide decrypted OpenPGP content"
+                        : "Decrypt current OpenPGP message"
+                )
+                : (
+                    cryptoContainerUnlocked
+                        ? "Lock current crypto container"
+                        : "Unlock current crypto container"
+                ),
+
             icon: cryptoContainerUnlocked
                 ? "codicon-eye"
                 : "codicon-eye-closed",
+
             iconPosition: "left",
+
             iconTone: cryptoContainerUnlocked
                 ? "unlocked"
                 : "locked",
+
             disabled: !cryptoContainer,
+
             action: () => {
                 if (!entry || !cryptoContainer) {
                     return;
@@ -73,16 +108,22 @@ export function openToolsMenu(button: HTMLElement): void {
                     return;
                 }
 
-                openCryptoContainerUnlockModal(entry.id);
+                vscode.postMessage({
+                    type: "prepareCryptoUnlock",
+                    entryId: entry.id
+                });
             }
         },
 
-        { sep: true },
+        {
+            sep: true
+        },
 
         {
             label: "Password Generator",
             title: "Open password generator",
             disabled: app.vaultLocked,
+
             action: () => {
                 if (app.vaultLocked) {
                     return;
@@ -107,7 +148,8 @@ function isCryptoContainer(
 
     return (
         type === "PKCS#12 Container" ||
-        type === "Java KeyStore"
+        type === "Java KeyStore" ||
+        type === "OpenPGP Encrypted Message"
     );
 }
 
@@ -115,4 +157,13 @@ function isCryptoContainerUnlocked(
     entry: ReturnType<typeof getSelectedEntry>
 ): boolean {
     return entry?.values?.Status === "Unlocked";
+}
+
+function isOpenPgpMessage(
+    entry: ReturnType<typeof getSelectedEntry>
+): boolean {
+    return (
+        entry?.values?.Type ===
+        "OpenPGP Encrypted Message"
+    );
 }

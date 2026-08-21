@@ -12,7 +12,9 @@ import {
     closeCryptoContainerUnlockModal,
     closeUnlockModal,
     fillEntryModal,
+    openCryptoContainerUnlockModal,
     openUnlockModal,
+    setOpenPgpPrivateKeyPath,
     showCryptoContainerUnlockError
 } from "./modals";
 
@@ -57,6 +59,33 @@ export function bindInboundMessages(): void {
             showCryptoContainerUnlockError(
                 String(msg.message || "Failed to unlock crypto container.")
             );
+            return;
+        }
+
+        if (msg.type === "cryptoUnlockReady") {
+            const entryId = String(msg.entryId || "");
+
+            if (!entryId) {
+                return;
+            }
+
+            openCryptoContainerUnlockModal(entryId);
+            return;
+        }
+
+        if (msg.type === "openPgpPrivateKeySelected") {
+            const entryId = String(msg.entryId || "");
+            const filePath = String(msg.filePath || "");
+
+            if (!entryId || !filePath) {
+                return;
+            }
+
+            setOpenPgpPrivateKeyPath(
+                entryId,
+                filePath
+            );
+
             return;
         }
 

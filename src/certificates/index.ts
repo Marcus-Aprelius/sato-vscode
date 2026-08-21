@@ -1,4 +1,8 @@
-
+import { isExpiredCertificate } from "./format";
+import { inspectPemCryptoFile } from "./inspectors/pemInspector";
+import { inspectGpg, inspectGpgUnlocked } from "./inspectors/gpgInspector";
+import { inspectJks, inspectJksUnlocked } from "./inspectors/jksInspector";
+import { inspectPkcs12, inspectPkcs12Unlocked } from "./inspectors/pkcs12Inspector";
 
 import type * as vscode from "vscode";
 import type { GroupView, VaultStats } from "../vault";
@@ -10,11 +14,6 @@ import type {
     CryptoInspection
 } from "./types";
 
-import { isExpiredCertificate } from "./format";
-import { inspectPemCryptoFile } from "./inspectors/pemInspector";
-import { inspectPkcs12, inspectPkcs12Unlocked } from "./inspectors/pkcs12Inspector";
-import { inspectJks, inspectJksUnlocked } from "./inspectors/jksInspector";
-
 export type {
     CertificateVault,
     CryptoContainerUnlockResult,
@@ -22,7 +21,7 @@ export type {
     CryptoInspection
 } from "./types";
 
-const EXTENSIONS = [".crt", ".pem", ".csr", ".key", ".pfx", ".p12", ".jks"];
+const EXTENSIONS = [".crt", ".pem", ".csr", ".key", ".pfx", ".p12", ".jks", ".gpg", ".pgp", ".asc", ".sig"];
 
 export function isCertificateLikeUri(uri: vscode.Uri): boolean {
     const filePath = uri.fsPath.toLowerCase();
@@ -74,7 +73,10 @@ export function buildCertificateDirectoryVault(
         const text =
             lower.endsWith(".p12") ||
             lower.endsWith(".pfx") ||
-            lower.endsWith(".jks")
+            lower.endsWith(".jks") ||
+            lower.endsWith(".gpg") ||
+            lower.endsWith(".pgp") ||
+            lower.endsWith(".sig")
                 ? ""
                 : Buffer.from(file.bytes).toString("utf8");
 
@@ -151,7 +153,8 @@ export function buildCertificateDirectoryVault(
 export function unlockCryptoContainer(
     vault: CertificateVault,
     entryId: string,
-    password: string
+    password: string,
+    privateKeyFile?: CryptoFileInput
 ): CryptoContainerUnlockResult {
     const file = vault.filesByEntryId?.[entryId];
 
@@ -167,7 +170,10 @@ export function unlockCryptoContainer(
 
     let inspected: CryptoInspection;
 
-    if (lowerPath.endsWith(".p12") || lowerPath.endsWith(".pfx")) {
+    if (
+        lowerPath.endsWith(".p12") ||
+        lowerPath.endsWith(".pfx")
+    ) {
         inspected = inspectPkcs12Unlocked(
             file.bytes,
             filePath,
@@ -178,6 +184,23 @@ export function unlockCryptoContainer(
             file.bytes,
             filePath,
             password
+        );
+    } else if (
+        lowerPath.endsWith(".gpg") ||
+        lowerPath.endsWith(".pgp")
+    ) {
+        if (!privateKeyFile) {
+            return {
+                ok: false,
+                message: "OpenPGP private key file is required."
+            };
+        }
+
+        inspected = inspectGpgUnlocked(
+            file.bytes,
+            filePath,
+            password,
+            privateKeyFile.bytes
         );
     } else {
         return {
@@ -191,7 +214,7 @@ export function unlockCryptoContainer(
             ok: false,
             message:
                 inspected.values.Summary ||
-                "Failed to unlock crypto container."
+                "Failed to unlock encrypted file."
         };
     }
 
@@ -215,7 +238,8 @@ export function unlockCryptoContainer(
             vault.privateKeysByEntryId = {};
         }
 
-        vault.privateKeysByEntryId[entryId] = inspected.privateKeyPem;
+        vault.privateKeysByEntryId[entryId] =
+            inspected.privateKeyPem;
     }
 
     return {
@@ -245,6 +269,11 @@ export function lockCryptoContainer(
         inspected = inspectPkcs12(file.bytes, filePath);
     } else if (lowerPath.endsWith(".jks")) {
         inspected = inspectJks(file.bytes, filePath);
+    } else if (
+        lowerPath.endsWith(".gpg") ||
+        lowerPath.endsWith(".pgp")
+    ) {
+        inspected = inspectGpg(file.bytes, filePath);
     } else {
         return {
             ok: false,
@@ -296,6 +325,15 @@ function inspectCryptoFile(
 
     if (lowerPath.endsWith(".jks")) {
         return inspectJks(bytes, filePath);
+    }
+
+    if (
+        lowerPath.endsWith(".gpg") ||
+        lowerPath.endsWith(".pgp") ||
+        lowerPath.endsWith(".asc") ||
+        lowerPath.endsWith(".sig")
+    ) {
+        return inspectGpg(bytes, filePath);
     }
 
     return inspectPemCryptoFile(

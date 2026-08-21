@@ -284,17 +284,29 @@ export function renderVault(
                 </div>
             </div>
         </div>
-        <div class="modal" id="crypto-unlock-modal" style="width:360px;">
-            <div class="modal-title">Unlock Crypto Container</div>
+        <div
+            class="modal"
+            id="crypto-unlock-modal"
+            style="width:420px;"
+        >
+            <div
+                class="modal-title"
+                id="crypto-unlock-title"
+            >
+                Unlock Crypto Container
+            </div>
 
             <div class="modal-body">
                 <label>
-                    Container password
+                    <span id="crypto-unlock-password-label">
+                        Container password
+                    </span>
 
                     <div class="unlock-password-field">
                         <input
                             type="password"
                             id="crypto-unlock-password"
+                            autocomplete="off"
                         />
 
                         <span
@@ -305,6 +317,32 @@ export function renderVault(
                         </span>
                     </div>
                 </label>
+
+                <div
+                    id="crypto-unlock-key-row"
+                    style="display:none;"
+                >
+                    <label>
+                        OpenPGP private key
+
+                        <div class="row">
+                            <input
+                                type="text"
+                                id="crypto-unlock-key-path"
+                                placeholder="Select private-key.asc"
+                                readonly
+                            />
+
+                            <button
+                                type="button"
+                                class="btn"
+                                id="crypto-unlock-key-browse"
+                            >
+                                Browse
+                            </button>
+                        </div>
+                    </label>
+                </div>
 
                 <div
                     class="empty"

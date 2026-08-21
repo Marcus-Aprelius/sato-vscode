@@ -12,134 +12,36 @@ Open, browse, edit and manage KeePass `.kdbx` Database (DB), Password Safe `.psa
 
 ---
 
-[![Release](https://img.shields.io/github/v/release/Marcus-Aprelius/sato-vscode)](https://github.com/Marcus-Aprelius/sato-vscode/releases)
-[![License MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![VS Code Marketplace](https://img.shields.io/badge/VS%20Code-Marketplace-007ACC?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=MarcusApreliusAntoninus.sato-vscode-ext)
-[![GitHub](https://img.shields.io/badge/GitHub-181717?logo=github&logoColor=white)](https://github.com/Marcus-Aprelius/sato-vscode)
-![Discord: Marcus.Aprelius.Antoninus](https://img.shields.io/badge/Discord-Marcus.Aprelius.Antoninus-5865F2?logo=discord&logoColor=white)
-
-![KDBX](https://img.shields.io/badge/.kdbx-support-4CAF50)
-![PSafe3](https://img.shields.io/badge/.psafe3-support-4CAF50)
-![IBAK](https://img.shields.io/badge/.ibak-support-4CAF50)
-![CRT](https://img.shields.io/badge/.crt-support-2196F3)
-![PEM](https://img.shields.io/badge/.pem-support-2196F3)
-![CSR](https://img.shields.io/badge/.csr-support-2196F3)
-![KEY](https://img.shields.io/badge/.key-support-2196F3)
-![P12](https://img.shields.io/badge/.p12-support-2196F3)
-![PFX](https://img.shields.io/badge/.pfx-support-2196F3)
-![JKS](https://img.shields.io/badge/.jks-support-2196F3)
+![KDBX](https://img.shields.io/badge/.kdbx-✓-4CAF50)
+![PSafe3](https://img.shields.io/badge/.psafe3-✓-4CAF50)
+![IBAK](https://img.shields.io/badge/.ibak-✓-4CAF50)
+![CRT](https://img.shields.io/badge/.crt-✓-2196F3)
+![PEM](https://img.shields.io/badge/.pem-✓-2196F3)
+![CSR](https://img.shields.io/badge/.csr-✓-2196F3)
+![KEY](https://img.shields.io/badge/.key-✓-2196F3)
+![P12](https://img.shields.io/badge/.p12-✓-F05032)
+![PFX](https://img.shields.io/badge/.pfx-✓-F05032)
+![JKS](https://img.shields.io/badge/.jks-✓-F05032)
+![GPG](https://img.shields.io/badge/.gpg-✓-8A2BE2)
+![GPG](https://img.shields.io/badge/.pgp-✓-8A2BE2)
+![ASC](https://img.shields.io/badge/.asg-✓-8A2BE2)
+![SIG](https://img.shields.io/badge/.sig-✓-8A2BE2)
 
 ---
 
 ## Security
 
-- The master password is only held in memory while the editor tab is open
-- KeePass `.kdbx` files are re-encrypted with the same credentials on every save
-- Password Safe `.psafe3` and `.ibak` files are saved using the Password Safe file format
-- Clipboard auto-clear can be configured in extension settings
-- Auto-lock can be configured in extension settings
-- Nothing leaves the extension host. No cloud services, no telemetry
-- Password Safe notes are currently displayed, but writing notes back to `.psafe3` is limited by the current password-safe npm package API
-- Empty Password Safe folders may be shown during the current session. To persist a new folder reliably, create an entry inside that folder
-- `.ibak` files are Password Safe backup files. They can be opened with the same master password as the original `.psafe3` database. Editing them is technically supported, but it is recommended to save or restore them intentionally
-
----
-
-## Supported Formats
-
-| Format    | Status                                       |
-|-----------|----------------------------------------------|
-| `.kdbx`   | Read and write                               |
-| `.psafe3` | Read and write                               |
-| `.ibak`   | Read and write backup file                   |
-| `.crt`    | View certificate details                     |
-| `.pem`    | View certificate, CSR or private key details |
-| `.csr`    | View certificate signing request details     |
-| `.key`    | View private key metadata                    |
-| `.p12`    | View and unlock PKCS#12 container            |
-| `.pfx`    | View and unlock PKCS#12 container            |
-| `.jks`    | View and unlock Java KeyStore                |
-
----
-
-## Features
-
-- **Vault viewer:**
-  - Three-pane layout: groups tree, entry list, entry details
-  - Works directly inside VS Code custom editor
-   
-- **KeePass KDBX support:**
-  - Open KDBX 3 and KDBX 4 vaults
-  - Create, edit, duplicate and delete entries
-  - Create, rename and delete groups
-  - Save changes back to the `.kdbx` file
- 
-- **Password Safe support:**
-  - Open `.psafe3` databases and `.ibak` intermediate backup files
-  - Create, edit, duplicate and delete entries
-  - Create, rename and delete groups
-  - Save changes back to the Password Safe file
-
-- **Crypto file viewer:**
-  - View `.crt`, `.csr`, `.key` and `.pem` files
-  - View `.p12`, `.pfx` and `.jks` containers
-  - Unlock and lock crypto containers
-  - Show certificate subject, issuer, validity, fingerprints and public key info
-  - Show CSR subject, public key algorithm, key size and signature algorithm
-  - Show private key metadata while keeping raw private key content hidden by default
-
-- **Actions:**
-  - **Entry actions:**
-    - Show and hide password
-    - Copy username, password, URL, notes
-    - Open URL with the **Go** button
-
-  - **Crypto actions:**
-    - Show and hide primary key
-    - Show and hide empty values
-    - Lock and unlock crypto containers
-    - Copy summary, file path, fingerprints and hashes
-
-- **Main menu:**
-  - `File`: open files, find crypto files in directory, reload from disk, show file or database info
-  - `Entry`: add, edit, duplicate and delete entries
-  - `Folder`: add, rename and delete folders
-  - `Tools`: lock or unlock database, lock or unlock container, password generator
-  - `View`: show empty values, show primary key, show status bar
-  - `Help`: home page, check update, about
-
-- **Password generator**
-  - Integration with the entry editor
-  - Configurable password length, uppercase, lowercase, digits and symbols
-  - Strength indicator
-  - One-click copy
-
-- **Search**
-  - Search by title, username, URL and notes
-  - Search crypto file fields such as subject, issuer, fingerprint, file path and summary
-  - Debounced input for smoother typing
-
-- **Statistics bar**
-  - Show information about Groups and entries
-  - Crypto file type and selected metadata
-  - Duplicate passwords or empty groups
-  - Weak or expired passwords
- 
-- **Session controls**
-  - Reload from disk
-  - Lock and Unlock database
-  - Auto-lock after inactivity
-  - Clipboard auto-clear after copying secrets
-
-- **Update check**
-  - Check for the latest SATO release from the Help menu
-  - Shows whether SATO is up to date or a new version is available
+- Passwords and decrypted data are held in memory only
+- Vaults are re-encrypted on save
+- OpenPGP keys use a temporary GPG directory
+- Clipboard auto-clear and auto-lock are configurable
+- No cloud services or telemetry
 
 ---
 
 ## Usage
 
-1. Open any supported file: `.kdbx`, `.psafe3`, `.ibak`, `.crt`, `.csr`, `.key`, `.pem`, `.p12`, `.pfx`, `.jks`.
+1. Open any supported file.
 
 2. For vault files, enter the master password.
 
@@ -147,13 +49,64 @@ Open, browse, edit and manage KeePass `.kdbx` Database (DB), Password Safe `.psa
 
 4. Use the toolbar or right-click context menus to manage groups, entries and crypto file actions.
 
-4. Use `Tools` → `Lock Database` to lock a password vault.
+5. Use `Tools` → `Lock Database` to lock a password vault.
 
-5. Also, ommands from Command Palette `Ctrl/Cmd + Shift + P`:
+6. Also, ommands from Command Palette `Ctrl/Cmd + Shift + P`:
 
   - `SATO: Open Password Vault`
   - `SATO: Lock Vault`
   - `SATO: Reload Vault`
+
+---
+
+## Supported Formats
+
+Empty Password Safe folders require an entry to persist. 
+
+| Format    | Required tool       | Status                                         |
+|-----------|---------------------|------------------------------------------------|
+| `.kdbx`   | -                   | Read and write                                 |
+| `.psafe3` | -                   | Read and write (writing notes is limited)      |
+| `.ibak`   | -                   | Read and write backup file (edit with caution) |
+| `.crt`    | `OpenSSL`           | View certificate details                       |
+| `.pem`    | `OpenSSL`           | View certificate, CSR or private key details   |
+| `.csr`    | `OpenSSL`           | View certificate signing request details       |
+| `.key`    | `OpenSSL`           | View private key metadata                      |
+| `.p12`    | `OpenSSL`/`keytool` | View and unlock PKCS#12 container              |
+| `.pfx`    | `OpenSSL`/`keytool` | View and unlock PKCS#12 container              |
+| `.jks`    | `keytool`           | View and unlock Java KeyStore                  |
+| `.gpg`    | `GPG`               | View and decrypt OpenPGP messages              |
+| `.pgp`    | `GPG`               | View and decrypt OpenPGP messages              |
+| `.asc`    | `GPG`               | View OpenPGP public and private keys           |
+| `.sig`    | `GPG`               | View OpenPGP signature details                 |
+
+
+## External Tools Installation
+
+| OS                  | Installation / Commands                                                       |
+|---------------------|-------------------------------------------------------------------------------|
+| `Debian` / `Ubuntu` | `sudo apt update`<br>`sudo apt install -y openssl gnupg default-jre-headless` |
+| `Fedora` / `RHEL`   | `sudo dnf install -y openssl gnupg2 java-latest-openjdk-headless`             |
+| `Arch Linux`        | `sudo pacman -S openssl gnupg jre-openjdk-headless`                           |
+| `Alpine Linux`      | `sudo apk add openssl gnupg openjdk17-jre-headless`                           |
+| `macOS`             | `brew install openssl gnupg openjdk`                                          |
+| `Windows`           | `OpenSSL for Windows`<br>`Gpg4win`<br>`OpenJDK or another Java Runtime`       |
+| `Ensure`            | Ensure openssl, gpg, and keytool are available in PATH.                       |
+| `Verify`            | `openssl`<br>`gpg --version`<br>`keytool -help` version`                      |
+
+---
+
+## Features
+
+| Feature                | Details |
+|------------------------|---------|
+| **Vault management**   | Three-pane viewer for groups, entries, and details<br>Read and write `.kdbx`, `.psafe3`, and `.ibak` vaults<br>Create, edit, duplicate, and delete entries<br>Create, rename, and delete groups |
+| **Crypto file viewer** | Inspect `.crt`, `.pem`, `.csr`, `.key`, `.p12`, `.pfx`, and `.jks`<br>Inspect `.gpg`, `.pgp`, `.asc`, and `.sig`<br>Unlock crypto containers and decrypt OpenPGP messages<br>View metadata, fingerprints, hashes, and decrypted content |
+| **Quick actions**      | Show, hide, and copy passwords or private keys<br>Copy usernames, URLs, notes, paths, and fingerprints<br>Open URLs directly from entry details<br>Show or hide empty values |
+| **Search**             | Search vault entries and crypto metadata<br>Search titles, usernames, URLs, notes, subjects, issuers, paths, and fingerprints |
+| **Password generator** | Configurable length and character sets<br>Password strength indicator<br>Entry editor integration and one-click copy |
+| **Security controls**  | Lock and reload vaults<br>Lock containers and hide decrypted content<br>Configurable auto-lock and clipboard auto-clear<br>Checks for required external tools |
+| **Interface**          | File, Entry, Folder, Tools, View, and Help menus<br>File and database information<br>Status bar with vault statistics or crypto metadata<br>Update check from the Help menu |
 
 ---
 
@@ -171,35 +124,29 @@ Open, browse, edit and manage KeePass `.kdbx` Database (DB), Password Safe `.psa
 ---
 
 ## Development
+
 Open folder `.devcontainer` in VSCode and use commands:
-* compile TypeScript to dist/
-  ```bash
-  npm install
-  ```
 
-* run project build
-  ```bash
-  npm run build
-  ```
-
-* build file `sato-vscode-<version>.vsix`
-  ```bash
-  npm run package
-  ```
-
-* install generated `.vsix` file:
-  ```bash
-  code --install-extension files/sato-vscode-ext-<version>.vsix --force
-  ```
+| Action                            | Command                                                                 |
+|-----------------------------------|-------------------------------------------------------------------------|
+| 1. Install dependencies           | `npm install`                                                           |
+| 2. Build the project              | `npm run build`                                                         |
+| 3. Package `.vsix` extension      | `npm run package`                                                       |
+| 4. Install generated `.vsix` file | `code --install-extension files/sato-vscode-ext-<version>.vsix --force` |
 
 ---
 
 ## Repository
+**VS Code extension**: https://github.com/Marcus-Aprelius/sato-vscode
 
-**VS Code extension**: [https://github.com/Marcus-Aprelius/sato-vscode](https://github.com/Marcus-Aprelius/sato-vscode)
+**SATO command line tool**: https://github.com/Marcus-Aprelius/sato
 
-**SATO command line tool**: [https://github.com/Marcus-Aprelius/sato](https://github.com/Marcus-Aprelius/sato)
+---
+
+[MIT LICENSE](LICENSE)
 
 ---
 
 © 2026 [Marcus-Aprelius](https://github.com/Marcus-Aprelius/sato-vscode)
+
+Discord: Marcus.Aprelius.Antoninus
