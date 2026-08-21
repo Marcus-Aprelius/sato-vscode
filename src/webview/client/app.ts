@@ -1,15 +1,15 @@
 import { reindex } from "./state";
-import { setupColumnResize } from "./resize";
-import { setupGroupsPaneContextMenu } from "./contextMenu";
 import { renderAll } from "./render";
-import { updateMainActionButton, updateToolbarForMode } from "./buttons";
-import { bindToolbarActions } from "./toolbar";
+import { bindSearch } from "./search";
 import { bindModalActions } from "./modals";
-import { bindGeneratorActions } from "./generator";
+import { setupColumnResize } from "./resize";
+import { bindToolbarActions } from "./toolbar";
 import { bindSettingsActions } from "./settings";
 import { bindInboundMessages } from "./messages";
-import { bindSearch } from "./search";
+import { bindGeneratorActions } from "./generator";
 import { bindDocumentEvents } from "./documentEvents";
+import { setupGroupsPaneContextMenu } from "./contextMenu";
+import { updateMainActionButton, updateToolbarForMode } from "./buttons";
 
 export function initializeClient(): void {
     reindex();

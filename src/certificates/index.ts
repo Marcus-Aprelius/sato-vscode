@@ -21,7 +21,7 @@ export type {
     CryptoInspection
 } from "./types";
 
-const EXTENSIONS = [".crt", ".pem", ".csr", ".key", ".pfx", ".p12", ".jks", ".gpg", ".pgp", ".asc", ".sig"];
+const EXTENSIONS = [".crt", ".cer", ".der", ".pem", ".csr", ".key", ".pfx", ".p12", ".jks", ".jceks", ".gpg", ".pgp", ".asc", ".sig"];
 
 export function isCertificateLikeUri(uri: vscode.Uri): boolean {
     const filePath = uri.fsPath.toLowerCase();
@@ -179,7 +179,10 @@ export function unlockCryptoContainer(
             filePath,
             password
         );
-    } else if (lowerPath.endsWith(".jks")) {
+    } else if (
+        lowerPath.endsWith(".jks") ||
+        lowerPath.endsWith(".jceks")
+    ) {
         inspected = inspectJksUnlocked(
             file.bytes,
             filePath,
@@ -267,8 +270,14 @@ export function lockCryptoContainer(
 
     if (lowerPath.endsWith(".p12") || lowerPath.endsWith(".pfx")) {
         inspected = inspectPkcs12(file.bytes, filePath);
-    } else if (lowerPath.endsWith(".jks")) {
-        inspected = inspectJks(file.bytes, filePath);
+    } else if (
+        lowerPath.endsWith(".jks") ||
+        lowerPath.endsWith(".jceks")
+    ) {
+        inspected = inspectJks(
+            file.bytes,
+            filePath
+        );
     } else if (
         lowerPath.endsWith(".gpg") ||
         lowerPath.endsWith(".pgp")
@@ -323,7 +332,10 @@ function inspectCryptoFile(
         return inspectPkcs12(bytes, filePath);
     }
 
-    if (lowerPath.endsWith(".jks")) {
+    if (
+        lowerPath.endsWith(".jks") ||
+        lowerPath.endsWith(".jceks")
+    ) {
         return inspectJks(bytes, filePath);
     }
 

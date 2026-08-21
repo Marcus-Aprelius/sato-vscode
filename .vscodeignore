@@ -1,13 +1,18 @@
 .vscode/**
 .devcontainer/**
 
-
 src/**
 test/**
 tests/**
 coverage/**
 files/**
 scripts/**
+tools/**
+todo/**
+
+esbuild.webview.cjs
+tsconfig.json
+package-lock.json
 
 **/*.ts
 **/*.map
@@ -16,27 +21,29 @@ scripts/**
 tsconfig.json
 package-lock.json
 
-tools/
-todo/
-
-files/*
 .env
 .env.*
-tests/
-tests/*
+/files/
+/files/**
+/tests/
+/tests/**
 
 .git/**
 .github/**
 .gitignore
 
 node_modules/**/.vscode/**
-node_modules/**/src/**
+node_modules/**/.github/**
 node_modules/**/test/**
 node_modules/**/tests/**
+node_modules/**/coverage/**
+node_modules/**/docs/**
+node_modules/**/examples/**
 node_modules/**/*.ts
 node_modules/**/*.map
 node_modules/**/tsconfig.json
 node_modules/**/rollup.config.*
+node_modules/**/webpack.config.*
 node_modules/**/jest.config.*
 node_modules/**/biome.json
 node_modules/**/.eslintrc*
@@ -48,3 +55,44 @@ node_modules/**/readme.md
 node_modules/**/release-notes.md
 
 node_modules/@vscode/codicons/**
+
+# Compiled webview modules duplicated by webviewClient.js
+dist/webview/client/**
+
+# Documentation and metadata
+node_modules/**/VAULT_FORMAT.md
+node_modules/**/ENTRY_FACADES.md
+node_modules/**/CONTRIBUTING.md
+node_modules/**/GOVERNANCE.md
+node_modules/**/HISTORY.md
+node_modules/**/History.md
+node_modules/**/SIGNED.md
+node_modules/**/TODO.md
+node_modules/**/LOCK_CONTACT.md
+node_modules/**/bower.json
+node_modules/**/component.json
+node_modules/**/Makefile
+node_modules/**/.npmignore
+node_modules/**/.nycrc
+node_modules/**/.jshintrc
+node_modules/**/.jscsrc
+node_modules/**/.editorconfig
+node_modules/**/.history/**
+
+# Clearly unused source and development assets
+node_modules/hash-wasm/src/**
+node_modules/triplesec/src/**
+node_modules/triplesec/ref/**
+node_modules/triplesec/browser/**
+node_modules/node-uuid/benchmark/**
+node_modules/binary/perf/**
+node_modules/binary/example/**
+node_modules/asynckit/bench.js
+node_modules/fastest-levenshtein/bench.js
+node_modules/fastest-levenshtein/test.js
+node_modules/md5/test.js
+node_modules/process/test.js
+node_modules/isarray/test.js
+node_modules/stream-each/test.js
+node_modules/stream-shift/test.js
+node_modules/requires-port/test.js

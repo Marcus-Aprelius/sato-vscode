@@ -1,5 +1,6 @@
-import type { ClientEntry, ClientInitialState } from "./types";
 import { readInitialState } from "./globals";
+
+import type { ClientEntry, ClientInitialState } from "./types";
 
 const initialState = readInitialState();
 
@@ -28,6 +29,14 @@ export const parentGroupOf = new Map<string, string>();
 
 export function isCryptoFileView(): boolean {
     return !!(app.state.tree && app.state.tree.name === "Crypto Files");
+}
+
+export function isReadOnlyVault(): boolean { 
+    return app.state.readOnlyVault === true;
+}
+
+export function vaultFormat(): string {
+    return app.state.vaultFormat || "";
 }
 
 export function getSelectedEntry(): ClientEntry | undefined {

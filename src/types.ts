@@ -1,16 +1,18 @@
+
 import type * as vscode from "vscode";
 import type * as kdbxweb from "kdbxweb";
-
 import type { Settings } from "./webview";
 import type { PsafeVault } from "./psafe";
 import type { EntryFields } from "./vault";
 import type { CertificateVault } from "./certificates";
+import type { ImportedVault } from "./importedVault";
 
 export interface VaultDocument extends vscode.CustomDocument {
     db?: kdbxweb.Kdbx;
     credentials?: kdbxweb.Credentials;
     psafe?: PsafeVault;
     certificate?: CertificateVault;
+    importedVault?: ImportedVault;
 }
 
 export type FromWebview =
@@ -25,11 +27,11 @@ export type FromWebview =
           password: string;
       }
     | {
-          type: "selectOpenPgpPrivateKey";
+          type: "prepareCryptoUnlock";
           entryId: string;
       }
     | {
-          type: "prepareCryptoUnlock";
+          type: "selectOpenPgpPrivateKey";
           entryId: string;
       }
     | {

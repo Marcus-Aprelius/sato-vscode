@@ -1,3 +1,4 @@
+import { runWithTempFile } from "../cli";
 import type { CryptoInspection } from "../types";
 
 import {
@@ -8,10 +9,6 @@ import {
     sha256Hex,
     uniqueValues
 } from "../format";
-
-import {
-    runWithTempFile
-} from "../cli";
 
 export function inspectJks(
     bytes: Uint8Array,
@@ -42,6 +39,8 @@ export function inspectJksUnlocked(
         (tmpFile) => [
             "-list",
             "-v",
+            "-storetype",
+            keyStoreType(filePath),
             "-keystore",
             tmpFile,
             "-storepass",
@@ -52,7 +51,9 @@ export function inspectJksUnlocked(
     if (!output.ok) {
         return {
             values: {
-                Type: "Java KeyStore",
+                Type: keyStoreType(filePath) === "JCEKS"
+                    ? "Java Cryptography Extension KeyStore"
+                    : "Java KeyStore",
                 Status: "Unlock failed",
                 Summary: "Wrong password or unsupported Java KeyStore.",
                 "File path": filePath,
@@ -129,7 +130,9 @@ export function inspectJksUnlocked(
 
     return {
         values: {
-            Type: "Java KeyStore",
+            Type: keyStoreType(filePath) === "JCEKS"
+                ? "Java Cryptography Extension KeyStore"
+                : "Java KeyStore",
             Status: "Unlocked",
             "Keystore type": extractOpenSslValue(
                 text,
@@ -162,4 +165,12 @@ export function inspectJksUnlocked(
                     : "Java KeyStore unlocked."
         }
     };
+}
+
+function keyStoreType(filePath: string): string {
+    return filePath
+        .toLowerCase()
+        .endsWith(".jceks")
+        ? "JCEKS"
+        : "JKS";
 }

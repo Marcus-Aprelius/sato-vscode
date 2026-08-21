@@ -1,7 +1,7 @@
 import { renderTree } from "./tree";
+import { renderStatus } from "./status";
 import { renderEntries } from "./entries";
 import { renderDetails } from "./details";
-import { renderStatus } from "./status";
 
 export function renderAll(): void {
     renderTree();

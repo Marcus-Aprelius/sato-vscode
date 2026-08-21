@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as kdbxweb from "kdbxweb";
+
 import type { VaultAdapterRuntime } from "./index";
 import type { FromWebview, VaultDocument } from "../types";
 

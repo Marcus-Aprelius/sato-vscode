@@ -3,18 +3,29 @@ import { vscode } from "../globals";
 import { openModal } from "../modals";
 import type { MenuItem } from "../types";
 import { openDropdown } from "../contextMenu";
-import { app, isCryptoFileView } from "../state";
+
+import {
+    app,
+    isCryptoFileView,
+    isReadOnlyVault,
+    vaultFormat
+} from "../state";
 
 export function openFileMenu(button: HTMLElement): void {
     const crypto = isCryptoFileView();
+    const readOnly = isReadOnlyVault();
+    const format = vaultFormat();
 
     const items: MenuItem[] = [
         {
             label: "Open",
             title: "Open vault or crypto file",
-            action: () => vscode.postMessage({
-                type: "openDb"
-            })
+
+            action: () => {
+                vscode.postMessage({
+                    type: "openDb"
+                });
+            }
         },
 
         { sep: true },
@@ -25,14 +36,22 @@ export function openFileMenu(button: HTMLElement): void {
                 ? "Detect crypto files in directory"
                 : "Available only in crypto mode",
             disabled: !crypto,
-            action: () => vscode.postMessage({
-                type: "openDirectory"
-            })
+            action: () => {
+                if (!crypto) {
+                    return;
+                }
+
+                vscode.postMessage({
+                    type: "openDirectory"
+                });
+            }
         },
 
         {
             label: "Reload from Disk",
-            title: "Reload current file from disk",
+            title: readOnly
+                ? "Reload read-only vault from disk"
+                : "Reload current file from disk",
             action: () => {
                 vscode.postMessage({
                     type: "reload"
@@ -44,7 +63,9 @@ export function openFileMenu(button: HTMLElement): void {
             label: "Show Info",
             title: crypto
                 ? "Show current crypto file information"
-                : "Show current database information",
+                : readOnly
+                    ? `Show ${format || "vault"} information`
+                    : "Show current database information",
             disabled: app.vaultLocked,
             action: () => {
                 if (app.vaultLocked) {
@@ -56,7 +77,9 @@ export function openFileMenu(button: HTMLElement): void {
 
                 byId("dbinfo-title").textContent = crypto
                     ? "File Info"
-                    : "Database Info";
+                    : readOnly
+                        ? "Vault Info"
+                        : "Database Info";
 
                 openModal("dbinfo-modal");
 

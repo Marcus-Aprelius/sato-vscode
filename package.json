@@ -1,9 +1,9 @@
 {
   "name": "sato-vscode-ext",
   "displayName": "SATO Secrets",
-  "description": "Browse KeePass, Password Safe and crypto files (.crt, .key, .csr, .p12, .pfx, .jks) inside VS Code.",
+  "description": "Browse password vaults and crypto files directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
@@ -25,16 +25,24 @@
     "kdbx",
     "psafe3",
     "password-safe",
+    "1password",
+    "1pif",
+    "buttercup",
+    "bcup",
     "secrets",
     "password",
     "vault",
     "certificate",
+    "crt",
+    "cer",
+    "der",
     "csr",
     "private-key",
     "pkcs12",
     "p12",
     "pfx",
     "jks",
+    "jceks",
     "openpgp",
     "gpg",
     "pgp",
@@ -47,20 +55,63 @@
         "viewType": "sato.kdbxViewer",
         "displayName": "SATO Vault Viewer",
         "selector": [
-          { "filenamePattern": "*.kdbx" },
-          { "filenamePattern": "*.psafe3" },
-          { "filenamePattern": "*.ibak" },
-          { "filenamePattern": "*.crt" },
-          { "filenamePattern": "*.pem" },
-          { "filenamePattern": "*.csr" },
-          { "filenamePattern": "*.key" },
-          { "filenamePattern": "*.p12" },
-          { "filenamePattern": "*.pfx" },
-          { "filenamePattern": "*.jks" },
-          { "filenamePattern": "*.gpg" },
-          { "filenamePattern": "*.pgp" },
-          { "filenamePattern": "*.asc" },
-          { "filenamePattern": "*.sig" }
+          {
+            "filenamePattern": "*.kdbx"
+          },
+          {
+            "filenamePattern": "*.psafe3"
+          },
+          {
+            "filenamePattern": "*.ibak"
+          },
+          {
+            "filenamePattern": "*.1pif"
+          },
+          {
+            "filenamePattern": "*.bcup"
+          },
+          {
+            "filenamePattern": "*.crt"
+          },
+          {
+            "filenamePattern": "*.cer"
+          },
+          {
+            "filenamePattern": "*.der"
+          },
+          {
+            "filenamePattern": "*.pem"
+          },
+          {
+            "filenamePattern": "*.csr"
+          },
+          {
+            "filenamePattern": "*.key"
+          },
+          {
+            "filenamePattern": "*.p12"
+          },
+          {
+            "filenamePattern": "*.pfx"
+          },
+          {
+            "filenamePattern": "*.jks"
+          },
+          {
+          "filenamePattern": "*.jceks"
+          },
+          {
+            "filenamePattern": "*.gpg"
+          },
+          {
+            "filenamePattern": "*.pgp"
+          },
+          {
+            "filenamePattern": "*.asc"
+          },
+          {
+            "filenamePattern": "*.sig"
+          }
         ],
         "priority": "default"
       }
@@ -142,11 +193,14 @@
   },
   "dependencies": {
     "@vscode/codicons": "^0.0.46-24",
+    "buttercup": "^7.7.1",
     "hash-wasm": "^4.12.0",
     "kdbxweb": "^2.1.1",
+    "node-fetch": "^3.3.2",
     "password-safe": "^0.0.3"
   },
   "overrides": {
-    "@xmldom/xmldom": "0.8.14"
+    "@xmldom/xmldom": "0.8.14",
+    "uuid": "11.1.1"
   }
 }

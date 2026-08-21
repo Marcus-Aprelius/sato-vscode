@@ -1,29 +1,38 @@
 import { vscode } from "../globals";
-import type { MenuItem } from "../types";
 import { openModal } from "../modals";
+import type { MenuItem } from "../types";
 import { openDropdown } from "../contextMenu";
 
-import { app, getSelectedEntry, isCryptoFileView } from "../state";
-
+import {
+    app,
+    getSelectedEntry,
+    isCryptoFileView,
+    isReadOnlyVault
+} from "../state";
 
 export function openToolsMenu(button: HTMLElement): void {
     const crypto = isCryptoFileView();
+    const readOnly = isReadOnlyVault();
     const entry = getSelectedEntry();
 
     const cryptoContainer = isCryptoContainer(entry);
-    const cryptoContainerUnlocked =
-        isCryptoContainerUnlocked(entry);
+    const cryptoContainerUnlocked = isCryptoContainerUnlocked(entry);
     const openPgpMessage = isOpenPgpMessage(entry);
 
+    const databaseActionUnavailable = crypto || readOnly;
     const items: MenuItem[] = [
         {
             label: app.vaultLocked
                 ? "Unlock Database"
                 : "Lock Database",
 
-            title: app.vaultLocked
-                ? "Unlock current database"
-                : "Lock current database",
+            title: crypto
+                ? "Not available for crypto files"
+                : readOnly
+                    ? "Not available for read-only vaults"
+                    : app.vaultLocked
+                        ? "Unlock current database"
+                        : "Lock current database",
 
             icon: app.vaultLocked
                 ? "codicon-unlock"
@@ -35,10 +44,10 @@ export function openToolsMenu(button: HTMLElement): void {
                 ? "locked"
                 : "unlocked",
 
-            disabled: crypto,
+            disabled: databaseActionUnavailable,
 
             action: () => {
-                if (crypto) {
+                if (databaseActionUnavailable) {
                     return;
                 }
 
@@ -121,7 +130,9 @@ export function openToolsMenu(button: HTMLElement): void {
 
         {
             label: "Password Generator",
-            title: "Open password generator",
+            title: app.vaultLocked
+                ? "Unlock the database first"
+                : "Open password generator",
             disabled: app.vaultLocked,
 
             action: () => {

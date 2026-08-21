@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+import { tryInspectCsrWithOpenSsl } from "../cli";
 
 import type { CryptoInspection } from "../types";
 
@@ -8,10 +9,6 @@ import {
     normalizeSignatureAlgorithm,
     sha256Hex
 } from "../format";
-
-import {
-    tryInspectCsrWithOpenSsl
-} from "../cli";
 
 export function inspectPemCryptoFile(
     text: string,
@@ -42,6 +39,16 @@ export function inspectPemCryptoFile(
         return inspectPrivateKey(text, bytes, filePath);
     }
 
+    if (isDerCertificatePath(filePath)) {
+        return {
+            values: inspectCertificate(
+                bytes,
+                bytes,
+                filePath
+            )
+        };
+    }
+
     return {
         values: {
             Type: "Unknown crypto file",
@@ -53,15 +60,23 @@ export function inspectPemCryptoFile(
 }
 
 export function inspectCertificate(
-    text: string,
+    certificateData: string | Uint8Array,
     bytes: Uint8Array,
     filePath: string
 ): Record<string, string> {
     try {
-        const cert = new crypto.X509Certificate(text);
+        const cert = new crypto.X509Certificate(
+            typeof certificateData === "string"
+                ? certificateData
+                : Buffer.from(certificateData)
+        );
 
         return {
             Type: "X.509 Certificate",
+            Encoding:
+                typeof certificateData === "string"
+                    ? "PEM"
+                    : "DER",
             Subject: cert.subject,
             Issuer: cert.issuer,
             "Serial number": cert.serialNumber,
@@ -74,6 +89,8 @@ export function inspectCertificate(
             "Fingerprint SHA-256": cert.fingerprint256,
             "Fingerprint SHA-1": cert.fingerprint,
             "File path": filePath,
+            "File size": `${bytes.length} bytes`,
+            "SHA-256": sha256Hex(bytes),
             Summary: [
                 cert.subject,
                 `Issued by: ${cert.issuer}`,
@@ -83,8 +100,12 @@ export function inspectCertificate(
     } catch {
         return {
             Type: "Certificate",
+            Encoding: isDerCertificatePath(filePath)
+                ? "DER"
+                : "PEM",
             Summary: "Certificate detected, but parsing failed.",
             "File path": filePath,
+            "File size": `${bytes.length} bytes`,
             "SHA-256": sha256Hex(bytes)
         };
     }
@@ -105,10 +126,7 @@ export function inspectPrivateKey(
         }) as Buffer;
 
         const details = key.asymmetricKeyDetails as
-            | {
-                  modulusLength?: number;
-                  namedCurve?: string;
-              }
+            | { modulusLength?: number; namedCurve?: string; }
             | undefined;
 
         return {
@@ -121,6 +139,9 @@ export function inspectPrivateKey(
                 Curve: details?.namedCurve || "",
                 "Public key SHA-256": sha256Hex(publicDer),
                 "File path": filePath,
+                "File size":
+                    `${bytes.length} bytes`,
+                "SHA-256": sha256Hex(bytes),
                 Summary: "Private key detected. Raw private key content is hidden."
             },
             privateKeyPem: text
@@ -131,6 +152,8 @@ export function inspectPrivateKey(
                 Type: "Private Key",
                 Summary: "Private key detected, but parsing failed. It may be encrypted or unsupported.",
                 "File path": filePath,
+                "File size":
+                    `${bytes.length} bytes`,
                 "SHA-256": sha256Hex(bytes)
             },
             privateKeyPem: text
@@ -155,6 +178,7 @@ export function inspectCsr(
             Type: "Certificate Signing Request",
             "PEM block": pemType,
             "File path": filePath,
+            "File size": `${bytes.length} bytes`,
             "SHA-256": hash,
             Summary: "CSR detected."
         };
@@ -208,7 +232,20 @@ export function inspectCsr(
         "Signature Algorithm": signatureAlgorithm,
         Attributes: attributes,
         "File path": filePath,
+        "File size": `${bytes.length} bytes`,
         "SHA-256": hash,
         Summary: summary || "CSR parsed successfully."
     };
+}
+
+function isDerCertificatePath(
+    filePath: string
+): boolean {
+    const lowerPath =
+        filePath.toLowerCase();
+
+    return (
+        lowerPath.endsWith(".der") ||
+        lowerPath.endsWith(".cer")
+    );
 }

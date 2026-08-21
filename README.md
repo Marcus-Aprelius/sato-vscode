@@ -6,6 +6,8 @@ Open, browse, edit and manage KeePass `.kdbx` Database (DB), Password Safe `.psa
 
 > **Status:** In development. Use in production environments at your own risk.
 
+> Bugs? Questions? Suggestions? Welcome to [GitHub](https://github.com/Marcus-Aprelius/sato-vscode/issues).
+
 ---
 
 <img src="assets/sato-vscode2.gif" alt="sato-vscode">
@@ -15,13 +17,21 @@ Open, browse, edit and manage KeePass `.kdbx` Database (DB), Password Safe `.psa
 ![KDBX](https://img.shields.io/badge/.kdbx-✓-4CAF50)
 ![PSafe3](https://img.shields.io/badge/.psafe3-✓-4CAF50)
 ![IBAK](https://img.shields.io/badge/.ibak-✓-4CAF50)
+![1PIF](https://img.shields.io/badge/.1pif-✓-4CAF50)
+![BCUP](https://img.shields.io/badge/.bcup-✓-4CAF50)
+
 ![CRT](https://img.shields.io/badge/.crt-✓-2196F3)
+![DER](https://img.shields.io/badge/.der-✓-2196F3)
+![CER](https://img.shields.io/badge/.cer-✓-2196F3)
 ![PEM](https://img.shields.io/badge/.pem-✓-2196F3)
 ![CSR](https://img.shields.io/badge/.csr-✓-2196F3)
 ![KEY](https://img.shields.io/badge/.key-✓-2196F3)
+
 ![P12](https://img.shields.io/badge/.p12-✓-F05032)
 ![PFX](https://img.shields.io/badge/.pfx-✓-F05032)
 ![JKS](https://img.shields.io/badge/.jks-✓-F05032)
+![JCEKS](https://img.shields.io/badge/.jceks-✓-F05032)
+
 ![GPG](https://img.shields.io/badge/.gpg-✓-8A2BE2)
 ![GPG](https://img.shields.io/badge/.pgp-✓-8A2BE2)
 ![ASC](https://img.shields.io/badge/.asg-✓-8A2BE2)
@@ -61,25 +71,31 @@ Open, browse, edit and manage KeePass `.kdbx` Database (DB), Password Safe `.psa
 
 ## Supported Formats
 
-Empty Password Safe folders require an entry to persist. 
-
-| Format    | Required tool       | Status                                         |
-|-----------|---------------------|------------------------------------------------|
-| `.kdbx`   | -                   | Read and write                                 |
-| `.psafe3` | -                   | Read and write (writing notes is limited)      |
-| `.ibak`   | -                   | Read and write backup file (edit with caution) |
-| `.crt`    | `OpenSSL`           | View certificate details                       |
-| `.pem`    | `OpenSSL`           | View certificate, CSR or private key details   |
-| `.csr`    | `OpenSSL`           | View certificate signing request details       |
-| `.key`    | `OpenSSL`           | View private key metadata                      |
-| `.p12`    | `OpenSSL`/`keytool` | View and unlock PKCS#12 container              |
-| `.pfx`    | `OpenSSL`/`keytool` | View and unlock PKCS#12 container              |
-| `.jks`    | `keytool`           | View and unlock Java KeyStore                  |
-| `.gpg`    | `GPG`               | View and decrypt OpenPGP messages              |
-| `.pgp`    | `GPG`               | View and decrypt OpenPGP messages              |
-| `.asc`    | `GPG`               | View OpenPGP public and private keys           |
-| `.sig`    | `GPG`               | View OpenPGP signature details                 |
-
+| Type        | Format    | Required tool | Status                                                   |
+|-------------|-----------|---------------|----------------------------------------------------------|
+| Vault       | `.kdbx`   | -             | Read and write                                           |
+| Vault       | `.psafe3` | -             | Read and write (writing notes is limited)                |
+| Vault       | `.ibak`   | -             | Read and write backup file (edit with caution)           |
+| Vault       | `.1pif`   | -             | Read-only                                                |
+| Vault       | `.bcup`   | -             | Read-only                                                |
+| Crypto file | `.crt`    | -             | View X.509 certificate details                           |
+| Crypto file | `.cer`    | -             | View X.509 certificate details                           |
+| Crypto file | `.der`    | -             | View DER-encoded X.509 certificate details               |
+| Crypto file | `.pem`    | -             | View certificate, CSR, or private key details            |
+| Crypto file | `.crt`    | -             | View X.509 certificate details                           |
+| Crypto file | `.cer`    | -             | View X.509 certificate details                           |
+| Crypto file | `.der`    | -             | View DER-encoded X.509 certificate details               |
+| Crypto file | `.pem`    | -             | View certificate, CSR, or private key details            |
+| Crypto file | `.key`    | -             | View private key metadata                                |
+| Crypto file | `.csr`    | `OpenSSL`     | View certificate signing request details                 |
+| Crypto file | `.p12`    | `OpenSSL`     | View and unlock PKCS#12 container                        |
+| Crypto file | `.pfx`    | `OpenSSL`     | View and unlock PKCS#12 container                        |
+| Crypto file | `.jks`    | `keytool`     | View and unlock Java KeyStore                            |
+| Crypto file | `.jceks`  | `keytool`     | View and unlock Java Cryptography Extension KeyStore     |
+| Crypto file | `.gpg`    | `GPG`         | View and decrypt OpenPGP messages                        |
+| Crypto file | `.pgp`    | `GPG`         | View and decrypt OpenPGP messages                        |
+| Crypto file | `.asc`    | `GPG`         | View OpenPGP public and private keys                     |
+| Crypto file | `.sig`    | `GPG`         | View OpenPGP signature details                           |
 
 ## External Tools Installation
 
@@ -100,8 +116,8 @@ Empty Password Safe folders require an entry to persist.
 
 | Feature                | Details |
 |------------------------|---------|
-| **Vault management**   | Three-pane viewer for groups, entries, and details<br>Read and write `.kdbx`, `.psafe3`, and `.ibak` vaults<br>Create, edit, duplicate, and delete entries<br>Create, rename, and delete groups |
-| **Crypto file viewer** | Inspect `.crt`, `.pem`, `.csr`, `.key`, `.p12`, `.pfx`, and `.jks`<br>Inspect `.gpg`, `.pgp`, `.asc`, and `.sig`<br>Unlock crypto containers and decrypt OpenPGP messages<br>View metadata, fingerprints, hashes, and decrypted content |
+| **Vault management**   | Three-pane viewer for groups, entries, and details<br>Read and write `.kdbx`, `.psafe3`, `.ibak`, `1pif` and `.bcup` vaults<br>Create, edit, duplicate, and delete entries<br>Create, rename, and delete groups |
+| **Crypto file viewer** | Inspect `.crt`, `.der`, `.cer`, `.pem`, `.csr` and `.key`<br>Inspect `.p12`, `.pfx`, `.jks` and `.jceks`<br>Inspect `.gpg`, `.pgp`, `.asc` and `.sig`<br>Unlock crypto containers and decrypt OpenPGP messages<br>View metadata, fingerprints, hashes, and decrypted content |
 | **Quick actions**      | Show, hide, and copy passwords or private keys<br>Copy usernames, URLs, notes, paths, and fingerprints<br>Open URLs directly from entry details<br>Show or hide empty values |
 | **Search**             | Search vault entries and crypto metadata<br>Search titles, usernames, URLs, notes, subjects, issuers, paths, and fingerprints |
 | **Password generator** | Configurable length and character sets<br>Password strength indicator<br>Entry editor integration and one-click copy |
@@ -149,4 +165,4 @@ Open folder `.devcontainer` in VSCode and use commands:
 
 © 2026 [Marcus-Aprelius](https://github.com/Marcus-Aprelius/sato-vscode)
 
-Discord: Marcus.Aprelius.Antoninus
+**Discord:** Marcus.Aprelius.Antoninus

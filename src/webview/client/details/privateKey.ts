@@ -1,4 +1,3 @@
-
 import { vscode } from "../globals";
 import { createCopyIconButton } from "../dom";
 

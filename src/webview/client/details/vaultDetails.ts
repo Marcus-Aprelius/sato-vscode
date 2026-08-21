@@ -1,9 +1,11 @@
-import type { ClientEntry } from "../types";
-import { createButton, createCopyIconButton } from "../dom";
+
 import { vscode } from "../globals";
-import { app } from "../state";
-import { openEntryModal } from "../modals";
 import { renderDetails } from "./index";
+import { openEntryModal } from "../modals";
+import { app, isReadOnlyVault } from "../state";
+import { createButton, createCopyIconButton } from "../dom";
+
+import type { ClientEntry } from "../types";
 
 import {
     countVaultEmptyValues,
@@ -51,7 +53,10 @@ export function renderVaultDetails(
     container.appendChild(emptyActions);
 
     renderVaultValuesTable(container, entry);
-    renderVaultActions(container, entry);
+
+    if (!isReadOnlyVault()) {
+        renderVaultActions(container, entry);
+    }
 }
 
 function renderVaultValuesTable(
@@ -62,9 +67,15 @@ function renderVaultValuesTable(
     const fields = getVaultDetailFields(entry);
 
     for (const field of fields) {
+        const previewValue =
+            getVaultFieldPreviewValue(
+                entry,
+                field
+            );
+
         if (
             !app.showVaultEmptyValues &&
-            !getVaultFieldPreviewValue(entry, field)
+            !previewValue
         ) {
             continue;
         }
@@ -87,7 +98,13 @@ function renderVaultValuesTable(
 
         const copy = createCopyIconButton("Copy");
 
+        copy.disabled = !previewValue;
+
         copy.addEventListener("click", () => {
+            if (!previewValue) {
+                return;
+            }
+
             vscode.postMessage({
                 type: "copySecret",
                 entryId: entry.id,
@@ -96,7 +113,6 @@ function renderVaultValuesTable(
         });
 
         value.appendChild(copy);
-
         tdValue.appendChild(value);
         tr.appendChild(tdLabel);
         tr.appendChild(tdValue);
@@ -122,8 +138,13 @@ function renderPasswordField(
     value.appendChild(input);
 
     const reveal = createButton("btn field-action-btn", "Show");
+    reveal.disabled = !entry.hasPassword;
 
     reveal.addEventListener("click", () => {
+        if (!entry.hasPassword) {
+            return;
+        }
+
         if (input.type === "password") {
             vscode.postMessage({
                 type: "revealSecret",
@@ -135,7 +156,7 @@ function renderPasswordField(
         }
 
         input.type = "password";
-        input.value = entry.hasPassword ? "••••••••" : "";
+        input.value = "••••••••";
         reveal.textContent = "Show";
     });
 
@@ -158,6 +179,7 @@ function renderPlainField(
     const fieldText = getVaultFieldPreviewValue(entry, field);
 
     const span = document.createElement("span");
+
     span.textContent = fieldText || "(empty)";
 
     value.appendChild(span);
@@ -190,35 +212,34 @@ function renderVaultActions(
     const actions = document.createElement("div");
     actions.className = "actions";
 
-    const editBtn = createButton("btn primary", "Edit");
+    const editButton = createButton("btn primary", "Edit");
 
-    editBtn.addEventListener("click", () => {
+    editButton.addEventListener("click", () => {
         openEntryModal(entry.id);
     });
 
-    actions.appendChild(editBtn);
+    actions.appendChild(editButton);
 
-    const dupBtn = createButton("btn", "Duplicate");
+    const duplicateButton = createButton("btn", "Duplicate");
 
-    dupBtn.addEventListener("click", () => {
+    duplicateButton.addEventListener("click", () => {
         vscode.postMessage({
             type: "duplicateEntry",
             entryId: entry.id
         });
     });
 
-    actions.appendChild(dupBtn);
+    actions.appendChild(duplicateButton);
 
-    const delBtn = createButton("btn danger", "Delete");
+    const deleteButton = createButton("btn danger", "Delete");
 
-    delBtn.addEventListener("click", () => {
+    deleteButton.addEventListener("click", () => {
         vscode.postMessage({
             type: "deleteEntry",
             entryId: entry.id
         });
     });
 
-    actions.appendChild(delBtn);
-
+    actions.appendChild(deleteButton);
     container.appendChild(actions);
 }

@@ -1,5 +1,20 @@
 # Change Log
 
+# 0.1.2
+
+## Changed:
+  * code rafactored
+  * `README.md` file
+  * `.vscodeignore` file
+
+## Added:
+  * Read-only `.1pif` vault viewer
+  * Read-only `.bcup` Buttercup vault viewer
+  * `.jceks` Java Cryptography Extension KeyStore support
+  * `.crt`, `.cer` and `.der` files support
+
+---
+
 # 0.1.1
 
 ## Changed:

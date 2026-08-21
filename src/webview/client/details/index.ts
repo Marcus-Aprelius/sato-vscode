@@ -1,9 +1,6 @@
-
-
 import { byId } from "../dom";
 import { app, entryIndex } from "../state";
 import { updateMainActionButton } from "../buttons";
-
 import { renderCryptoDetails } from "./cryptoDetails";
 import { renderVaultDetails } from "./vaultDetails";
 

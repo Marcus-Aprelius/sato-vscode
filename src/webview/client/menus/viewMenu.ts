@@ -1,15 +1,12 @@
+import { vscode } from "../globals";
+import { renderStatus } from "../status";
+import { openDropdown } from "../contextMenu";
+import { app, getSelectedEntry } from "../state";
+import { updateMainActionButton } from "../buttons";
+import { clearPrivateKeyValue, renderDetails } from "../details";
+import { countCryptoEmptyValues, countVaultEmptyValues } from "../details/emptyValues";
 
 import type { MenuItem } from "../types";
-import { vscode } from "../globals";
-import { app, getSelectedEntry } from "../state";
-import { openDropdown } from "../contextMenu";
-import {
-    clearPrivateKeyValue,
-    renderDetails
-} from "../details";
-
-import { renderStatus } from "../status";
-import { updateMainActionButton } from "../buttons";
 
 export function openViewMenu(button: HTMLElement): void {
     const entry = getSelectedEntry();
@@ -74,11 +71,9 @@ export function openViewMenu(button: HTMLElement): void {
                 : "Show Primary Key",
 
             title: hasPrivateKey
-                ? (
-                    app.privateKeyVisible
-                        ? "Hide private key"
-                        : "Show private key"
-                )
+                ? app.privateKeyVisible
+                    ? "Hide private key"
+                    : "Show private key"
                 : "No private key available",
 
             disabled: !hasPrivateKey,
@@ -138,70 +133,4 @@ export function openViewMenu(button: HTMLElement): void {
     ];
 
     openDropdown(button, items);
-}
-
-function countCryptoEmptyValues(
-    entry: NonNullable<ReturnType<typeof getSelectedEntry>>
-): number {
-    const fields = entry.fields || [];
-    let count = 0;
-
-    for (const field of fields) {
-        const value = entry.values && entry.values[field] !== undefined
-            ? entry.values[field]
-            : "";
-
-        if (!value) {
-            count++;
-        }
-    }
-
-    return count;
-}
-
-function countVaultEmptyValues(
-    entry: NonNullable<ReturnType<typeof getSelectedEntry>>
-): number {
-    const fields = [
-        "UserName",
-        "URL",
-        "Password",
-        "Notes",
-        ...entry.fields.filter((field) =>
-            !["Title", "UserName", "URL", "Password", "Notes"].includes(field)
-        )
-    ];
-
-    let count = 0;
-
-    for (const field of fields) {
-        if (!getVaultFieldPreviewValue(entry, field)) {
-            count++;
-        }
-    }
-
-    return count;
-}
-
-function getVaultFieldPreviewValue(
-    entry: NonNullable<ReturnType<typeof getSelectedEntry>>,
-    field: string
-): string {
-    if (field === "UserName") {
-        return entry.username;
-    }
-
-    if (field === "URL") {
-        return entry.url;
-    }
-
-    if (field === "Password") {
-        return entry.hasPassword ? "********" : "";
-    }
-
-    if (field === "Notes") {
-        return entry.notes;
-    }
-
-    return "";
 }

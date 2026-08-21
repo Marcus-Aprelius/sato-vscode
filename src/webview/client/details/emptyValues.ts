@@ -1,21 +1,13 @@
 import type { ClientEntry } from "../types";
 
-const STANDARD_VAULT_FIELDS = [
-    "Title",
-    "UserName",
-    "URL",
-    "Password",
-    "Notes"
-];
+const STANDARD_VAULT_FIELDS = [ "Title", "UserName", "URL", "Password", "Notes" ];
 
 export function countCryptoEmptyValues(entry: ClientEntry): number {
     const fields = entry.fields || [];
     let count = 0;
 
     for (const field of fields) {
-        const value = entry.values && entry.values[field] !== undefined
-            ? entry.values[field]
-            : "";
+        const value = entry.values?.[field] || "";
 
         if (!value) {
             count++;
@@ -40,13 +32,17 @@ export function countVaultEmptyValues(entry: ClientEntry): number {
 }
 
 export function getVaultDetailFields(entry: ClientEntry): string[] {
+    const fields = entry.fields || [];
+
     return [
         "UserName",
         "URL",
         "Password",
         "Notes",
-        ...entry.fields.filter((field) =>
-            !STANDARD_VAULT_FIELDS.includes(field)
+        ...fields.filter((field) =>
+                !STANDARD_VAULT_FIELDS.includes(
+                    field
+                )
         )
     ];
 }
@@ -55,6 +51,10 @@ export function getVaultFieldPreviewValue(
     entry: ClientEntry,
     field: string
 ): string {
+    if (field === "Title") {
+        return entry.title;
+    }
+
     if (field === "UserName") {
         return entry.username;
     }
@@ -71,7 +71,7 @@ export function getVaultFieldPreviewValue(
         return entry.notes;
     }
 
-    return "";
+    return entry.values?.[field] || "";
 }
 
 export function emptyValuesButtonText(
