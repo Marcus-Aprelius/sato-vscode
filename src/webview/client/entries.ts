@@ -1,9 +1,10 @@
-import type { EntryView, GroupView } from "../../vault";
 import { byId, closestElement } from "./dom";
 import { app, entryIndex, groupIndex, resetCryptoUiState } from "./state";
 import { renderDetails } from "./details";
 import { updateMainActionButton } from "./buttons";
 import { openEntryMenu } from "./contextMenu";
+
+import type { EntryView, GroupView } from "../../vault";
 
 export function renderEntries(): void {
     const list = byId<HTMLElement>("entry-list");

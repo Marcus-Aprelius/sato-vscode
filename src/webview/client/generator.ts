@@ -1,7 +1,7 @@
-import { byId, maybeById } from "./dom";
-import { vscode } from "./globals";
 import { app } from "./state";
+import { vscode } from "./globals";
 import { closeModal } from "./modals";
+import { byId, maybeById } from "./dom";
 
 interface GeneratorOptions {
     length: number;

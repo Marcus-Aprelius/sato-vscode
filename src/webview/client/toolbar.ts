@@ -1,12 +1,12 @@
 import { byId } from "./dom";
 import { openSettingsModal } from "./settings";
-
 import { openFileMenu } from "./menus/fileMenu";
-import { openEntryMenu } from "./menus/entryMenu";
-import { openFolderMenu } from "./menus/folderMenu";
-import { openToolsMenu } from "./menus/toolsMenu";
-import { openViewMenu } from "./menus/viewMenu";
 import { openHelpMenu } from "./menus/helpMenu";
+import { openViewMenu } from "./menus/viewMenu";
+import { openEntryMenu } from "./menus/entryMenu";
+import { openToolsMenu } from "./menus/toolsMenu";
+import { openFolderMenu } from "./menus/folderMenu";
+
 
 export function bindToolbarActions(): void {
     byId("btn-file").addEventListener("click", (event) => {

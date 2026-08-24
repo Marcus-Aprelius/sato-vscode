@@ -1,4 +1,3 @@
-
 import { byId } from "./dom";
 import { vscode } from "./globals";
 import { renderAll } from "./render";

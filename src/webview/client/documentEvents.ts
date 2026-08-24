@@ -1,6 +1,6 @@
 import { closestElement } from "./dom";
-import { closeMenu } from "./contextMenu";
 import { closeModal } from "./modals";
+import { closeMenu } from "./contextMenu";
 
 export function bindDocumentEvents(): void {
     document.addEventListener("click", () => {

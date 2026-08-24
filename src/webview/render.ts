@@ -111,7 +111,9 @@ export function renderVault(
     webviewClientUri: vscode.Uri,
     appVersion = "0.0.0",
     gitCommit = "",
-    selectedEntryId: string | null = null
+    selectedEntryId: string | null = null,
+    readOnlyVault = false,
+    vaultFormat = ""
 ): string {
 
     const n = nonce();
@@ -124,7 +126,9 @@ export function renderVault(
         tree: root,
         stats,
         settings,
-        selectedEntryId
+        selectedEntryId,
+        readOnlyVault,
+        vaultFormat
     }));
     const versionLabel = gitCommit ? `${appVersion} [${gitCommit}]` : appVersion;
 
@@ -470,9 +474,26 @@ export function renderVault(
             <img class="about-logo" src="${logoSrc}" alt="SATO logo" />
                 Secure Access Task Operator
 
-                <div>VS Code extension for secure vault and crypto file viewing</div>
-                <div style="font-size: 12px; color: var(--vscode-descriptionForeground); line-height: 1.5;">
-                    Supports: .kdbx, .psafe3, .ibak, .crt, .csr, .key, .pem, .p12, .pfx, .jks
+                <div>VS Code extension for secure vaults and crypto file viewing</div>
+
+                <div class="about-supports">
+                    <div class="about-supports-title">
+                        <strong>Supports:</strong>
+                    </div>
+
+                    <div class="about-supports-row">
+                        <strong>Vaults:</strong>
+                        <span>.kdbx, .psafe3, .ibak, .1pif, .bcup</span>
+                    </div>
+
+                    <div class="about-supports-row">
+                        <strong>Files:</strong>
+                        <span>
+                            .crt, .cer, .der, .pem, .csr<br>
+                            .key, .p12, .pfx, .jks, .jceks<br>
+                            .gpg, .pgp, .asc, .sig
+                        </span>
+                    </div>
                 </div>
 
                 <div style="margin-top:12px;">

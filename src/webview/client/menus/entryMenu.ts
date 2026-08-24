@@ -1,33 +1,63 @@
-import type { MenuItem } from "../types";
 import { vscode } from "../globals";
-import { app, getSelectedEntry, isCryptoFileView } from "../state";
 import { openDropdown } from "../contextMenu";
 import { openEntryModal } from "../modals";
 
+import type { MenuItem } from "../types";
+
+import {
+    app,
+    getSelectedEntry,
+    isCryptoFileView,
+    isReadOnlyVault
+} from "../state";
+
 export function openEntryMenu(button: HTMLElement): void {
     const crypto = isCryptoFileView();
+    const readOnly = isReadOnlyVault();
     const entry = getSelectedEntry();
+
+    const unavailable =
+        crypto || readOnly;
+
+    const unavailableTitle = crypto
+        ? "Not available for crypto files"
+        : readOnly
+            ? "Not available in read-only mode"
+            : "";
 
     const items: MenuItem[] = [
         {
             label: "Add",
-            title: crypto
-                ? "Not available for crypto files"
+            title: unavailable
+                ? unavailableTitle
                 : "Create new entry",
-            disabled: crypto,
+
+            disabled: unavailable,
             action: () => {
+                if (unavailable) {
+                    return;
+                }
+
                 openEntryModal(null, app.selectedGroupId);
             }
         },
 
         {
             label: "Edit",
-            title: crypto
-                ? "Not available for crypto files"
+
+            title: unavailable
+                ? unavailableTitle
                 : "Edit selected entry",
-            disabled: crypto || !entry,
+
+            disabled:
+                unavailable ||
+                !entry,
+
             action: () => {
-                if (!entry) {
+                if (
+                    unavailable ||
+                    !entry
+                ) {
                     return;
                 }
 
@@ -37,12 +67,18 @@ export function openEntryMenu(button: HTMLElement): void {
 
         {
             label: "Duplicate",
-            title: crypto
-                ? "Not available for crypto files"
+            title: unavailable
+                ? unavailableTitle
                 : "Duplicate selected entry",
-            disabled: crypto || !entry,
+            disabled:
+                unavailable ||
+                !entry,
+
             action: () => {
-                if (!entry) {
+                if (
+                    unavailable ||
+                    !entry
+                ) {
                     return;
                 }
 
@@ -57,12 +93,12 @@ export function openEntryMenu(button: HTMLElement): void {
 
         {
             label: "Delete",
-            title: crypto
-                ? "Not available for crypto files"
+            title: unavailable
+                ? unavailableTitle
                 : "Delete selected entry",
-            disabled: crypto || !entry,
+            disabled: unavailable || !entry,
             action: () => {
-                if (!entry) {
+                if (unavailable || !entry ) {
                     return;
                 }
 

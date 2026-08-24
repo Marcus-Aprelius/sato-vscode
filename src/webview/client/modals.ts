@@ -1,10 +1,15 @@
-
 import { vscode } from "./globals";
 import { byId, maybeById } from "./dom";
-import { app, entryIndex } from "./state";
 import { generateWithDefaults, updateEntryStrength } from "./generator";
 
 import type { EntryFormFields } from "./types";
+
+import {
+    app,
+    entryIndex,
+    isReadOnlyVault
+} from "./state";
+
 
 let openPgpPrivateKeyPath = "";
 let cryptoUnlockRequiresPrivateKey = false;
@@ -230,10 +235,7 @@ export function showCryptoContainerUnlockError(message: string): void {
     }
 }
 
-export function setOpenPgpPrivateKeyPath(
-    entryId: string,
-    filePath: string
-): void {
+export function setOpenPgpPrivateKeyPath(entryId: string, filePath: string ): void {
     if (
         !cryptoUnlockEntryId ||
         cryptoUnlockEntryId !== entryId
@@ -430,26 +432,40 @@ function updateUnlockInputHints(event: KeyboardEvent): void {
 }
 
 export function openEntryModal(entryId: string | null, groupId?: string): void {
-    if (app.vaultLocked) {
+    if (
+        app.vaultLocked ||
+        isReadOnlyVault()
+    ) {
         return;
     }
 
-    const entry = entryId ? entryIndex.get(entryId) : undefined;
+    const entry = entryId
+        ? entryIndex.get(entryId)
+        : undefined;
 
-    if (entry && entry.readOnly) {
+    if (entry?.readOnly) {
         return;
     }
 
-    app.editingEntryId = entryId || null;
-    app.editingGroupId = groupId || app.selectedGroupId;
+    app.editingEntryId =
+        entryId || null;
 
-    byId("entry-modal-title").textContent = entryId ? "Edit Entry" : "New Entry";
+    app.editingGroupId =
+        groupId || app.selectedGroupId;
+
+    byId("entry-modal-title").textContent =
+        entryId
+            ? "Edit Entry"
+            : "New Entry";
 
     byId<HTMLInputElement>("ef-title").value = "";
     byId<HTMLInputElement>("ef-username").value = "";
     byId<HTMLInputElement>("ef-password").value = "";
-    byId<HTMLInputElement>("ef-password").type = "password";
+    byId<HTMLInputElement>("ef-password").type =
+        "password";
+
     byId("ef-toggle").textContent = "Show";
+
     byId<HTMLInputElement>("ef-url").value = "";
     byId<HTMLTextAreaElement>("ef-notes").value = "";
 
