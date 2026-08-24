@@ -103,8 +103,8 @@ export function renderCryptoDetails(
                 ? "btn primary crypto-toggle-pk-btn"
                 : "btn danger crypto-toggle-pk-btn",
             app.privateKeyVisible
-                ? "Hide Primary Key"
-                : "Show Primary Key"
+                ? "Hide Private Key"
+                : "Show Private Key"
         );
 
         togglePrivateKey.addEventListener("click", () => {
@@ -198,18 +198,31 @@ function renderCryptoValuesTable(
     container.appendChild(table);
 }
 
-function isCryptoContainer(entry: ClientEntry): boolean {
+function isCryptoContainer(
+    entry: ClientEntry
+): boolean {
     const type = entry.values?.Type || "";
+    const protection = entry.values?.Protection || "";
+    const encryption = entry.values?.Encryption || "";
+    const status = entry.values?.Status || "";
+    const encryptedPkcs8 = type === "PKCS#8 Private Key" && (protection === "Password encrypted" || status === "Locked");
+    const encryptedPpk = type === "PuTTY Private Key" && (status === "Locked" || (encryption !== "" && encryption.toLowerCase() !== "none"));
+    const encryptedSshKey = type === "OpenSSH Private Key" && ( status === "Locked" || protection === "Password encrypted" );
 
     return (
         entry.readOnly === true &&
         (
             type === "PKCS#12 Container" ||
             type === "Java KeyStore" ||
-            type === "OpenPGP Encrypted Message"
+            type === "Java Cryptography Extension KeyStore" ||
+            type === "OpenPGP Encrypted Message" ||
+            encryptedPkcs8 ||
+            encryptedPpk ||
+            encryptedSshKey
         )
     );
 }
+
 
 function isUnlockedCryptoContainer(entry: ClientEntry): boolean {
     return entry.values?.Status === "Unlocked";

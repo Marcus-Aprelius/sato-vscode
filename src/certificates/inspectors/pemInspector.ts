@@ -17,16 +17,25 @@ export function inspectPemCryptoFile(
 ): CryptoInspection {
     if (text.includes("-----BEGIN CERTIFICATE-----")) {
         return {
-            values: inspectCertificate(text, bytes, filePath)
+            values: inspectCertificate(
+                text,
+                bytes,
+                filePath
+            )
         };
     }
 
     if (
         text.includes("-----BEGIN CERTIFICATE REQUEST-----") ||
-        text.includes("-----BEGIN NEW CERTIFICATE REQUEST-----")
+        text.includes("-----BEGIN NEW CERTIFICATE REQUEST-----") ||
+        filePath.toLowerCase().endsWith(".p10")
     ) {
         return {
-            values: inspectCsr(text, bytes, filePath)
+            values: inspectCsr(
+                text,
+                bytes,
+                filePath
+            )
         };
     }
 
@@ -34,9 +43,14 @@ export function inspectPemCryptoFile(
         text.includes("-----BEGIN PRIVATE KEY-----") ||
         text.includes("-----BEGIN RSA PRIVATE KEY-----") ||
         text.includes("-----BEGIN EC PRIVATE KEY-----") ||
-        text.includes("-----BEGIN ENCRYPTED PRIVATE KEY-----")
+        text.includes("-----BEGIN ENCRYPTED PRIVATE KEY-----") ||
+        text.includes("-----BEGIN OPENSSH PRIVATE KEY-----")
     ) {
-        return inspectPrivateKey(text, bytes, filePath);
+        return inspectPrivateKey(
+            text,
+            bytes,
+            filePath
+        );
     }
 
     if (isDerCertificatePath(filePath)) {
@@ -73,19 +87,14 @@ export function inspectCertificate(
 
         return {
             Type: "X.509 Certificate",
-            Encoding:
-                typeof certificateData === "string"
-                    ? "PEM"
-                    : "DER",
+            Encoding: typeof certificateData === "string" ? "PEM" : "DER",
             Subject: cert.subject,
             Issuer: cert.issuer,
             "Serial number": cert.serialNumber,
             "Valid from": cert.validFrom,
             "Valid to": cert.validTo,
             "Subject alternative names": cert.subjectAltName || "",
-            "Public key algorithm": normalizeAlgorithm(
-                cert.publicKey.asymmetricKeyType || ""
-            ),
+            "Public key algorithm": normalizeAlgorithm(cert.publicKey.asymmetricKeyType || ""),
             "Fingerprint SHA-256": cert.fingerprint256,
             "Fingerprint SHA-1": cert.fingerprint,
             "File path": filePath,
@@ -100,9 +109,7 @@ export function inspectCertificate(
     } catch {
         return {
             Type: "Certificate",
-            Encoding: isDerCertificatePath(filePath)
-                ? "DER"
-                : "PEM",
+            Encoding: isDerCertificatePath(filePath) ? "DER" : "PEM",
             Summary: "Certificate detected, but parsing failed.",
             "File path": filePath,
             "File size": `${bytes.length} bytes`,
@@ -116,31 +123,47 @@ export function inspectPrivateKey(
     bytes: Uint8Array,
     filePath: string
 ): CryptoInspection {
+    const openSsh =
+        text.includes(
+            "-----BEGIN OPENSSH PRIVATE KEY-----"
+        );
+
+    if (openSsh) {
+        return inspectOpenSshPrivateKey(
+            text,
+            bytes,
+            filePath
+        );
+    }
+
+    const encrypted =
+        text.includes("-----BEGIN ENCRYPTED PRIVATE KEY-----") ||
+        /Proc-Type:\s*4,ENCRYPTED/i.test(text);
+
     try {
         const key = crypto.createPrivateKey(text);
         const publicKey = crypto.createPublicKey(key);
+        const publicDer = publicKey.export({type: "spki",format: "der"}) as Buffer;
 
-        const publicDer = publicKey.export({
-            type: "spki",
-            format: "der"
-        }) as Buffer;
-
-        const details = key.asymmetricKeyDetails as
-            | { modulusLength?: number; namedCurve?: string; }
-            | undefined;
+        const details =
+            key.asymmetricKeyDetails as
+                | {
+                      modulusLength?: number;
+                      namedCurve?: string;
+                  }
+                | undefined;
 
         return {
             values: {
                 Type: "Private Key",
+                Status: "Unlocked",
+                Protection: "None",
                 Algorithm: normalizeAlgorithm(key.asymmetricKeyType || ""),
-                "Key size": details?.modulusLength
-                    ? `${details.modulusLength} bits`
-                    : "",
+                "Key size": details?.modulusLength ? `${details.modulusLength} bits` : "",
                 Curve: details?.namedCurve || "",
                 "Public key SHA-256": sha256Hex(publicDer),
                 "File path": filePath,
-                "File size":
-                    `${bytes.length} bytes`,
+                "File size": `${bytes.length} bytes`,
                 "SHA-256": sha256Hex(bytes),
                 Summary: "Private key detected. Raw private key content is hidden."
             },
@@ -150,13 +173,15 @@ export function inspectPrivateKey(
         return {
             values: {
                 Type: "Private Key",
-                Summary: "Private key detected, but parsing failed. It may be encrypted or unsupported.",
+                Status: encrypted ? "Locked" : "Unsupported",
+                Protection: encrypted ? "Password encrypted" : "",
+                Summary: encrypted
+                    ? "Encrypted private key detected. The key must be unlocked before its metadata or contents can be displayed."
+                    : "Private key detected, but parsing failed. The key format may be unsupported.",
                 "File path": filePath,
-                "File size":
-                    `${bytes.length} bytes`,
+                "File size": `${bytes.length} bytes`,
                 "SHA-256": sha256Hex(bytes)
-            },
-            privateKeyPem: text
+            }
         };
     }
 }
@@ -166,30 +191,45 @@ export function inspectCsr(
     bytes: Uint8Array,
     filePath: string
 ): Record<string, string> {
-    const pemType = text.includes("NEW CERTIFICATE REQUEST")
-        ? "NEW CERTIFICATE REQUEST"
-        : "CERTIFICATE REQUEST";
+    const isPem =
+        text.includes("-----BEGIN CERTIFICATE REQUEST-----") ||
+        text.includes("-----BEGIN NEW CERTIFICATE REQUEST-----");
 
-    const openssl = tryInspectCsrWithOpenSsl(text);
+    const pemType = text.includes(
+        "NEW CERTIFICATE REQUEST"
+    )
+        ? "NEW CERTIFICATE REQUEST"
+        : isPem
+            ? "CERTIFICATE REQUEST"
+            : "DER";
+
+    const openssl =
+        tryInspectCsrWithOpenSsl(
+            isPem
+                ? text
+                : bytes,
+            isPem
+                ? "PEM"
+                : "DER"
+        );
+
     const hash = sha256Hex(bytes);
 
     if (!openssl?.Details) {
         return {
             Type: "Certificate Signing Request",
+            Encoding: isPem ? "PEM" : "DER",
             "PEM block": pemType,
             "File path": filePath,
             "File size": `${bytes.length} bytes`,
             "SHA-256": hash,
-            Summary: "CSR detected."
+            Summary: "CSR detected, but OpenSSL inspection failed."
         };
     }
 
     const details = openssl.Details;
 
-    const subject = extractOpenSslValue(
-        details,
-        /Subject:\s*(.+)/i
-    );
+    const subject = extractOpenSslValue(details, /Subject:\s*(.+)/i);
 
     const publicKeyAlgorithm = normalizeAlgorithm(
         extractOpenSslValue(
@@ -225,6 +265,7 @@ export function inspectCsr(
 
     return {
         Type: "Certificate Signing Request",
+        Encoding: isPem ? "PEM" : "DER",
         "PEM block": pemType,
         Subject: subject,
         "Public Key Algorithm": publicKeyAlgorithm,
@@ -241,11 +282,142 @@ export function inspectCsr(
 function isDerCertificatePath(
     filePath: string
 ): boolean {
-    const lowerPath =
-        filePath.toLowerCase();
+    const lowerPath = filePath.toLowerCase();
 
-    return (
-        lowerPath.endsWith(".der") ||
-        lowerPath.endsWith(".cer")
-    );
+    return (lowerPath.endsWith(".der") || lowerPath.endsWith(".cer"));
+}
+
+function inspectOpenSshPrivateKey(
+    text: string,
+    bytes: Uint8Array,
+    filePath: string
+): CryptoInspection {
+    const encrypted = isEncryptedOpenSshPrivateKey(text);
+
+    return {
+        values: {
+            Type: "OpenSSH Private Key",
+            Status: encrypted ? "Locked" : "Detected",
+            Protection: encrypted ? "Password encrypted" : "None",
+            Algorithm: sshAlgorithmFromFilePath(filePath),
+            Format: "OpenSSH",
+            Summary: encrypted
+                ? "Encrypted OpenSSH private key detected. Enter the password to inspect the key."
+                : "OpenSSH private key detected. Raw private key content is hidden.",
+            "File path": filePath,
+            "File size": `${bytes.length} bytes`,
+            "SHA-256": sha256Hex(bytes)
+        }
+    };
+}
+
+function sshAlgorithmFromFilePath(
+    filePath: string
+): string {
+    const normalizedPath =
+        filePath
+            .replace(/\\/g, "/")
+            .toLowerCase();
+
+    const fileName =
+        normalizedPath
+            .split("/")
+            .pop() || "";
+
+    switch (fileName) {
+        case "id_rsa":
+            return "RSA";
+
+        case "id_ecdsa":
+            return "ECDSA";
+
+        case "id_ed25519":
+            return "Ed25519";
+
+        default:
+            return "SSH";
+    }
+}
+
+function isEncryptedOpenSshPrivateKey(
+    text: string
+): boolean {
+    try {
+        const base64 = text
+            .replace(
+                "-----BEGIN OPENSSH PRIVATE KEY-----",
+                ""
+            )
+            .replace(
+                "-----END OPENSSH PRIVATE KEY-----",
+                ""
+            )
+            .replace(/\s+/g, "");
+
+        const decoded =
+            Buffer.from(
+                base64,
+                "base64"
+            );
+
+        const marker =
+            Buffer.from(
+                "openssh-key-v1\0",
+                "ascii"
+            );
+
+        if (
+            decoded.length <= marker.length ||
+            !decoded
+                .subarray(
+                    0,
+                    marker.length
+                )
+                .equals(marker)
+        ) {
+            return false;
+        }
+
+        let offset = marker.length;
+
+        const cipherName =
+            readOpenSshString(
+                decoded,
+                offset
+            );
+
+        return (
+            cipherName.value !== "none"
+        );
+    } catch {
+        return false;
+    }
+}
+
+function readOpenSshString(
+    buffer: Buffer,
+    offset: number
+): {
+    value: string;
+    nextOffset: number;
+} {
+    if (offset + 4 > buffer.length) {
+        throw new Error("Invalid OpenSSH key.");
+    }
+
+    const length = buffer.readUInt32BE(offset);
+
+    const start = offset + 4;
+    const end = start + length;
+
+    if (end > buffer.length) {
+        throw new Error("Invalid OpenSSH key.");
+    }
+
+    return {
+        value: buffer
+            .subarray(start, end )
+            .toString("utf8"),
+        nextOffset: end
+    };
 }

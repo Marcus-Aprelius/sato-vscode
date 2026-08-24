@@ -5,11 +5,14 @@ import { isCommandAvailable } from "../certificates/cli";
 export function prepareCryptoUnlock(
     filePath: string
 ): boolean {
-    const normalizedPath =
-        filePath.toLowerCase();
+    const normalizedPath = filePath.toLowerCase();
 
     if (normalizedPath.endsWith(".p12") || normalizedPath.endsWith(".pfx")) {
         return checkOpenSsl();
+    }
+
+    if (normalizedPath.endsWith(".ppk")) {
+        return checkPuttygen();
     }
 
     if (normalizedPath.endsWith(".jks") || normalizedPath.endsWith(".jceks") ) {
@@ -18,6 +21,10 @@ export function prepareCryptoUnlock(
 
     if (normalizedPath.endsWith(".gpg") || normalizedPath.endsWith(".pgp") ) {
         return checkGpg();
+    }
+
+    if (isSshPrivateKeyPath(normalizedPath)) {
+        return checkSshKeygen();
     }
 
     return true;
@@ -76,6 +83,57 @@ function checkGpg(): boolean {
     vscode.window.showWarningMessage(
         `SATO: GPG is required to inspect and decrypt OpenPGP files. ${installHint}`
     );
+
+    return false;
+}
+
+function checkPuttygen(): boolean {
+    if (isCommandAvailable("puttygen")) {
+        return true;
+    }
+
+    const installHint =
+        process.platform === "win32"
+            ? "Install PuTTY, add puttygen.exe to PATH, and restart VS Code."
+            : process.platform === "darwin"
+                ? "Install PuTTY with: brew install putty"
+                : "Install PuTTY tools, for example: sudo apt install putty-tools";
+
+    vscode.window.showWarningMessage(
+        `SATO: puttygen is required to unlock PuTTY private keys. ${installHint}`
+    );
+
+    return false;
+}
+
+function isSshPrivateKeyPath(
+    filePath: string
+): boolean {
+    const fileName = filePath
+        .replace(/\\/g, "/")
+        .split("/")
+        .pop() || "";
+
+    return [
+        "id_rsa",
+        "id_ecdsa",
+        "id_ed25519"
+    ].includes(fileName);
+}
+
+function checkSshKeygen(): boolean {
+    if (isCommandAvailable("ssh-keygen")) {
+        return true;
+    }
+
+    const installHint =
+        process.platform === "win32"
+            ? "Install the Windows OpenSSH Client, ensure ssh-keygen.exe is available in PATH, and restart VS Code."
+            : process.platform === "darwin"
+                ? "Install or enable the macOS OpenSSH tools."
+                : "Install OpenSSH tools, for example: sudo apt install openssh-client";
+
+    vscode.window.showWarningMessage(`SATO: ssh-keygen is required to unlock SSH private keys. ${installHint}`);
 
     return false;
 }

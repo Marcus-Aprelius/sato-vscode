@@ -3,7 +3,7 @@
   "displayName": "SATO Secrets",
   "description": "Browse password vaults and crypto files directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
@@ -37,16 +37,35 @@
     "cer",
     "der",
     "csr",
+    "p10",
     "private-key",
     "pkcs12",
     "p12",
     "pfx",
+    "pkcs7",
+    "p7b",
+    "p7c",
+    "cms",
+    "smime",
+    "p7s",
+    "p7m",
+    "pkcs8",
+    "p8",
+    "pk8",
+    "putty",
+    "ppk",
+    "ssh-key",
     "jks",
     "jceks",
     "openpgp",
     "gpg",
     "pgp",
-    "signature"
+    "signature",
+    "ssh",
+    "ssh-key",
+    "id-rsa",
+    "id-ecdsa",
+    "id-ed25519"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -86,6 +105,9 @@
             "filenamePattern": "*.csr"
           },
           {
+            "filenamePattern": "*.p10"
+          },
+          {
             "filenamePattern": "*.key"
           },
           {
@@ -93,6 +115,27 @@
           },
           {
             "filenamePattern": "*.pfx"
+          },
+          {
+            "filenamePattern": "*.p7b"
+          },
+          {
+            "filenamePattern": "*.p7c"
+          },
+          {
+            "filenamePattern": "*.p7s"
+          },
+          {
+            "filenamePattern": "*.p7m"
+          },
+          {
+            "filenamePattern": "*.p8"
+          },
+          {
+            "filenamePattern": "*.pk8"
+          },
+          {
+            "filenamePattern": "*.ppk"
           },
           {
             "filenamePattern": "*.jks"
@@ -111,6 +154,15 @@
           },
           {
             "filenamePattern": "*.sig"
+          },
+          {
+            "filenamePattern": "**/id_rsa"
+          },
+          {
+            "filenamePattern": "**/id_ecdsa"
+          },
+          {
+            "filenamePattern": "**/id_ed25519"
           }
         ],
         "priority": "default"
