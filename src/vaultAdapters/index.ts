@@ -2,6 +2,8 @@ import type * as vscode from "vscode";
 import type { Settings } from "../webview";
 import type { VaultDocument } from "../types";
 
+import { hasExtension } from "../editor/uriExtensions";
+
 export type CopyToClipboard = (
     value: string,
     message: string,
@@ -21,11 +23,15 @@ export interface VaultAdapterRuntime {
 }
 
 export function isPsafeUri(uri: vscode.Uri): boolean {
-    const path = uri.fsPath.toLowerCase();
-
-    return path.endsWith(".psafe3") || path.endsWith(".ibak");
+    return (
+        hasExtension(uri, ".psafe3") ||
+        hasExtension(uri, ".ibak")
+    );
 }
 
 export function isKdbxUri(uri: vscode.Uri): boolean {
-    return uri.fsPath.toLowerCase().endsWith(".kdbx");
+    return hasExtension(
+        uri,
+        ".kdbx"
+    );
 }

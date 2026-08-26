@@ -1,5 +1,7 @@
 import type * as vscode from "vscode";
 
+import { hasExtension } from "./uriExtensions";
+
 export function isOnePifUri(
     uri: vscode.Uri
 ): boolean {
@@ -27,15 +29,7 @@ export function isOpenPgpEncryptedFile(
 
     return (
         hasExtension(uri, ".gpg") ||
-        hasExtension(uri, ".pgp")
+        hasExtension(uri, ".pgp") ||
+        hasExtension(uri, ".asc")
     );
-}
-
-function hasExtension(
-    uri: vscode.Uri,
-    extension: string
-): boolean {
-    return uri.fsPath
-        .toLowerCase()
-        .endsWith(extension);
 }

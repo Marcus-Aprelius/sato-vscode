@@ -41,20 +41,21 @@ async function saveAndRefreshPsafe(
         return;
     }
 
-    const bytes = savePsafeVaultToBytes(psafe);
+    try {
+        const bytes = savePsafeVaultToBytes(psafe);
 
-    await vscode.workspace.fs.writeFile(document.uri, bytes);
+        await vscode.workspace.fs.writeFile(document.uri, bytes);
 
-    panel.webview.postMessage({
-        type: "vaultState",
-        state: {
-            tree: psafe.tree,
-            stats: psafe.stats,
-            settings: runtime.readSettings()
-        }
-    });
+        panel.webview.postMessage({type: "vaultState", state: {tree: psafe.tree, stats: psafe.stats, settings:runtime.readSettings()}});
 
-    vscode.window.setStatusBarMessage(message, 2500);
+        vscode.window.setStatusBarMessage(message, 2500);
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+
+        console.error("SATO: failed to save Password Safe vault:", err);
+
+        vscode.window.showErrorMessage(`SATO: failed to save Password Safe vault - ${errorMessage}`);
+    }
 }
 
 function psafeGroupNameFromId(groupId: string): string {
@@ -197,12 +198,6 @@ export async function handlePsafeMessage(
                 `SATO: Created “${msg.fields.title}”`
             );
 
-            if (msg.fields.notes) {
-                vscode.window.showInformationMessage(
-                    "SATO: .psafe3 entry created, but Notes are not saved yet."
-                );
-            }
-
             return;
         }
 
@@ -215,12 +210,6 @@ export async function handlePsafeMessage(
                 runtime,
                 `SATO: Updated “${msg.fields.title}”`
             );
-
-            if (msg.fields.notes) {
-                vscode.window.showInformationMessage(
-                    "SATO: .psafe3 entry updated, but Notes are not saved yet."
-                );
-            }
 
             return;
         }

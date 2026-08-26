@@ -2,7 +2,7 @@
 
 # SATO - Secure Access Task Operator for VS Code
 
-Open, browse, edit and manage KeePass `.kdbx` Database (DB), Password Safe `.psafe3` / `.ibak` vaults, and common [crypto files](#supported-formats) directly inside VS Code `v1.100.0+` with a single UI.
+Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [crypto files](#supported-formats) directly inside VS Code `v1.100.0+` with a single UI.
 
 > **Status:** In development. Use in production environments at your own risk.
 
@@ -43,6 +43,7 @@ Open, browse, edit and manage KeePass `.kdbx` Database (DB), Password Safe `.psa
 ![ASC](https://img.shields.io/badge/.asg-✓-8A2BE2)
 ![SIG](https://img.shields.io/badge/.sig-✓-8A2BE2)
 ![PPK](https://img.shields.io/badge/.ppk-✓-8A2BE2)
+![AGE](https://img.shields.io/badge/.age-✓-8A2BE2)
 ![ID_RSA](https://img.shields.io/badge/id_rsa-✓-8A8D42)
 ![ID_ECDSA](https://img.shields.io/badge/id_ecdsa-✓-8A8D42)
 ![ID_ED25519](https://img.shields.io/badge/id_ed25519-✓-8A8D42)
@@ -71,7 +72,7 @@ Open, browse, edit and manage KeePass `.kdbx` Database (DB), Password Safe `.psa
 
 5. Use `Tools` → `Lock Database` to lock a password vault.
 
-6. Also, ommands from Command Palette `Ctrl/Cmd + Shift + P`:
+6. Also, commands from Command Palette `Ctrl/Cmd + Shift + P`:
 
   - `SATO: Open Password Vault`
   - `SATO: Lock Vault`
@@ -103,6 +104,7 @@ Open, browse, edit and manage KeePass `.kdbx` Database (DB), Password Safe `.psa
 | Crypto file | `.p7m`       | `OpenSSL`     | View CMS/S/MIME message details                      |
 | Crypto file | `.p8`        | -             | View PKCS#8 private key                              |
 | Crypto file | `.pk8`       | -             | View and unlock PKCS#8 private key                   |
+| Crypto file | `.age`       | -             | Read-only inspection; decryption is planned          |
 | Crypto file | `.ppk`       | `puttygen`    | View and unlock PuTTY private keys                   |
 | Crypto file | `id_rsa`     | `ssh-keygen`  | View and unlock OpenSSH RSA private keys             |
 | Crypto file | `id_ecdsa`   | `ssh-keygen`  | View and unlock OpenSSH ECDSA private keys           |
@@ -114,6 +116,7 @@ Open, browse, edit and manage KeePass `.kdbx` Database (DB), Password Safe `.psa
 | Crypto file | `.asc`       | `GPG`         | View OpenPGP public and private keys                 |
 | Crypto file | `.sig`       | `GPG`         | View OpenPGP signature details                       |
 
+> **Note:** `.age` files are currently supported in read-only inspection mode. SATO detects the encoding and protection type, but does not decrypt file contents. Decryption support is planned through a secure built-in helper.
 
 ## External Tools Installation
 
