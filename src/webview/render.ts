@@ -488,10 +488,16 @@ export function renderVault(
 
                     <div class="about-supports-row">
                         <strong>Files:</strong>
+                            <span>
+                                .crt, .cer, .der, .pem, .csr, .p10, .key<br>
+                                .ppk, .jks, .pgp, .gpg, .pk8, .asc, .jceks<br>
+                                .p12, .pfx, .p7b, .p7c, .p7s, .p7m, .p8, .sig
+                            </span>
+                    </div>
+                    <div class="about-supports-row">
+                        <strong>SSH:</strong>
                         <span>
-                            .crt, .cer, .der, .pem, .csr<br>
-                            .key, .p12, .pfx, .jks, .jceks<br>
-                            .gpg, .pgp, .asc, .sig
+                            id_rsa, id_ecdsa, id_ed25519
                         </span>
                     </div>
                 </div>

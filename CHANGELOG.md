@@ -1,5 +1,26 @@
 # Change Log
 
+# 0.1.3
+
+## Changed:
+  * Updated `README.md` with the latest supported formats
+  * Updated the About dialog with the latest supported formats
+  * Refactored `KdbxEditorProvider.ts` into smaller editor modules
+  * Renamed Primary Key actions to Private Key
+  * file `devcontainer.json`
+
+## Added:
+  * Read-only `.p7b` and `.p7c` PKCS#7 certificate chain inspection
+  * Read-only `.p7s` PKCS#7 digital signature inspection
+  * Read-only `.p7m` CMS/S/MIME message inspection
+  * Added `.p10` PKCS#10 certificate signing request inspection in PEM and DER formats
+  * `.p8` PKCS#8 private key inspection
+  * Password-protected `.pk8` PKCS#8 private key unlocking
+  * `.ppk` PuTTY private key inspection and password-protected unlocking with `puttygen`
+  * Support for viewing and unlocking OpenSSH private keys named `id_rsa`, `id_ecdsa`, and `id_ed25519`
+
+---
+
 # 0.1.2
 
 ## Changed:

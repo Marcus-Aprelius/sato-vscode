@@ -129,7 +129,6 @@ export function createPsafeEntry(
     fields: EntryFields
 ): void {
     const safe = new PasswordSafe({ password: vault.password });
-
     const title = fields.title.trim() || "(untitled)";
     const password = fields.password || "";
     const record = safe.createDatabaseRecord(title, password);
@@ -162,7 +161,6 @@ export function updatePsafeEntry(
     }
 
     const record = vault.databaseRecords[index];
-
     const title = fields.title.trim() || "(untitled)";
     const password = fields.password || "";
 

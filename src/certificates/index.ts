@@ -1,11 +1,17 @@
+import type * as vscode from "vscode";
 import { isExpiredCertificate } from "./format";
+import type { GroupView, VaultStats } from "../vault";
+import { inspectCms } from "./inspectors/cmsInspector";
+import { inspectPkcs7 } from "./inspectors/pkcs7Inspector";
 import { inspectPemCryptoFile } from "./inspectors/pemInspector";
 import { inspectGpg, inspectGpgUnlocked } from "./inspectors/gpgInspector";
 import { inspectJks, inspectJksUnlocked } from "./inspectors/jksInspector";
+import { inspectPpk, inspectPpkUnlocked } from "./inspectors/ppkInspector";
+import { inspectPkcs8, inspectPkcs8Unlocked } from "./inspectors/pkcs8Inspector";
 import { inspectPkcs12, inspectPkcs12Unlocked } from "./inspectors/pkcs12Inspector";
 
-import type * as vscode from "vscode";
-import type { GroupView, VaultStats } from "../vault";
+import { inspectSshPrivateKey, inspectSshPrivateKeyUnlocked } from "./inspectors/sshKeyInspector";
+
 
 import type {
     CertificateVault,
@@ -21,18 +27,57 @@ export type {
     CryptoInspection
 } from "./types";
 
-const EXTENSIONS = [".crt", ".cer", ".der", ".pem", ".csr", ".key", ".pfx", ".p12", ".jks", ".jceks", ".gpg", ".pgp", ".asc", ".sig"];
+const EXTENSIONS = [
+    ".crt",
+    ".cer",
+    ".der",
+    ".pem",
+    ".csr",
+    ".p10",
+    ".key",
+    ".pfx",
+    ".p12",
+    ".p7b",
+    ".p7c",
+    ".p7s",
+    ".p7m",
+    ".p8",
+    ".pk8",
+    ".ppk",
+    ".jks",
+    ".jceks",
+    ".gpg",
+    ".pgp",
+    ".asc",
+    ".sig"
+];
+
+const SSH_PRIVATE_KEY_FILE_NAMES = [ "id_rsa", "id_ecdsa", "id_ed25519" ];
 
 export function isCertificateLikeUri(uri: vscode.Uri): boolean {
     const filePath = uri.fsPath.toLowerCase();
 
-    return EXTENSIONS.some((ext) => filePath.endsWith(ext));
+    const fileName = fileNameOf(uri).toLowerCase();
+
+    return (
+        EXTENSIONS.some(
+            (extension) => filePath.endsWith(extension)
+        ) ||
+        SSH_PRIVATE_KEY_FILE_NAMES.includes(fileName)
+    );
 }
 
 export function isCertificateLikeFileName(fileName: string): boolean {
     const value = fileName.toLowerCase();
 
-    return EXTENSIONS.some((ext) => value.endsWith(ext));
+    return (
+        EXTENSIONS.some(
+            (extension) => value.endsWith(extension)
+        ) ||
+        SSH_PRIVATE_KEY_FILE_NAMES.includes(
+            value
+        )
+    );
 }
 
 export function buildCertificateVault(
@@ -73,7 +118,14 @@ export function buildCertificateDirectoryVault(
         const text =
             lower.endsWith(".p12") ||
             lower.endsWith(".pfx") ||
+            lower.endsWith(".p7b") ||
+            lower.endsWith(".p7c") ||
+            lower.endsWith(".p7s") ||
+            lower.endsWith(".p7m") ||
+            lower.endsWith(".p8") ||
+            lower.endsWith(".pk8") ||
             lower.endsWith(".jks") ||
+            lower.endsWith(".jceks") ||
             lower.endsWith(".gpg") ||
             lower.endsWith(".pgp") ||
             lower.endsWith(".sig")
@@ -180,6 +232,41 @@ export function unlockCryptoContainer(
             password
         );
     } else if (
+        lowerPath.endsWith(".p8") ||
+        lowerPath.endsWith(".pk8")
+    ) {
+        inspected = inspectPkcs8Unlocked(
+            file.bytes,
+            filePath,
+            password
+        );
+    } else if (
+        lowerPath.endsWith(".ppk")
+    ) {
+        const text = Buffer.from(
+            file.bytes
+        ).toString("utf8");
+
+        inspected = inspectPpkUnlocked(
+            text,
+            file.bytes,
+            filePath,
+            password
+        );
+    } else if (
+        isSshPrivateKeyFilePath(filePath)
+    ) {
+        const text = Buffer.from(
+            file.bytes
+        ).toString("utf8");
+
+        inspected = inspectSshPrivateKeyUnlocked(
+            text,
+            file.bytes,
+            filePath,
+            password
+        );
+    } else if (
         lowerPath.endsWith(".jks") ||
         lowerPath.endsWith(".jceks")
     ) {
@@ -268,8 +355,43 @@ export function lockCryptoContainer(
 
     let inspected: CryptoInspection;
 
-    if (lowerPath.endsWith(".p12") || lowerPath.endsWith(".pfx")) {
+    if (
+        lowerPath.endsWith(".p12") ||
+        lowerPath.endsWith(".pfx")
+    ) {
         inspected = inspectPkcs12(file.bytes, filePath);
+    } else if (
+        lowerPath.endsWith(".p8") ||
+        lowerPath.endsWith(".pk8")
+    ) {
+        inspected = inspectPkcs8(
+            file.bytes,
+            filePath
+        );
+    } else if (
+        lowerPath.endsWith(".ppk")
+    ) {
+        const text = Buffer.from(
+            file.bytes
+        ).toString("utf8");
+
+        inspected = inspectPpk(
+            text,
+            file.bytes,
+            filePath
+        );
+    } else if (
+        isSshPrivateKeyFilePath(filePath)
+    ) {
+        const text = Buffer.from(
+            file.bytes
+        ).toString("utf8");
+
+        inspected = inspectSshPrivateKey(
+            text,
+            file.bytes,
+            filePath
+        );
     } else if (
         lowerPath.endsWith(".jks") ||
         lowerPath.endsWith(".jceks")
@@ -318,34 +440,84 @@ export function lockCryptoContainer(
     };
 }
 
+function isSshPrivateKeyFilePath(
+    filePath: string
+): boolean {
+    const fileName = filePath
+        .replace(/\\/g, "/")
+        .split("/")
+        .pop()
+        ?.toLowerCase() || "";
+
+    return SSH_PRIVATE_KEY_FILE_NAMES.includes(
+        fileName
+    );
+}
+
 function inspectCryptoFile(
     text: string,
     bytes: Uint8Array,
     filePath: string
 ): CryptoInspection {
-    const lowerPath = filePath.toLowerCase();
+    const lowerPath =
+        filePath.toLowerCase();
 
-    if (
-        lowerPath.endsWith(".pfx") ||
-        lowerPath.endsWith(".p12")
-    ) {
-        return inspectPkcs12(bytes, filePath);
+    if (lowerPath.endsWith(".pfx") || lowerPath.endsWith(".p12")) {
+        return inspectPkcs12(
+            bytes,
+            filePath
+        );
     }
 
-    if (
-        lowerPath.endsWith(".jks") ||
-        lowerPath.endsWith(".jceks")
-    ) {
-        return inspectJks(bytes, filePath);
+    if (lowerPath.endsWith(".p7b") || lowerPath.endsWith(".p7c") ) {
+        return inspectPkcs7(
+            bytes,
+            filePath
+        );
     }
 
-    if (
-        lowerPath.endsWith(".gpg") ||
-        lowerPath.endsWith(".pgp") ||
-        lowerPath.endsWith(".asc") ||
-        lowerPath.endsWith(".sig")
-    ) {
-        return inspectGpg(bytes, filePath);
+    if (lowerPath.endsWith(".p7s") || lowerPath.endsWith(".p7m")) {
+        return inspectCms(
+            bytes,
+            filePath
+        );
+    }
+
+    if (lowerPath.endsWith(".p8") || lowerPath.endsWith(".pk8")) {
+        return inspectPkcs8(
+            bytes,
+            filePath
+        );
+    }
+
+    if (lowerPath.endsWith(".ppk")) {
+        return inspectPpk(
+            text,
+            bytes,
+            filePath
+        );
+    }
+
+    if (isSshPrivateKeyFilePath(filePath)) {
+        return inspectSshPrivateKey(
+            text,
+            bytes,
+            filePath
+        );
+    }
+
+    if (lowerPath.endsWith(".jks") || lowerPath.endsWith(".jceks")) {
+        return inspectJks(
+            bytes,
+            filePath
+        );
+    }
+
+    if (lowerPath.endsWith(".gpg") || lowerPath.endsWith(".pgp") || lowerPath.endsWith(".asc") || lowerPath.endsWith(".sig")) {
+        return inspectGpg(
+            bytes,
+            filePath
+        );
     }
 
     return inspectPemCryptoFile(
@@ -364,9 +536,11 @@ function cryptoGroupId(uri: vscode.Uri): string {
 }
 
 function fileNameOf(uri: vscode.Uri): string {
-    return uri.path.split("/").pop()
-        ?? uri.fsPath.split(/[\\/]/).pop()
-        ?? "crypto-file";
+    return (
+        uri.path.split("/").pop() ??
+        uri.fsPath.split(/[\\/]/).pop() ??
+        "crypto-file"
+    );
 }
 
 function findEntryInTree(

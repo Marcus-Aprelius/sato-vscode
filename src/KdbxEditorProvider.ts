@@ -285,8 +285,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         document: VaultDocument,
         panel: vscode.WebviewPanel
     ): Promise<void> {
-        const opened =
-            await openCertificateFile(document);
+        const opened = await openCertificateFile(document);
 
         if (!opened) {
             return;
