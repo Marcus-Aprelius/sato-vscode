@@ -90,7 +90,7 @@ export function setClientState(nextState: ClientInitialState): void {
         app.settings = nextState.settings;
     }
 
-    if (nextState.selectedEntryId) {
+    if (nextState.selectedEntryId !== undefined) {
         app.selectedEntryId = nextState.selectedEntryId;
     }
 

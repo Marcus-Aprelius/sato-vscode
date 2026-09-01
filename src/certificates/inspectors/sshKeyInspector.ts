@@ -1,9 +1,12 @@
 import * as fs from "fs";
-import * as os from "os";
 import * as path from "path";
 import * as crypto from "crypto";
-import { sha256Hex } from "../format";
+
+
 import { spawnSync } from "child_process";
+import { fileMetadata } from "../fileMetadata";
+import { formatSshAlgorithm, sshAlgorithmFromFilePath } from "../sshFormat";
+import { createTemporaryDirectory, removeTemporaryDirectory } from "../cli/tempDirectory";
 
 import type { CryptoInspection } from "../types";
 
@@ -12,15 +15,11 @@ export function inspectSshPrivateKey(
     bytes: Uint8Array,
     filePath: string
 ): CryptoInspection {
-    const algorithm = algorithmFromFilePath(filePath);
+    const algorithm = sshAlgorithmFromFilePath(filePath);
     const encrypted = isEncryptedOpenSshKey(text);
 
     if (encrypted) {
-        return lockedInspection(
-            bytes,
-            filePath,
-            algorithm
-        );
+        return lockedInspection(bytes, filePath, algorithm);
     }
 
     const publicKey = extractPublicKey(bytes, "");
@@ -33,20 +32,12 @@ export function inspectSshPrivateKey(
                 Status: "Unsupported",
                 Algorithm: algorithm,
                 Summary: "SSH private key detected, but its metadata could not be read.",
-                "File path": filePath, 
-                "File size": `${bytes.length} bytes`,
-                "SHA-256": sha256Hex(bytes)
+                ...fileMetadata(bytes, filePath)
             }
         };
     }
 
-    return unlockedInspection(
-        text,
-        bytes,
-        filePath,
-        publicKey,
-        false
-    );
+    return unlockedInspection(text, bytes, filePath, publicKey, false);
 }
 
 export function inspectSshPrivateKeyUnlocked(
@@ -64,11 +55,9 @@ export function inspectSshPrivateKeyUnlocked(
                 Format: detectKeyFormat(text),
                 Status: "Unlock failed",
                 Protection: "Password encrypted",
-                Algorithm: algorithmFromFilePath(filePath),
+                Algorithm: sshAlgorithmFromFilePath(filePath),
                 Summary: "Failed to unlock SSH private key. The password may be incorrect or ssh-keygen may be unavailable.",
-                "File path": filePath,
-                "File size": `${bytes.length} bytes`,
-                "SHA-256": sha256Hex(bytes)
+                ...fileMetadata(bytes, filePath)
             }
         };
     }
@@ -84,20 +73,12 @@ export function inspectSshPrivateKeyUnlocked(
                 Protection: "Password encrypted",
                 Algorithm: publicKey.algorithm,
                 Summary: "The SSH key password was accepted, but the unlocked private key could not be exported.",
-                "File path": filePath,
-                "File size": `${bytes.length} bytes`,
-                "SHA-256": sha256Hex(bytes)
+                ...fileMetadata(bytes, filePath)
             }
         };
     }
 
-    return unlockedInspection(
-        privateKeyPem,
-        bytes,
-        filePath,
-        publicKey,
-        true
-    );
+    return unlockedInspection(privateKeyPem, bytes, filePath, publicKey, true);
 }
 
 interface SshPublicKeyInfo {
@@ -124,14 +105,8 @@ function unlockedInspection(
             "Key size": publicKey.keySize,
             Comment: publicKey.comment,
             "Public key fingerprint": publicKey.fingerprint,
-            "File path": filePath,
-            "File size": `${bytes.length} bytes`,
-            "SHA-256": sha256Hex(bytes),
-            Summary: [
-                publicKey.algorithm,
-                publicKey.keySize,
-                "SSH private key."
-            ]
+            ...fileMetadata(bytes, filePath),
+            Summary: [publicKey.algorithm, publicKey.keySize, "SSH private key."]
                 .filter(Boolean)
                 .join(" ")
         },
@@ -152,9 +127,7 @@ function lockedInspection(
             Protection: "Password encrypted",
             Algorithm: algorithm,
             Summary: "Encrypted OpenSSH private key detected. Enter the password to inspect the key.",
-            "File path": filePath,
-            "File size": `${bytes.length} bytes`,
-            "SHA-256": sha256Hex(bytes)
+            ...fileMetadata(bytes, filePath)
         }
     };
 }
@@ -164,34 +137,16 @@ function extractPublicKey(
     password: string
 ): SshPublicKeyInfo | undefined {
     
-    const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "sato-ssh-key-"));
+    const temporaryDirectory = createTemporaryDirectory("sato-ssh-key-");
     const privateKeyPath = path.join(temporaryDirectory, "private-key");
 
     try {
-        fs.writeFileSync(
-            privateKeyPath,
-            Buffer.from(bytes),
-            {
-                mode: 0o600
-            }
-        );
+        fs.writeFileSync(privateKeyPath, Buffer.from(bytes), {mode: 0o600});
 
         const result = spawnSync(
             "ssh-keygen",
-            [
-                "-y",
-                "-P",
-                password,
-                "-f",
-                privateKeyPath
-            ],
-            {
-                encoding: "utf8",
-                timeout: 30000,
-                maxBuffer:
-                    4 * 1024 * 1024,
-                windowsHide: true
-            }
+            ["-y", "-P", password, "-f", privateKeyPath],
+            {encoding: "utf8", timeout: 30000, maxBuffer: 4 * 1024 * 1024, windowsHide: true}
         );
 
         if (result.error || result.status !== 0 || !result.stdout?.trim()) {
@@ -204,9 +159,7 @@ function extractPublicKey(
     } catch {
         return undefined;
     } finally {
-        removeTemporaryDirectory(
-            temporaryDirectory
-        );
+        removeTemporaryDirectory(temporaryDirectory);
     }
 }
 
@@ -214,48 +167,24 @@ function createUnlockedPrivateKeyCopy(
     bytes: Uint8Array,
     password: string
 ): string | undefined {
-    const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "sato-ssh-unlock-"));
 
+    const temporaryDirectory = createTemporaryDirectory("sato-ssh-unlock-");
     const privateKeyPath = path.join(temporaryDirectory, "private-key");
 
     try {
-        fs.writeFileSync(
-            privateKeyPath,
-            Buffer.from(bytes),
-            {
-                mode: 0o600
-            }
-        );
+        fs.writeFileSync(privateKeyPath, Buffer.from(bytes), {mode: 0o600});
 
         const result = spawnSync(
             "ssh-keygen",
-            [
-                "-p",
-                "-P",
-                password,
-                "-N",
-                "",
-                "-f",
-                privateKeyPath
-            ],
-            {
-                encoding: "utf8",
-                timeout: 30000,
-                maxBuffer:
-                    4 * 1024 * 1024,
-                windowsHide: true
-            }
+            ["-p", "-P", password, "-N", "", "-f", privateKeyPath],
+            {encoding: "utf8", timeout: 30000, maxBuffer: 4 * 1024 * 1024, windowsHide: true}
         );
 
         if (result.error || result.status !== 0 ) {
             return undefined;
         }
 
-        const privateKey =
-            fs.readFileSync(
-                privateKeyPath,
-                "utf8"
-            ).trim();
+        const privateKey = fs.readFileSync(privateKeyPath, "utf8").trim();
 
         if (!privateKey.startsWith("-----BEGIN ")) {
             return undefined;
@@ -265,9 +194,7 @@ function createUnlockedPrivateKeyCopy(
     } catch {
         return undefined;
     } finally {
-        removeTemporaryDirectory(
-            temporaryDirectory
-        );
+        removeTemporaryDirectory(temporaryDirectory);
     }
 }
 
@@ -276,11 +203,9 @@ function parsePublicKey(
 ): SshPublicKeyInfo | undefined {
     const parts = publicKey.trim().split(/\s+/);
 
-    if (parts.length < 2) {
-        return undefined;
-    }
+    if (parts.length < 2) {return undefined;}
 
-    const algorithm = formatAlgorithm(parts[0]);
+    const algorithm = formatSshAlgorithm(parts[0]);
     const encodedKey = parts[1];
 
     let keyBlob: Buffer;
@@ -291,9 +216,7 @@ function parsePublicKey(
         return undefined;
     }
 
-    if (!keyBlob.length) {
-        return undefined;
-    }
+    if (!keyBlob.length) {return undefined;}
 
     const fingerprint = crypto.createHash("sha256").update(keyBlob).digest("base64").replace(/=+$/, "");
 
@@ -309,35 +232,19 @@ function keySizeFromPublicBlob(
     algorithm: string,
     keyBlob: Buffer
 ): string {
-    if (algorithm === "ssh-ed25519") {
-        return "256 bits";
-    }
-
-    if (algorithm === "ecdsa-sha2-nistp256" ) {
-        return "256 bits";
-    }
-
-    if (algorithm === "ecdsa-sha2-nistp384") {
-        return "384 bits";
-    }
-
-    if (algorithm === "ecdsa-sha2-nistp521") {
-        return "521 bits";
-    }
-
-    if (algorithm !== "ssh-rsa") {
-        return "";
-    }
+    if (algorithm === "ssh-ed25519") {return "256 bits";}
+    if (algorithm === "ecdsa-sha2-nistp256" ) {return "256 bits";}
+    if (algorithm === "ecdsa-sha2-nistp384") {return "384 bits";}
+    if (algorithm === "ecdsa-sha2-nistp521") {return "521 bits";}
+    if (algorithm !== "ssh-rsa") {return "";}
 
     try {
         let offset = 0;
 
         const type = readBinaryString(keyBlob, offset);
-
         offset = type.nextOffset;
 
         const exponent = readBinaryString(keyBlob, offset);
-
         offset = exponent.nextOffset;
 
         const modulus = readBinaryString(keyBlob, offset).value;
@@ -365,28 +272,19 @@ function readBinaryString(
     nextOffset: number;
 } {
     if (offset + 4 > buffer.length) {
-        throw new Error(
-            "Invalid SSH public key."
-        );
+        throw new Error("Invalid SSH public key.");
     }
 
     const length = buffer.readUInt32BE(offset);
-
     const start = offset + 4;
     const end = start + length;
 
     if (end > buffer.length) {
-        throw new Error(
-            "Invalid SSH public key."
-        );
+        throw new Error("Invalid SSH public key.");
     }
 
     return {
-        value: buffer.subarray(
-            start,
-            end
-        ),
-        nextOffset: end
+        value: buffer.subarray(start, end), nextOffset: end
     };
 }
 
@@ -394,10 +292,7 @@ function isEncryptedOpenSshKey(
     text: string
 ): boolean {
     if (!text.includes("-----BEGIN OPENSSH PRIVATE KEY-----")) {
-        return (
-            text.includes("-----BEGIN ENCRYPTED PRIVATE KEY-----") ||
-            /Proc-Type:\s*4,ENCRYPTED/i.test(text)
-        );
+        return (text.includes("-----BEGIN ENCRYPTED PRIVATE KEY-----") || /Proc-Type:\s*4,ENCRYPTED/i.test(text));
     }
 
     try {
@@ -407,28 +302,16 @@ function isEncryptedOpenSshKey(
             .replace(/\s+/g, "");
 
         const decoded = Buffer.from(base64, "base64");
-
         const marker = Buffer.from("openssh-key-v1\0", "ascii");
 
-        if (
-            decoded.length < marker.length ||
-            !decoded
-                .subarray(
-                    0,
-                    marker.length
-                )
-                .equals(marker)
-        ) {
+        if (decoded.length < marker.length || !decoded.subarray(0, marker.length).equals(marker)) {
             return false;
         }
 
         const cipherName = readBinaryString(decoded, marker.length);
 
         return (
-            cipherName.value.toString(
-                "utf8"
-            ) !== "none"
-        );
+            cipherName.value.toString("utf8") !== "none");
     } catch {
         return false;
     }
@@ -437,95 +320,11 @@ function isEncryptedOpenSshKey(
 function detectKeyFormat(
     text: string
 ): string {
-    if (text.includes("-----BEGIN OPENSSH PRIVATE KEY-----")) {
-        return "OpenSSH";
-    }
-
-    if (text.includes("-----BEGIN RSA PRIVATE KEY-----")) {
-        return "PEM RSA";
-    }
-
-    if (text.includes("-----BEGIN EC PRIVATE KEY-----")) {
-        return "PEM EC";
-    }
-
-    if (text.includes("-----BEGIN ENCRYPTED PRIVATE KEY-----")) {
-        return "PKCS#8 PEM";
-    }
-
-    if (text.includes("-----BEGIN PRIVATE KEY-----")) {
-        return "PKCS#8 PEM";
-    }
+    if (text.includes("-----BEGIN OPENSSH PRIVATE KEY-----")) {return "OpenSSH";}
+    if (text.includes("-----BEGIN RSA PRIVATE KEY-----")) {return "PEM RSA";}
+    if (text.includes("-----BEGIN EC PRIVATE KEY-----")) {return "PEM EC";}
+    if (text.includes("-----BEGIN ENCRYPTED PRIVATE KEY-----")) {return "PKCS#8 PEM";}
+    if (text.includes("-----BEGIN PRIVATE KEY-----")) {return "PKCS#8 PEM";}
 
     return "PEM";
-}
-
-function algorithmFromFilePath(
-    filePath: string
-): string {
-    const fileName = filePath
-        .replace(/\\/g, "/")
-        .split("/")
-        .pop()
-        ?.toLowerCase();
-
-    switch (fileName) {
-        case "id_rsa":
-            return "RSA";
-
-        case "id_ecdsa":
-            return "ECDSA";
-
-        case "id_ed25519":
-            return "Ed25519";
-
-        default:
-            return "SSH";
-    }
-}
-
-function formatAlgorithm(
-    algorithm: string
-): string {
-    switch (algorithm) {
-        case "ssh-rsa":
-            return "RSA";
-
-        case "ssh-dss":
-            return "DSA";
-
-        case "ssh-ed25519":
-            return "Ed25519";
-
-        case "ssh-ed448":
-            return "Ed448";
-
-        case "ecdsa-sha2-nistp256":
-            return "ECDSA P-256";
-
-        case "ecdsa-sha2-nistp384":
-            return "ECDSA P-384";
-
-        case "ecdsa-sha2-nistp521":
-            return "ECDSA P-521";
-
-        default:
-            return algorithm;
-    }
-}
-
-function removeTemporaryDirectory(
-    temporaryDirectory: string
-): void {
-    try {
-        fs.rmSync(
-            temporaryDirectory,
-            {
-                recursive: true,
-                force: true
-            }
-        );
-    } catch {
-        // Ignore temporary file cleanup errors.
-    }
 }

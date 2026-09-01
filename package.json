@@ -3,7 +3,7 @@
   "displayName": "SATO Secrets",
   "description": "Browse password vaults and crypto files directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
@@ -55,6 +55,8 @@
     "putty",
     "ppk",
     "ssh-key",
+    "age-encryption",
+    "age-file",
     "jks",
     "jceks",
     "openpgp",
@@ -62,7 +64,6 @@
     "pgp",
     "signature",
     "ssh",
-    "ssh-key",
     "id-rsa",
     "id-ecdsa",
     "id-ed25519"
@@ -136,6 +137,9 @@
           },
           {
             "filenamePattern": "*.ppk"
+          },
+          {
+            "filenamePattern": "*.age"
           },
           {
             "filenamePattern": "*.jks"

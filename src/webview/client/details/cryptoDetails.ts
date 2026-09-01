@@ -7,6 +7,12 @@ import { renderStatus } from "../status";
 import { renderDetails } from "./index";
 
 import {
+    isCryptoContainer,
+    isCryptoContainerUnlocked,
+    isOpenPgpMessage
+} from "../crypto/containerTypes";
+
+import {
     countCryptoEmptyValues,
     emptyValuesButtonText,
     emptyValuesButtonTitle
@@ -57,8 +63,9 @@ export function renderCryptoDetails(
     actions.appendChild(toggleEmpty);
 
     if (isCryptoContainer(entry)) {
-        const containerUnlocked = isUnlockedCryptoContainer(entry);
+        const containerUnlocked = isCryptoContainerUnlocked(entry);
         const openPgp = isOpenPgpMessage(entry);
+        const ageFile = entry.values?.Type === "age Encrypted File";
 
         const containerButton = createButton(
             containerUnlocked
@@ -70,11 +77,17 @@ export function renderCryptoDetails(
                         ? "Hide Decrypted Content"
                         : "Decrypt Message"
                 )
-                : (
-                    containerUnlocked
-                        ? "Lock Container"
-                        : "Unlock Container"
-                )
+                : ageFile
+                    ? (
+                        containerUnlocked
+                            ? "Hide Decrypted Content"
+                            : "Decrypt File"
+                    )
+                    : (
+                        containerUnlocked
+                            ? "Lock Container"
+                            : "Unlock Container"
+                    )
         );
 
         containerButton.addEventListener("click", () => {
@@ -91,7 +104,6 @@ export function renderCryptoDetails(
                 type: "prepareCryptoUnlock",
                 entryId: entry.id
             });
-
         });
 
         actions.appendChild(containerButton);
@@ -196,38 +208,4 @@ function renderCryptoValuesTable(
     }
 
     container.appendChild(table);
-}
-
-function isCryptoContainer(
-    entry: ClientEntry
-): boolean {
-    const type = entry.values?.Type || "";
-    const protection = entry.values?.Protection || "";
-    const encryption = entry.values?.Encryption || "";
-    const status = entry.values?.Status || "";
-    const encryptedPkcs8 = type === "PKCS#8 Private Key" && (protection === "Password encrypted" || status === "Locked");
-    const encryptedPpk = type === "PuTTY Private Key" && (status === "Locked" || (encryption !== "" && encryption.toLowerCase() !== "none"));
-    const encryptedSshKey = type === "OpenSSH Private Key" && ( status === "Locked" || protection === "Password encrypted" );
-
-    return (
-        entry.readOnly === true &&
-        (
-            type === "PKCS#12 Container" ||
-            type === "Java KeyStore" ||
-            type === "Java Cryptography Extension KeyStore" ||
-            type === "OpenPGP Encrypted Message" ||
-            encryptedPkcs8 ||
-            encryptedPpk ||
-            encryptedSshKey
-        )
-    );
-}
-
-
-function isUnlockedCryptoContainer(entry: ClientEntry): boolean {
-    return entry.values?.Status === "Unlocked";
-}
-
-function isOpenPgpMessage(entry: ClientEntry): boolean {
-    return entry.values?.Type === "OpenPGP Encrypted Message";
 }

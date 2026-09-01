@@ -201,33 +201,18 @@ export async function handleCryptoMessage(
     }
 
     if (msg.type === "copyText") {
-        await runtime.copyToClipboard(
-            msg.text,
-            "SATO: copied text",
-            runtime.readSettings()
-        );
+        await runtime.copyToClipboard(msg.text, "SATO: copied text", runtime.readSettings());
 
         return true;
     }
 
     if (msg.type === "revealPrivateKey") {
-        const entryId =
-            msg.entryId ||
-            certificate.selectedEntryId;
-
-        const privateKeyPem =
-            certificate
-                .privateKeysByEntryId?.[
-                    entryId
-                ] ||
-            certificate.privateKeyPem;
+        
+        const entryId = msg.entryId || certificate.selectedEntryId;
+        const privateKeyPem = certificate.privateKeysByEntryId?.[entryId];
 
         if (privateKeyPem) {
-            panel.webview.postMessage({
-                type: "privateKeyRevealed",
-                entryId,
-                value: privateKeyPem
-            });
+            panel.webview.postMessage({type: "privateKeyRevealed", entryId, value: privateKeyPem});
         }
 
         return true;
@@ -241,7 +226,7 @@ async function selectOpenPgpPrivateKey(
     panel: vscode.WebviewPanel,
     entryId: string
 ): Promise<void> {
-    const encryptedFile =
+    const encryptedFile = 
         document.certificate
             ?.filesByEntryId?.[entryId];
 
@@ -249,8 +234,7 @@ async function selectOpenPgpPrivateKey(
         panel.webview.postMessage({
             type: "cryptoContainerUnlockFailed",
             entryId,
-            message:
-                "Encrypted OpenPGP file is not available."
+            message: "Encrypted OpenPGP file is not available."
         });
 
         return;
@@ -258,13 +242,10 @@ async function selectOpenPgpPrivateKey(
 
     const selected =
         await vscode.window.showOpenDialog({
-            title:
-                "SATO - Select OpenPGP Private Key",
+            title: "SATO - Select OpenPGP Private Key",
 
             defaultUri: vscode.Uri.file(
-                path.dirname(
-                    encryptedFile.uri.fsPath
-                )
+                path.dirname(encryptedFile.uri.fsPath)
             ),
 
             canSelectFiles: true,
@@ -272,15 +253,8 @@ async function selectOpenPgpPrivateKey(
             canSelectMany: false,
 
             filters: {
-                "OpenPGP private keys": [
-                    "asc",
-                    "gpg",
-                    "pgp"
-                ],
-
-                "All files": [
-                    "*"
-                ]
+                "OpenPGP private keys": ["asc", "gpg", "pgp"],
+                "All files": ["*"]
             }
         });
 
@@ -307,9 +281,7 @@ function prepareCryptoContainerUnlock(
             ?.filesByEntryId?.[entryId];
 
     if (!file) {
-        vscode.window.showWarningMessage(
-            "SATO: encrypted file is not available."
-        );
+        vscode.window.showWarningMessage("SATO: encrypted file is not available.");
 
         return;
     }
@@ -318,10 +290,7 @@ function prepareCryptoContainerUnlock(
         return;
     }
 
-    panel.webview.postMessage({
-        type: "cryptoUnlockReady",
-        entryId
-    });
+    panel.webview.postMessage({type: "cryptoUnlockReady", entryId});
 }
 
 function postCertificateState(

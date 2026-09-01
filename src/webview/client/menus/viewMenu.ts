@@ -9,41 +9,17 @@ import { countCryptoEmptyValues, countVaultEmptyValues } from "../details/emptyV
 import type { MenuItem } from "../types";
 
 export function openViewMenu(button: HTMLElement): void {
+    
     const entry = getSelectedEntry();
-
-    const isCryptoEntry = !!(
-        entry &&
-        entry.readOnly
-    );
-
-    const emptyValuesCount = entry
-        ? isCryptoEntry
-            ? countCryptoEmptyValues(entry)
-            : countVaultEmptyValues(entry)
-        : 0;
-
-    const showEmptyValues = isCryptoEntry
-        ? app.showEmptyValues
-        : app.showVaultEmptyValues;
-
-    const hasPrivateKey = !!(
-        entry &&
-        entry.readOnly &&
-        entry.hasPrivateKey
-    );
+    const isCryptoEntry = !!(entry && entry.readOnly);
+    const emptyValuesCount = entry ? isCryptoEntry ? countCryptoEmptyValues(entry) : countVaultEmptyValues(entry) : 0;
+    const showEmptyValues = isCryptoEntry ? app.showEmptyValues : app.showVaultEmptyValues;
+    const hasPrivateKey = !!(entry && entry.readOnly && entry.hasPrivateKey);
 
     const items: MenuItem[] = [
         {
-            label: showEmptyValues
-                ? "✓ Show Empty Values"
-                : "Show Empty Values",
-
-            title: emptyValuesCount === 0
-                ? "No empty values"
-                : showEmptyValues
-                    ? "Hide empty values"
-                    : "Show empty values",
-
+            label: showEmptyValues ? "✓ Show Empty Values" : "Show Empty Values",
+            title: emptyValuesCount === 0 ? "No empty values" : showEmptyValues ? "Hide empty values" : "Show empty values",
             disabled: emptyValuesCount === 0,
 
             action: () => {
@@ -52,11 +28,9 @@ export function openViewMenu(button: HTMLElement): void {
                 }
 
                 if (isCryptoEntry) {
-                    app.showEmptyValues =
-                        !app.showEmptyValues;
+                    app.showEmptyValues = !app.showEmptyValues;
                 } else {
-                    app.showVaultEmptyValues =
-                        !app.showVaultEmptyValues;
+                    app.showVaultEmptyValues = !app.showVaultEmptyValues;
                 }
 
                 renderDetails();
@@ -66,16 +40,8 @@ export function openViewMenu(button: HTMLElement): void {
         },
 
         {
-            label: app.privateKeyVisible
-                ? "✓ Show Primary Key"
-                : "Show Primary Key",
-
-            title: hasPrivateKey
-                ? app.privateKeyVisible
-                    ? "Hide private key"
-                    : "Show private key"
-                : "No private key available",
-
+            label: app.privateKeyVisible ? "✓ Show Private Key" : "Show Private Key",
+            title: hasPrivateKey ? app.privateKeyVisible ? "Hide private key" : "Show private key" : "No private key available",
             disabled: !hasPrivateKey,
 
             action: () => {
@@ -94,38 +60,21 @@ export function openViewMenu(button: HTMLElement): void {
                     return;
                 }
 
-                vscode.postMessage({
-                    type: "revealPrivateKey",
-                    entryId: entry.id
-                });
+                vscode.postMessage({type: "revealPrivateKey", entryId: entry.id});
             }
         },
 
-        {
-            sep: true
-        },
+        { sep: true },
 
         {
-            label: app.settings.showStatusBar
-                ? "✓ Show Status Bar"
-                : "Show Status Bar",
-
-            title: app.settings.showStatusBar
-                ? "Hide status bar"
-                : "Show status bar",
+            label: app.settings.showStatusBar ? "✓ Show Status Bar" : "Show Status Bar",
+            title: app.settings.showStatusBar ? "Hide status bar" : "Show status bar",
 
             action: () => {
-                const next = {
-                    ...app.settings,
-                    showStatusBar: !app.settings.showStatusBar
-                };
+                const next = {...app.settings, showStatusBar: !app.settings.showStatusBar};
 
                 app.settings = next;
-
-                vscode.postMessage({
-                    type: "updateSettings",
-                    settings: next
-                });
+                vscode.postMessage({type: "updateSettings", settings: next});
 
                 renderStatus();
             }

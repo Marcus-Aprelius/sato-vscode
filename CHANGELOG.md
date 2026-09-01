@@ -1,5 +1,21 @@
 # Change Log
 
+# 0.1.4
+
+## Changed:
+  * `README.md` updated
+  * code refactored without changing functionality
+  * code improvement:
+    * duplication removed
+    * removed possibility of displaying the private key of another entry
+    * ASC file encryption has been fixed
+
+## Added:
+  * Added read-only `.age` encrypted file inspection
+  * Added a File menu command (`Open with Default Editor`) to reopen the current file with the default VS Code editor
+
+---
+
 # 0.1.3
 
 ## Changed:

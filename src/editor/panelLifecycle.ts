@@ -6,45 +6,23 @@ import type { ActiveEditor, FromWebview } from "../types";
 export interface PanelLifecycleRuntime {
     extensionUri: vscode.Uri;
 
-    scheduleAutoLock: (
-        editor: ActiveEditor
-    ) => void;
-
-    clearAutoLock: (
-        editor: ActiveEditor
-    ) => void;
-
-    handleMessage: (
-        msg: FromWebview
-    ) => Promise<void>;
-
-    removeEditor: (
-        editor: ActiveEditor
-    ) => void;
+    scheduleAutoLock: (editor: ActiveEditor) => void;
+    clearAutoLock: (editor: ActiveEditor) => void;
+    handleMessage: (msg: FromWebview) => Promise<void>;
+    removeEditor: (editor: ActiveEditor) => void;
 }
 
 export function configurePanelLifecycle(
     editor: ActiveEditor,
     runtime: PanelLifecycleRuntime
 ): void {
-    const {
-        document,
-        panel
-    } = editor;
+    const {document, panel} = editor;
 
     panel.webview.options = {
         enableScripts: true,
-
         localResourceRoots: [
-            vscode.Uri.joinPath(
-                runtime.extensionUri,
-                "assets"
-            ),
-
-            vscode.Uri.joinPath(
-                runtime.extensionUri,
-                "dist"
-            )
+            vscode.Uri.joinPath(runtime.extensionUri, "assets"),
+            vscode.Uri.joinPath(runtime.extensionUri, "dist")
         ]
     };
 
@@ -52,7 +30,13 @@ export function configurePanelLifecycle(
         (msg: FromWebview) => {
             runtime.scheduleAutoLock(editor);
 
-            void runtime.handleMessage(msg);
+            void runtime.handleMessage(msg).catch((err) => {
+                console.error("SATO: failed to handle webview message:", err);
+
+                vscode.window.showErrorMessage(
+                    err instanceof Error ? `SATO: operation failed - ${err.message}` : "SATO: operation failed."
+                );
+            });
         }
     );
 

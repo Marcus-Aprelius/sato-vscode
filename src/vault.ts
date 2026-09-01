@@ -1,4 +1,5 @@
 import * as kdbxweb from "kdbxweb";
+import { isWeakPassword } from "./security/passwordStrength";
 
 export interface EntryView {
     id: string;
@@ -82,7 +83,7 @@ function mapEntry(entry: kdbxweb.KdbxEntry, parentId: string): EntryView {
         fields: [...entry.fields.keys()],
         hasPassword: passwordLength > 0,
         passwordLength,
-        weak: passwordLength > 0 && isWeak(password),
+        weak: passwordLength > 0 && isWeakPassword(password),
         expired: isExpired(entry)
     };
 }
@@ -117,18 +118,6 @@ function isExpired(entry: kdbxweb.KdbxEntry): boolean {
     return expiry.getTime() <= Date.now();
 }
 
-function isWeak(password: string): boolean {
-    if (password.length < 10) {
-        return true;
-    }
-    let classes = 0;
-    if (/[a-z]/.test(password)) classes++;
-    if (/[A-Z]/.test(password)) classes++;
-    if (/[0-9]/.test(password)) classes++;
-    if (/[^A-Za-z0-9]/.test(password)) classes++;
-    return classes < 3;
-}
-
 export function computeStats(db: kdbxweb.Kdbx): VaultStats {
     const stats: VaultStats = {
         groups: 0,
@@ -152,7 +141,7 @@ export function computeStats(db: kdbxweb.Kdbx): VaultStats {
             }
             const password = readProtected(entry, "Password");
             if (password.length > 0) {
-                if (isWeak(password)) {
+                if (isWeakPassword(password)) {
                     stats.weak++;
                 }
                 passwordCounts.set(password, (passwordCounts.get(password) ?? 0) + 1);

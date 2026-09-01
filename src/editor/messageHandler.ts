@@ -60,6 +60,16 @@ export async function handleEditorMessage(
         return;
     }
 
+    if (msg.type === "openWithDefaultEditor") {
+        await vscode.commands.executeCommand(
+            "vscode.openWith",
+            document.uri,
+            "default"
+        );
+
+        return;
+    }
+
     if (msg.type === "openDirectory") {
         await openCryptoDirectory(
             runtime.viewType

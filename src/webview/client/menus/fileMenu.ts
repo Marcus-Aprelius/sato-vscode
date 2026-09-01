@@ -28,6 +28,17 @@ export function openFileMenu(button: HTMLElement): void {
             }
         },
 
+        {
+            label: "Open with Default Editor",
+            title: "Reopen current file with the default VS Code editor",
+
+            action: () => {
+                vscode.postMessage({
+                    type: "openWithDefaultEditor"
+                });
+            }
+        },
+
         { sep: true },
 
         {
