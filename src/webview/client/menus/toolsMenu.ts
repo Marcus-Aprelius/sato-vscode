@@ -1,7 +1,8 @@
 import { vscode } from "../globals";
 import { openModal } from "../modals";
-import type { MenuItem } from "../types";
 import { openDropdown } from "../contextMenu";
+
+import type { MenuItem } from "../types";
 
 import {
     isCryptoContainer,
@@ -20,17 +21,14 @@ export function openToolsMenu(button: HTMLElement): void {
     const crypto = isCryptoFileView();
     const readOnly = isReadOnlyVault();
     const entry = getSelectedEntry();
-
     const cryptoContainer = isCryptoContainer(entry);
     const cryptoContainerUnlocked = isCryptoContainerUnlocked(entry);
     const openPgpMessage = isOpenPgpMessage(entry);
-
     const databaseActionUnavailable = crypto || readOnly;
+
     const items: MenuItem[] = [
         {
-            label: app.vaultLocked
-                ? "Unlock Database"
-                : "Lock Database",
+            label: app.vaultLocked ? "Unlock Database" : "Lock Database",
 
             title: crypto
                 ? "Not available for crypto files"
@@ -40,16 +38,9 @@ export function openToolsMenu(button: HTMLElement): void {
                         ? "Unlock current database"
                         : "Lock current database",
 
-            icon: app.vaultLocked
-                ? "codicon-unlock"
-                : "codicon-lock",
-
+            icon: app.vaultLocked ? "codicon-unlock" : "codicon-lock",
             iconPosition: "left",
-
-            iconTone: app.vaultLocked
-                ? "locked"
-                : "unlocked",
-
+            iconTone: app.vaultLocked ? "locked" : "unlocked",
             disabled: databaseActionUnavailable,
 
             action: () => {
@@ -62,51 +53,24 @@ export function openToolsMenu(button: HTMLElement): void {
                     return;
                 }
 
-                vscode.postMessage({
-                    type: "lock"
-                });
+                vscode.postMessage({type: "lock"});
             }
         },
 
-        {
-            sep: true
-        },
+        { sep: true },
 
         {
             label: openPgpMessage
-                ? (
-                    cryptoContainerUnlocked
-                        ? "Hide Decrypted Content"
-                        : "Decrypt Message"
-                )
-                : (
-                    cryptoContainerUnlocked
-                        ? "Lock Container"
-                        : "Unlock Container"
-                ),
+                ? (cryptoContainerUnlocked ? "Hide Decrypted Content" : "Decrypt Message")
+                : (cryptoContainerUnlocked ? "Lock Container" : "Unlock Container"),
 
             title: openPgpMessage
-                ? (
-                    cryptoContainerUnlocked
-                        ? "Hide decrypted OpenPGP content"
-                        : "Decrypt current OpenPGP message"
-                )
-                : (
-                    cryptoContainerUnlocked
-                        ? "Lock current crypto container"
-                        : "Unlock current crypto container"
-                ),
+                ? (cryptoContainerUnlocked ? "Hide decrypted OpenPGP content" : "Decrypt current OpenPGP message")
+                : (cryptoContainerUnlocked ? "Lock current crypto container" : "Unlock current crypto container"),
 
-            icon: cryptoContainerUnlocked
-                ? "codicon-eye"
-                : "codicon-eye-closed",
-
+            icon: cryptoContainerUnlocked ? "codicon-eye" : "codicon-eye-closed",
             iconPosition: "left",
-
-            iconTone: cryptoContainerUnlocked
-                ? "unlocked"
-                : "locked",
-
+            iconTone: cryptoContainerUnlocked ? "unlocked" : "locked",
             disabled: !cryptoContainer,
 
             action: () => {
@@ -115,30 +79,19 @@ export function openToolsMenu(button: HTMLElement): void {
                 }
 
                 if (cryptoContainerUnlocked) {
-                    vscode.postMessage({
-                        type: "lockCryptoContainer",
-                        entryId: entry.id
-                    });
-
+                    vscode.postMessage({type: "lockCryptoContainer", entryId: entry.id});
                     return;
                 }
 
-                vscode.postMessage({
-                    type: "prepareCryptoUnlock",
-                    entryId: entry.id
-                });
+                vscode.postMessage({type: "prepareCryptoUnlock", entryId: entry.id});
             }
         },
 
-        {
-            sep: true
-        },
+        { sep: true },
 
         {
             label: "Password Generator",
-            title: app.vaultLocked
-                ? "Unlock the database first"
-                : "Open password generator",
+            title: app.vaultLocked ? "Unlock the database first" : "Open password generator",
             disabled: app.vaultLocked,
 
             action: () => {

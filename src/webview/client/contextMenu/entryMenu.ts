@@ -1,9 +1,6 @@
 import { showMenu } from "./menu";
 import { vscode } from "../globals";
-import { renderStatus } from "../status";
 import { openEntryModal } from "../modals";
-import { updateMainActionButton } from "../buttons";
-import { clearPrivateKeyValue, renderDetails } from "../details";
 
 import {
     app,
@@ -42,33 +39,6 @@ export function openEntryMenu(
             });
         }
 
-        if (entry.hasPrivateKey) {
-            if (items.length > 0) {
-                items.push({sep: true});
-            }
-
-            items.push({
-                label: app.privateKeyVisible ? "Hide Private Key" : "Show Private Key",
-                icon: app.privateKeyVisible ? "codicon-eye" : "codicon-eye-closed",
-                title: app.privateKeyVisible ? "Hide private key" : "Show private key",
-
-                action: () => {
-                    if (app.privateKeyVisible) {
-                        app.privateKeyVisible = false;
-
-                        clearPrivateKeyValue(entryId);
-                        renderDetails();
-                        renderStatus();
-                        updateMainActionButton();
-
-                        return;
-                    }
-
-                    vscode.postMessage({type: "revealPrivateKey", entryId});
-                }
-            });
-        }
-
         if (items.length > 0) {
             showMenu(x, y, items);
         }
@@ -82,7 +52,6 @@ export function openEntryMenu(
                 {
                     label: "Copy Username",
                     disabled: !entry.username,
-
                     action: () => {vscode.postMessage({type: "copySecret", entryId, field: "UserName"});}
                 },
                 {

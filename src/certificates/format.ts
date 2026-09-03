@@ -18,11 +18,7 @@ export function collectOpenSslValues(
     pattern: RegExp
 ): string[] {
     const result: string[] = [];
-
-    const flags = pattern.flags.includes("g")
-        ? pattern.flags
-        : pattern.flags + "g";
-
+    const flags = pattern.flags.includes("g") ? pattern.flags : pattern.flags + "g";
     const regex = new RegExp(pattern.source, flags);
 
     let match: RegExpExecArray | null;
@@ -44,14 +40,8 @@ export function uniqueValues(values: string[]): string[] {
 
 export function sanitizeOpenSslDetails(text: string): string {
     return text
-        .replace(
-            /-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g,
-            "[certificate PEM omitted]"
-        )
-        .replace(
-            /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g,
-            "[private key omitted]"
-        )
+        .replace(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g, "[certificate PEM omitted]")
+        .replace(/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g, "[private key omitted]")
         .trim();
 }
 

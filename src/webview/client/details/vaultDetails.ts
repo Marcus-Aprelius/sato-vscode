@@ -28,17 +28,11 @@ export function renderVaultDetails(
         app.showVaultEmptyValues
             ? "btn primary crypto-toggle-empty-btn"
             : "btn danger crypto-toggle-empty-btn",
-        emptyValuesButtonText(
-            app.showVaultEmptyValues,
-            emptyValuesCount
-        )
+        emptyValuesButtonText(app.showVaultEmptyValues, emptyValuesCount)
     );
 
     toggleEmpty.disabled = emptyValuesCount === 0;
-    toggleEmpty.title = emptyValuesButtonTitle(
-        app.showVaultEmptyValues,
-        emptyValuesCount
-    );
+    toggleEmpty.title = emptyValuesButtonTitle(app.showVaultEmptyValues, emptyValuesCount);
 
     toggleEmpty.addEventListener("click", () => {
         if (emptyValuesCount === 0) {
@@ -68,26 +62,21 @@ function renderVaultValuesTable(
 
     for (const field of fields) {
         const previewValue =
-            getVaultFieldPreviewValue(
-                entry,
-                field
-            );
+            getVaultFieldPreviewValue(entry, field);
 
-        if (
-            !app.showVaultEmptyValues &&
-            !previewValue
-        ) {
+        if (!app.showVaultEmptyValues && !previewValue) {
             continue;
         }
 
         const tr = document.createElement("tr");
-
         const tdLabel = document.createElement("td");
+
         tdLabel.className = "label";
         tdLabel.textContent = field;
 
         const tdValue = document.createElement("td");
         const value = document.createElement("div");
+
         value.className = "value";
 
         if (field === "Password") {
@@ -105,11 +94,7 @@ function renderVaultValuesTable(
                 return;
             }
 
-            vscode.postMessage({
-                type: "copySecret",
-                entryId: entry.id,
-                field
-            });
+            vscode.postMessage({type: "copySecret", entryId: entry.id, field});
         });
 
         value.appendChild(copy);
@@ -146,11 +131,7 @@ function renderPasswordField(
         }
 
         if (input.type === "password") {
-            vscode.postMessage({
-                type: "revealSecret",
-                entryId: entry.id,
-                field
-            });
+            vscode.postMessage({type: "revealSecret", entryId: entry.id, field});
 
             return;
         }
@@ -163,11 +144,7 @@ function renderPasswordField(
     value.appendChild(reveal);
 
     if (app.settings?.showPasswordsByDefault && entry.hasPassword) {
-        vscode.postMessage({
-            type: "revealSecret",
-            entryId: entry.id,
-            field
-        });
+        vscode.postMessage({type: "revealSecret", entryId: entry.id, field});
     }
 }
 
@@ -177,7 +154,6 @@ function renderPlainField(
     field: string
 ): void {
     const fieldText = getVaultFieldPreviewValue(entry, field);
-
     const span = document.createElement("span");
 
     span.textContent = fieldText || "(empty)";
@@ -195,10 +171,7 @@ function renderPlainField(
                 return;
             }
 
-            vscode.postMessage({
-                type: "openUrl",
-                url: fieldText
-            });
+            vscode.postMessage({type: "openUrl", url: fieldText});
         });
 
         value.appendChild(go);
@@ -213,33 +186,16 @@ function renderVaultActions(
     actions.className = "actions";
 
     const editButton = createButton("btn primary", "Edit");
-
-    editButton.addEventListener("click", () => {
-        openEntryModal(entry.id);
-    });
-
+    editButton.addEventListener("click", () => {openEntryModal(entry.id);});
     actions.appendChild(editButton);
 
     const duplicateButton = createButton("btn", "Duplicate");
-
-    duplicateButton.addEventListener("click", () => {
-        vscode.postMessage({
-            type: "duplicateEntry",
-            entryId: entry.id
-        });
-    });
-
+    duplicateButton.addEventListener("click", () => {vscode.postMessage({type: "duplicateEntry", entryId: entry.id});});
     actions.appendChild(duplicateButton);
 
     const deleteButton = createButton("btn danger", "Delete");
-
-    deleteButton.addEventListener("click", () => {
-        vscode.postMessage({
-            type: "deleteEntry",
-            entryId: entry.id
-        });
-    });
-
+    deleteButton.addEventListener("click", () => {vscode.postMessage({type: "deleteEntry", entryId: entry.id});});
     actions.appendChild(deleteButton);
+
     container.appendChild(actions);
 }

@@ -21,10 +21,7 @@ export function inspectCsr(
             Type: "Certificate Signing Request",
             Encoding: isPem ? "PEM" : "DER",
             "PEM block": pemType,
-            ...fileMetadata(
-                bytes,
-                filePath
-            ),
+            ...fileMetadata(bytes, filePath),
             Summary: "CSR detected, but OpenSSL inspection failed."
         };
     }
@@ -53,10 +50,7 @@ export function inspectCsr(
         "Key Size": keySize,
         "Signature Algorithm": signatureAlgorithm,
         Attributes: attributes,
-        ...fileMetadata(
-            bytes,
-            filePath
-        ),
+        ...fileMetadata(bytes, filePath),
         Summary: summary || "CSR parsed successfully."
     };
 }

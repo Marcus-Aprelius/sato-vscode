@@ -147,14 +147,15 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 
 ## Extension Settings
 
-| Setting                        | Description                                                                            |
-|--------------------------------|----------------------------------------------------------------------------------------|
-| `sato.autoLockTimeout`         | Auto-lock vault after N minutes of inactivity.<br>`0` disables auto-lock               |
-| `sato.clipboardClearTimeout`   | Clear clipboard N seconds after copying a secret.<br>`0` disables clipboard auto-clear |
-| `sato.passwordGeneratorLength` | Default password length used by the generator                                          |
-| `sato.confirmBeforeDelete`     | Ask for confirmation before deleting entries or folders                                |
-| `sato.showPasswordsByDefault`  | Reveal passwords automatically in the entry details pane                               |
-| `sato.showStatusBar`           | Show or hide the vault statistics bar                                                  |
+| Setting                         | Description                                                                            |
+|---------------------------------|----------------------------------------------------------------------------------------|
+| `sato.autoLockTimeout`          | Auto-lock vault after N minutes of inactivity.<br>`0` disables auto-lock               |
+| `sato.clipboardClearTimeout`    | Clear clipboard N seconds after copying a secret.<br>`0` disables clipboard auto-clear |
+| `sato.passwordGeneratorLength`  | Default password length used by the generator                                          |
+| `sato.confirmBeforeDelete`      | Ask for confirmation before deleting entries or folders                                |
+| `sato.showPasswordsByDefault`   | Reveal passwords automatically in the entry details pane                               |
+| `sato.showEmptyValuesByDefault` | Show empty values by default in vault and crypto file details                          |
+| `sato.showStatusBar`            | Show or hide the vault statistics bar                                                  |
 
 ---
 
@@ -171,17 +172,13 @@ Open folder `.devcontainer` in VSCode and use commands:
 
 ---
 
-## Repository
-**VS Code extension**: https://github.com/Marcus-Aprelius/sato-vscode
+## Links
 
-**SATO command line tool**: https://github.com/Marcus-Aprelius/sato
-
----
-
-[MIT LICENSE](LICENSE)
+[[Git: sato-vscode](https://github.com/Marcus-Aprelius/sato-vscode)]
+[[Git: sato](https://github.com/Marcus-Aprelius/sato)]
+[[LICENSE (MIT)](LICENSE)]
+[[Teams (Skype)](marcus.aprelius.antoninus@gmail.com)]
 
 ---
 
 © 2026 [Marcus-Aprelius](https://github.com/Marcus-Aprelius/sato-vscode)
-
-**Discord:** Marcus.Aprelius.Antoninus

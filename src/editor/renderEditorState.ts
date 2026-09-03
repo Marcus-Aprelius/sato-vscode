@@ -40,9 +40,7 @@ export function renderLockedShell(
         weak: 0
     };
 
-    const resources = createResourceUris(
-        context.extensionUri
-    );
+    const resources = createResourceUris(context.extensionUri);
 
     panel.webview.html = renderVault(
         panel.webview,
@@ -58,15 +56,10 @@ export function renderLockedShell(
         GIT_COMMIT
     );
 
-    setTimeout(() => {
-        panel.webview.postMessage({
-            type: "vaultLocked"
-        });
+    setTimeout(() => {panel.webview.postMessage({type: "vaultLocked"});
 
         if (openUnlockModal) {
-            panel.webview.postMessage({
-                type: "openUnlockModal"
-            });
+            panel.webview.postMessage({type: "openUnlockModal"});
         }
     }, 100);
 }
@@ -79,9 +72,7 @@ export function renderEditorState(
 ): void {
     const settings = context.readSettings();
 
-    const resources = createResourceUris(
-        context.extensionUri
-    );
+    const resources = createResourceUris(context.extensionUri);
 
     if (document.certificate) {
         const certificate = document.certificate;
@@ -104,13 +95,7 @@ export function renderEditorState(
         } else {
             panel.webview.postMessage({
                 type: "vaultState",
-                state: {
-                    tree: certificate.tree,
-                    stats: certificate.stats,
-                    settings,
-                    selectedEntryId:
-                        certificate.selectedEntryId
-                }
+                state: {tree: certificate.tree, stats: certificate.stats, settings, selectedEntryId: certificate.selectedEntryId}
             });
         }
 
@@ -118,8 +103,7 @@ export function renderEditorState(
     }
 
     if (document.importedVault) {
-        const importedVault =
-            document.importedVault;
+        const importedVault = document.importedVault;
 
         if (initialLoad) {
             panel.webview.html = renderVault(
@@ -141,15 +125,7 @@ export function renderEditorState(
         } else {
             panel.webview.postMessage({
                 type: "vaultState",
-                state: {
-                    tree: importedVault.tree,
-                    stats: importedVault.stats,
-                    settings,
-                    selectedEntryId: null,
-                    readOnlyVault: true,
-                    vaultFormat:
-                        importedVault.format
-                }
+                state: {tree: importedVault.tree, stats: importedVault.stats, settings, selectedEntryId: null, readOnlyVault: true, vaultFormat: importedVault.format}
             });
         }
 
@@ -176,11 +152,7 @@ export function renderEditorState(
         } else {
             panel.webview.postMessage({
                 type: "vaultState",
-                state: {
-                    tree: psafe.tree,
-                    stats: psafe.stats,
-                    settings
-                }
+                state: {tree: psafe.tree, stats: psafe.stats, settings}
             });
         }
 
@@ -214,11 +186,7 @@ export function renderEditorState(
 
     panel.webview.postMessage({
         type: "vaultState",
-        state: {
-            tree,
-            stats,
-            settings
-        }
+        state: {tree, stats, settings}
     });
 }
 
@@ -231,29 +199,9 @@ function createResourceUris(
     webviewClientUri: vscode.Uri;
 } {
     return {
-        logoUri: vscode.Uri.joinPath(
-            extensionUri,
-            "assets",
-            "sato.png"
-        ),
-
-        toolbarLogoUri: vscode.Uri.joinPath(
-            extensionUri,
-            "assets",
-            "sato_icon.jpg"
-        ),
-
-        codiconsCssUri: vscode.Uri.joinPath(
-            extensionUri,
-            "assets",
-            "codicons",
-            "codicon.css"
-        ),
-
-        webviewClientUri: vscode.Uri.joinPath(
-            extensionUri,
-            "dist",
-            "webviewClient.js"
-        )
+        logoUri: vscode.Uri.joinPath(extensionUri, "assets", "sato.png"),
+        toolbarLogoUri: vscode.Uri.joinPath(extensionUri, "assets", "sato_icon.jpg"),
+        codiconsCssUri: vscode.Uri.joinPath(extensionUri, "assets", "codicons", "codicon.css"),
+        webviewClientUri: vscode.Uri.joinPath(extensionUri, "dist", "webviewClient.js")
     };
 }

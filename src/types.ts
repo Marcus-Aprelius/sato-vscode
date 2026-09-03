@@ -1,10 +1,11 @@
 import type * as vscode from "vscode";
 import type * as kdbxweb from "kdbxweb";
+
 import type { Settings } from "./webview";
 import type { PsafeVault } from "./psafe";
 import type { EntryFields } from "./vault";
-import type { CertificateVault } from "./certificates";
 import type { ImportedVault } from "./importedVault";
+import type { CertificateVault } from "./certificates";
 
 export interface VaultDocument extends vscode.CustomDocument {
     db?: kdbxweb.Kdbx;

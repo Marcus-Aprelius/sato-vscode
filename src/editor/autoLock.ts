@@ -8,12 +8,7 @@ export function scheduleAutoLock(
 ): void {
     clearAutoLock(editor);
 
-    if (
-        !editor.document.db &&
-        !editor.document.psafe &&
-        !editor.document.certificate &&
-        !editor.document.importedVault
-    ) {
+    if (!editor.document.db && !editor.document.psafe && !editor.document.certificate && !editor.document.importedVault) {
         return;
     }
 
@@ -21,10 +16,7 @@ export function scheduleAutoLock(
         return;
     }
 
-    if (
-        editor.document.importedVault?.format ===
-        "1pif"
-    ) {
+    if (editor.document.importedVault?.format === "1pif") {
         return;
     }
 
@@ -33,18 +25,10 @@ export function scheduleAutoLock(
     }
 
     editor.autoLockTimer = setTimeout(() => {
-        if (
-            editor.document.db ||
-            editor.document.psafe ||
-            editor.document.importedVault?.format ===
-                "bcup"
-        ) {
+        if (editor.document.db || editor.document.psafe || editor.document.importedVault?.format === "bcup") {
             editor.lock();
 
-            vscode.window.setStatusBarMessage(
-                "SATO: vault auto-locked",
-                3000
-            );
+            vscode.window.setStatusBarMessage("SATO: vault auto-locked", 3000);
         }
     }, timeoutMinutes * 60 * 1000);
 }

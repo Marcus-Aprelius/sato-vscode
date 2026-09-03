@@ -107,11 +107,7 @@ export async function handlePsafeMessage(
                 return;
             }
 
-            await runtime.copyToClipboard(
-                value,
-                `SATO: copied ${msg.field}`,
-                settings
-            );
+            await runtime.copyToClipboard(value, `SATO: copied ${msg.field}`, settings);
 
             return;
         }
@@ -121,11 +117,7 @@ export async function handlePsafeMessage(
                 return;
             }
 
-            await runtime.copyToClipboard(
-                msg.text,
-                "SATO: copied text",
-                settings
-            );
+            await runtime.copyToClipboard(msg.text, "SATO: copied text", settings);
 
             return;
         }
@@ -137,12 +129,7 @@ export async function handlePsafeMessage(
                 return;
             }
 
-            panel.webview.postMessage({
-                type: "secretRevealed",
-                entryId: msg.entryId,
-                field: msg.field,
-                value
-            });
+            panel.webview.postMessage({type: "secretRevealed", entryId: msg.entryId, field: msg.field, value});
 
             return;
         }
@@ -151,10 +138,7 @@ export async function handlePsafeMessage(
             const detail = readPsafeEntryDetail(psafe, msg.entryId);
 
             if (detail) {
-                panel.webview.postMessage({
-                    type: "entryDetail",
-                    detail
-                });
+                panel.webview.postMessage({type: "entryDetail", detail});
             }
 
             return;
@@ -166,6 +150,7 @@ export async function handlePsafeMessage(
             try {
                 const stat = await vscode.workspace.fs.stat(document.uri);
                 fileSize = stat.size;
+
             } catch {
                 // ignore
             }
@@ -191,12 +176,7 @@ export async function handlePsafeMessage(
         case "createEntry": {
             createPsafeEntry(psafe, msg.groupId, msg.fields);
 
-            await saveAndRefreshPsafe(
-                document,
-                panel,
-                runtime,
-                `SATO: Created “${msg.fields.title}”`
-            );
+            await saveAndRefreshPsafe(document, panel, runtime, `SATO: Created “${msg.fields.title}”`);
 
             return;
         }
@@ -204,12 +184,7 @@ export async function handlePsafeMessage(
         case "updateEntry": {
             updatePsafeEntry(psafe, msg.entryId, msg.fields);
 
-            await saveAndRefreshPsafe(
-                document,
-                panel,
-                runtime,
-                `SATO: Updated “${msg.fields.title}”`
-            );
+            await saveAndRefreshPsafe(document, panel, runtime, `SATO: Updated “${msg.fields.title}”`);
 
             return;
         }
@@ -218,11 +193,7 @@ export async function handlePsafeMessage(
             const title = readPsafeField(psafe, msg.entryId, "Title") || "(untitled)";
 
             if (settings.confirmBeforeDelete) {
-                const answer = await vscode.window.showWarningMessage(
-                    `Delete entry “${title}”?`,
-                    { modal: true },
-                    "Delete"
-                );
+                const answer = await vscode.window.showWarningMessage(`Delete entry “${title}”?`, { modal: true }, "Delete");
 
                 if (answer !== "Delete") {
                     return;
@@ -231,12 +202,7 @@ export async function handlePsafeMessage(
 
             deletePsafeEntry(psafe, msg.entryId);
 
-            await saveAndRefreshPsafe(
-                document,
-                panel,
-                runtime,
-                `SATO: Deleted “${title}”`
-            );
+            await saveAndRefreshPsafe(document, panel, runtime, `SATO: Deleted “${title}”`);
 
             return;
         }
@@ -244,12 +210,7 @@ export async function handlePsafeMessage(
         case "duplicateEntry": {
             duplicatePsafeEntry(psafe, msg.entryId);
 
-            await saveAndRefreshPsafe(
-                document,
-                panel,
-                runtime,
-                "SATO: Entry duplicated"
-            );
+            await saveAndRefreshPsafe(document, panel, runtime, "SATO: Entry duplicated");
 
             return;
         }
@@ -269,21 +230,11 @@ export async function handlePsafeMessage(
 
             panel.webview.postMessage({
                 type: "vaultState",
-                state: {
-                    tree: psafe.tree,
-                    stats: psafe.stats,
-                    settings
-                }
+                state: {tree: psafe.tree, stats: psafe.stats, settings}
             });
 
-            vscode.window.setStatusBarMessage(
-                `SATO: Created folder “${name.trim()}”`,
-                2500
-            );
-
-            vscode.window.showInformationMessage(
-                "SATO: empty .psafe3 folder is shown in this session. Add an entry inside it to persist it in the vault."
-            );
+            vscode.window.setStatusBarMessage(`SATO: Created folder “${name.trim()}”`, 2500);
+            vscode.window.showInformationMessage("SATO: empty .psafe3 folder is shown in this session. Add an entry inside it to persist it in the vault.");
 
             return;
         }
@@ -309,12 +260,7 @@ export async function handlePsafeMessage(
 
             renamePsafeGroup(psafe, msg.groupId, name);
 
-            await saveAndRefreshPsafe(
-                document,
-                panel,
-                runtime,
-                `SATO: Renamed folder to “${name.trim()}”`
-            );
+            await saveAndRefreshPsafe(document, panel, runtime, `SATO: Renamed folder to “${name.trim()}”`);
 
             return;
         }
@@ -341,12 +287,7 @@ export async function handlePsafeMessage(
 
             deletePsafeGroup(psafe, msg.groupId);
 
-            await saveAndRefreshPsafe(
-                document,
-                panel,
-                runtime,
-                `SATO: Deleted folder “${groupPath}”`
-            );
+            await saveAndRefreshPsafe(document, panel, runtime, `SATO: Deleted folder “${groupPath}”`);
 
             return;
         }

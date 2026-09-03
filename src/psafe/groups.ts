@@ -95,7 +95,6 @@ export function deletePsafeGroup(
         vault.databaseRecords.filter(
             (record) => {
                 const group = readRecordField(record, ["getGroup", "getGroupName"], "");
-
                 return (group !== groupPath && !group.startsWith(groupPath + "."));
             }
         );

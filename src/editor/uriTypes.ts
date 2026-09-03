@@ -5,19 +5,13 @@ import { hasExtension } from "./uriExtensions";
 export function isOnePifUri(
     uri: vscode.Uri
 ): boolean {
-    return hasExtension(
-        uri,
-        ".1pif"
-    );
+    return hasExtension(uri, ".1pif");
 }
 
 export function isButtercupUri(
     uri: vscode.Uri
 ): boolean {
-    return hasExtension(
-        uri,
-        ".bcup"
-    );
+    return hasExtension(uri, ".bcup");
 }
 
 export function isOpenPgpEncryptedFile(
@@ -27,9 +21,5 @@ export function isOpenPgpEncryptedFile(
         return false;
     }
 
-    return (
-        hasExtension(uri, ".gpg") ||
-        hasExtension(uri, ".pgp") ||
-        hasExtension(uri, ".asc")
-    );
+    return (hasExtension(uri, ".gpg") || hasExtension(uri, ".pgp") || hasExtension(uri, ".asc"));
 }

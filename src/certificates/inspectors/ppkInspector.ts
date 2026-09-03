@@ -197,10 +197,7 @@ function parsePpk(
         if (name === "Public-Lines") {
             const count = parseLineCount(value);
 
-            publicLines = lines
-                .slice(index + 1, index + 1 + count)
-                .map((item) => item.trim())
-                .filter(Boolean);
+            publicLines = lines.slice(index + 1, index + 1 + count).map((item) => item.trim()).filter(Boolean);
 
             index += count;
             continue;
@@ -209,10 +206,7 @@ function parsePpk(
         if (name === "Private-Lines") {
             const count = parseLineCount(value);
 
-            privateLines = lines
-                .slice(index + 1, index + 1 + count)
-                .map((item) => item.trim())
-                .filter(Boolean);
+            privateLines = lines.slice(index + 1, index + 1 + count).map((item) => item.trim()).filter(Boolean);
 
             index += count;
             continue;
@@ -259,8 +253,10 @@ function parseLineCount(
 function decodeBase64Lines(
     lines: string[]
 ): Buffer {
+
     try {
         return Buffer.from(lines.join(""), "base64");
+
     } catch {
         return Buffer.alloc(0);
     }
@@ -269,11 +265,7 @@ function decodeBase64Lines(
 function sshFingerprint(
     publicKey: Buffer
 ): string {
-    const digest = crypto
-        .createHash("sha256")
-        .update(publicKey)
-        .digest("base64")
-        .replace(/=+$/, "");
+    const digest = crypto.createHash("sha256").update(publicKey).digest("base64").replace(/=+$/, "");
 
     return `SHA256:${digest}`;
 }
@@ -281,11 +273,7 @@ function sshFingerprint(
 function buildEncryptedSummary(
     parsed: ParsedPpk
 ): string {
-    const parts = [
-        `Encrypted PuTTY PPK v${parsed.version}`,
-        formatSshAlgorithm(parsed.algorithm),
-        `using ${parsed.encryption}`
-    ];
+    const parts = [`Encrypted PuTTY PPK v${parsed.version}`, formatSshAlgorithm(parsed.algorithm), `using ${parsed.encryption}`];
 
     if (parsed.keyDerivation) {
         parts.push(`with ${parsed.keyDerivation}`);
@@ -297,10 +285,7 @@ function buildEncryptedSummary(
 function buildUnencryptedSummary(
     parsed: ParsedPpk
 ): string {
-    return (
-        `Unencrypted PuTTY PPK v${parsed.version} ` +
-        `${formatSshAlgorithm(parsed.algorithm)} private key.`
-    );
+    return (`Unencrypted PuTTY PPK v${parsed.version} ` + `${formatSshAlgorithm(parsed.algorithm)} private key.`);
 }
 
 function buildUnlockedSummary(
@@ -316,8 +301,5 @@ function buildUnlockedSummary(
         "private key unlocked"
     ].filter(Boolean);
 
-    return (
-        `${parts.join(" ")}. ` +
-        "Raw private key content is hidden."
-    );
+    return (`${parts.join(" ")}. ` + "Raw private key content is hidden.");
 }

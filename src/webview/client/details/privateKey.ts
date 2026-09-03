@@ -27,15 +27,10 @@ export function renderPrivateKeyBlock(
     entryId: string
 ): void {
     const privateKey = getPrivateKeyValue(entryId);
-
-    const header = document.createElement("div");
-    header.className = "private-key-header";
-
-    const title = document.createElement("h3");
-    title.textContent = "Private Key";
+    const actions = document.createElement("div");
+    actions.className = "private-key-actions";
 
     const copyButton = createCopyIconButton("Copy Private Key");
-
     copyButton.disabled = !privateKey;
 
     copyButton.addEventListener("click", () => {
@@ -43,19 +38,15 @@ export function renderPrivateKeyBlock(
             return;
         }
 
-        vscode.postMessage({
-            type: "copyText",
-            text: privateKey
-        });
+        vscode.postMessage({type: "copyText", text: privateKey});
     });
 
-    header.appendChild(title);
-    header.appendChild(copyButton);
-    container.appendChild(header);
+    actions.appendChild(copyButton);
+    container.appendChild(actions);
 
     const pre = document.createElement("pre");
-    pre.style.whiteSpace = "pre-wrap";
-    pre.style.wordBreak = "break-all";
+
+    pre.className = "private-key-content";
     pre.textContent = privateKey;
 
     container.appendChild(pre);

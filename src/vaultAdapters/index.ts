@@ -23,15 +23,9 @@ export interface VaultAdapterRuntime {
 }
 
 export function isPsafeUri(uri: vscode.Uri): boolean {
-    return (
-        hasExtension(uri, ".psafe3") ||
-        hasExtension(uri, ".ibak")
-    );
+    return (hasExtension(uri, ".psafe3") || hasExtension(uri, ".ibak"));
 }
 
 export function isKdbxUri(uri: vscode.Uri): boolean {
-    return hasExtension(
-        uri,
-        ".kdbx"
-    );
+    return hasExtension(uri, ".kdbx");
 }

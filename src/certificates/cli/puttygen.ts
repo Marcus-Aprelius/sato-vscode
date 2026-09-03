@@ -7,6 +7,7 @@ export function tryUnlockPpkWithPuttygen(
     bytes: Uint8Array,
     password: string
 ): string | undefined {
+
     const temporaryDirectory = createTemporaryDirectory("sato-ppk-");
     const inputPath = path.join(temporaryDirectory, "private-key.ppk");
     const outputPath = path.join(temporaryDirectory, "private-key.pem");
@@ -35,11 +36,11 @@ export function tryUnlockPpkWithPuttygen(
         }
 
         return `${privateKeyPem}\n`;
+
     } catch {
         return undefined;
+
     } finally {
-        removeTemporaryDirectory(
-            temporaryDirectory
-        );
+        removeTemporaryDirectory(temporaryDirectory);
     }
 }

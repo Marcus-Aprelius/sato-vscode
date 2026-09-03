@@ -4,15 +4,37 @@ import { renderDetails } from "./details";
 import { renderEntries } from "./entries";
 import { openGroupMenu } from "./contextMenu";
 import { updateMainActionButton } from "./buttons";
-import { app, groupIndex, resetCryptoUiState } from "./state";
+
+import { 
+    app,
+    groupIndex,
+    resetCryptoUiState,
+    isCryptoFileView
+} from "./state";
 
 import type { GroupView } from "../../vault";
 
 export function renderTree(): void {
-    const treeEl = byId<HTMLElement>("tree");
 
-    treeEl.innerHTML = "";
-    treeEl.appendChild(renderGroupNode(app.state.tree, 0));
+    const treeElement = byId<HTMLElement>("tree");
+    const titleElement = byId<HTMLElement>("groups-title");
+
+    treeElement.innerHTML = "";
+
+    if (isCryptoFileView()) {
+        const fileCount = app.state.tree.groups.length;
+
+        titleElement.textContent = `Crypto Files (${fileCount})`;
+
+        for (const group of app.state.tree.groups) {
+            treeElement.appendChild(renderGroupNode(group, 0));
+        }
+
+        return;
+    }
+
+    titleElement.textContent = "Groups";
+    treeElement.appendChild(renderGroupNode(app.state.tree, 0));
 }
 
 function renderGroupNode(group: GroupView, depth: number): HTMLElement {
@@ -38,10 +60,7 @@ function renderGroupNode(group: GroupView, depth: number): HTMLElement {
     count.textContent = group.entries.length ? String(group.entries.length) : "";
     row.appendChild(count);
 
-    row.addEventListener("click", (event) => {
-        event.stopPropagation();
-        selectGroup(group.id);
-    });
+    row.addEventListener("click", (event) => {event.stopPropagation(); selectGroup(group.id);});
 
     row.addEventListener("contextmenu", (event) => {
         event.preventDefault();
@@ -74,7 +93,6 @@ export function selectGroup(groupId: string): void {
     }
 
     app.selectedGroupId = groupId;
-
     const group = groupIndex.get(groupId);
 
     if (group && group.entries.length > 0) {
@@ -84,7 +102,7 @@ export function selectGroup(groupId: string): void {
     }
 
     resetCryptoUiState();
-    app.showVaultEmptyValues = true;
+    app.showVaultEmptyValues = app.settings.showEmptyValuesByDefault;
 
     renderTree();
     renderEntries();

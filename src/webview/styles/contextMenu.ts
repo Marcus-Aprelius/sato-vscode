@@ -34,39 +34,13 @@ export const CONTEXT_MENU_STYLES = `
     user-select: none;
 }
 
-.ctx-item-label {
-    flex: 1;
-}
-
-.ctx-item-icon {
-    font-size: 14px;
-    opacity: 0.95;
-}
-
-.ctx-item-icon-left {
-    flex: 0 0 auto;
-}
-
-.ctx-item-icon-right {
-    flex: 0 0 auto;
-    margin-left: auto;
-}
-
-.ctx-item-icon.unlocked {
-    color: var(--vscode-charts-yellow);
-}
-
-.ctx-item-icon.locked {
-    color: var(
-        --vscode-testing-iconPassed,
-        var(--vscode-textLink-foreground)
-    );
-}
-
-.ctx-item-icon {
-    font-size: 14px;
-    opacity: 0.8;
-}
+.ctx-item-label {flex: 1;}
+.ctx-item-icon {font-size: 14px; opacity: 0.95;}
+.ctx-item-icon-left {flex: 0 0 auto;}
+.ctx-item-icon-right {flex: 0 0 auto; margin-left: auto;}
+.ctx-item-icon.unlocked {color: var(--vscode-charts-yellow);}
+.ctx-item-icon.locked {color: var(--vscode-testing-iconPassed, var(--vscode-textLink-foreground));}
+.ctx-item-icon {font-size: 14px; opacity: 0.8;}
 
 .ctx-item:hover {
     background: var(

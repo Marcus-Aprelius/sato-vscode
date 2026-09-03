@@ -8,9 +8,7 @@ export interface ConfigurationLifecycleRuntime {
 
     readSettings: () => Settings;
 
-    scheduleAutoLock: (
-        editor: ActiveEditor
-    ) => void;
+    scheduleAutoLock: (editor: ActiveEditor) => void;
 }
 
 export function registerConfigurationLifecycle(
@@ -20,26 +18,16 @@ export function registerConfigurationLifecycle(
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(
             (event) => {
-                if (
-                    !event.affectsConfiguration(
-                        "sato"
-                    )
-                ) {
+                if (!event.affectsConfiguration("sato")) {
                     return;
                 }
 
-                const settings =
-                    runtime.readSettings();
+                const settings = runtime.readSettings();
 
                 for (const editor of runtime.editors) {
-                    editor.panel.webview.postMessage({
-                        type: "settingsUpdated",
-                        settings
-                    });
+                    editor.panel.webview.postMessage({type: "settingsUpdated", settings});
 
-                    runtime.scheduleAutoLock(
-                        editor
-                    );
+                    runtime.scheduleAutoLock(editor);
                 }
             }
         )

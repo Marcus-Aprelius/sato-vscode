@@ -42,10 +42,7 @@ export async function handleEditorMessage(
     msg: FromWebview,
     runtime: EditorMessageRuntime
 ): Promise<void> {
-    if (
-        msg.type === "unlock" ||
-        msg.type === "reload"
-    ) {
+    if (msg.type === "unlock" || msg.type === "reload") {
         await runtime.reload();
         return;
     }
@@ -61,40 +58,27 @@ export async function handleEditorMessage(
     }
 
     if (msg.type === "openWithDefaultEditor") {
-        await vscode.commands.executeCommand(
-            "vscode.openWith",
-            document.uri,
-            "default"
-        );
+        await vscode.commands.executeCommand("vscode.openWith", document.uri,"default");
 
         return;
     }
 
     if (msg.type === "openDirectory") {
-        await openCryptoDirectory(
-            runtime.viewType
-        );
+        await openCryptoDirectory(runtime.viewType);
 
         return;
     }
 
     if (msg.type === "unlockWithPassword") {
-        await runtime.unlockWithPassword(
-            msg.password
-        );
+        await runtime.unlockWithPassword(msg.password);
 
         return;
     }
 
     if (msg.type === "updateSettings") {
-        await runtime.updateSettings(
-            msg.settings
-        );
+        await runtime.updateSettings(msg.settings);
 
-        vscode.window.setStatusBarMessage(
-            "SATO: settings saved",
-            2000
-        );
+        vscode.window.setStatusBarMessage("SATO: settings saved", 2000);
 
         return;
     }
@@ -105,26 +89,15 @@ export async function handleEditorMessage(
     }
 
     if (msg.type === "openUrl") {
-        await runtime.openExternalUrl(
-            msg.url
-        );
+        await runtime.openExternalUrl(msg.url);
 
         return;
     }
 
     const cryptoHandled =
         await handleCryptoMessage(
-            document,
-            panel,
-            msg,
-            {
-                readSettings:
-                    runtime.readSettings,
-
-                copyToClipboard:
-                    runtime.adapterRuntime
-                        .copyToClipboard
-            }
+            document, panel, msg,
+            {readSettings: runtime.readSettings, copyToClipboard: runtime.adapterRuntime.copyToClipboard}
         );
 
     if (cryptoHandled) {
@@ -132,34 +105,19 @@ export async function handleEditorMessage(
     }
 
     if (document.importedVault) {
-        await handleImportedVaultMessage(
-            document,
-            panel,
-            msg,
-            runtime.adapterRuntime
-        );
+        await handleImportedVaultMessage(document, panel, msg, runtime.adapterRuntime);
 
         return;
     }
 
     if (document.psafe) {
-        await handlePsafeMessage(
-            document,
-            panel,
-            msg,
-            runtime.adapterRuntime
-        );
+        await handlePsafeMessage(document, panel, msg, runtime.adapterRuntime);
 
         return;
     }
 
     if (document.db) {
-        await handleKdbxMessage(
-            document,
-            panel,
-            msg,
-            runtime.adapterRuntime
-        );
+        await handleKdbxMessage(document, panel, msg, runtime.adapterRuntime);
     }
 }
 
@@ -168,15 +126,11 @@ async function openVault(
 ): Promise<void> {
     const selected =
         await vscode.window.showOpenDialog({
-            title:
-                "SATO - Open Password Vault",
-
+            title: "SATO - Open Password Vault",
             canSelectFiles: true,
             canSelectFolders: false,
             canSelectMany: false,
-
-            filters:
-                SUPPORTED_VAULT_FILTERS
+            filters: SUPPORTED_VAULT_FILTERS
         });
 
     const uri = selected?.[0];
@@ -185,11 +139,7 @@ async function openVault(
         return;
     }
 
-    await vscode.commands.executeCommand(
-        "vscode.openWith",
-        uri,
-        viewType
-    );
+    await vscode.commands.executeCommand("vscode.openWith", uri, viewType);
 }
 
 async function openCryptoDirectory(
@@ -197,9 +147,7 @@ async function openCryptoDirectory(
 ): Promise<void> {
     const selected =
         await vscode.window.showOpenDialog({
-            title:
-                "SATO - Open Crypto Directory",
-
+            title: "SATO - Open Crypto Directory",
             canSelectFiles: false,
             canSelectFolders: true,
             canSelectMany: false
@@ -211,22 +159,13 @@ async function openCryptoDirectory(
         return;
     }
 
-    const files =
-        await readCryptoFilesFromDirectory(
-            directoryUri
-        );
+    const files = await readCryptoFilesFromDirectory(directoryUri);
 
     if (!files.length) {
-        vscode.window.showInformationMessage(
-            "SATO: no supported crypto files found in selected directory"
-        );
+        vscode.window.showInformationMessage("SATO: no supported crypto files found in selected directory");
 
         return;
     }
 
-    await vscode.commands.executeCommand(
-        "vscode.openWith",
-        files[0].uri,
-        viewType
-    );
+    await vscode.commands.executeCommand("vscode.openWith", files[0].uri, viewType);
 }

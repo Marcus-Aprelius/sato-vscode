@@ -17,37 +17,25 @@ export async function checkForUpdates(
             );
 
         if (answer === "Open Releases") {
-            await openExternalUrl(
-                RELEASES_URL
-            );
+            await openExternalUrl(RELEASES_URL);
         }
 
         return;
     }
 
-    if (
-        !isNewerVersion(
-            latest,
-            currentVersion
-        )
-    ) {
-        vscode.window.showInformationMessage(
-            "SATO is up to date."
-        );
+    if (!isNewerVersion(latest, currentVersion)) {
+        vscode.window.showInformationMessage("SATO is up to date.");
 
         return;
     }
 
-    const answer =
-        await vscode.window.showInformationMessage(
+    const answer = await vscode.window.showInformationMessage(
             `New version is available: ${latest}.`,
             "Open Update"
         );
 
     if (answer === "Open Update") {
-        await openExternalUrl(
-            RELEASES_URL
-        );
+        await openExternalUrl(RELEASES_URL);
     }
 }
 
@@ -60,43 +48,27 @@ export async function openExternalUrl(
         return;
     }
 
-    const url =
-        /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(
-            value
-        )
-            ? value
-            : `https://${value}`;
+    const url = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(value) ? value : `https://${value}`;
 
     let uri: vscode.Uri;
 
     try {
-        uri = vscode.Uri.parse(
-            url,
-            true
-        );
+        uri = vscode.Uri.parse(url, true);
+
     } catch {
-        vscode.window.showWarningMessage(
-            "SATO: invalid URL"
-        );
+        vscode.window.showWarningMessage("SATO: invalid URL");
 
         return;
     }
 
     if (!uri.authority) {
-        vscode.window.showWarningMessage(
-            "SATO: invalid URL"
-        );
+        vscode.window.showWarningMessage("SATO: invalid URL");
 
         return;
     }
 
-    if (
-        uri.scheme !== "http" &&
-        uri.scheme !== "https"
-    ) {
-        vscode.window.showWarningMessage(
-            "SATO: only http and https URLs are supported"
-        );
+    if (uri.scheme !== "http" && uri.scheme !== "https") {
+        vscode.window.showWarningMessage("SATO: only http and https URLs are supported");
 
         return;
     }
@@ -107,31 +79,16 @@ export async function openExternalUrl(
 async function fetchLatestReleaseVersion():
     Promise<string | undefined> {
     try {
-        const response = await fetch(
-            LATEST_RELEASE_URL,
-            {
-                headers: {
-                    "User-Agent":
-                        "sato-vscode"
-                }
-            }
-        );
+        const response = await fetch(LATEST_RELEASE_URL, {headers: {"User-Agent": "sato-vscode"}});
 
         if (!response.ok) {
             return undefined;
         }
 
-        const data =
-            await response.json() as {
-                tag_name?: string;
-                name?: string;
-            };
+        const data = await response.json() as {tag_name?: string; name?: string;};
 
-        return normalizeVersion(
-            data.tag_name ||
-            data.name ||
-            ""
-        );
+        return normalizeVersion(data.tag_name || data.name || "");
+
     } catch {
         return undefined;
     }
@@ -140,33 +97,23 @@ async function fetchLatestReleaseVersion():
 function normalizeVersion(
     value: string
 ): string {
-    return value
-        .trim()
-        .replace(/^v/i, "");
+    return value.trim().replace(/^v/i, "");
 }
 
 function isNewerVersion(
     latest: string,
     current: string
 ): boolean {
-    const latestParts =
-        parseVersion(latest);
+    const latestParts = parseVersion(latest);
 
-    const currentParts =
-        parseVersion(current);
+    const currentParts = parseVersion(current);
 
     for (let index = 0; index < 3; index++) {
-        if (
-            latestParts[index] >
-            currentParts[index]
-        ) {
+        if (latestParts[index] > currentParts[index]) {
             return true;
         }
 
-        if (
-            latestParts[index] <
-            currentParts[index]
-        ) {
+        if (latestParts[index] < currentParts[index]) {
             return false;
         }
     }
@@ -177,21 +124,11 @@ function isNewerVersion(
 function parseVersion(
     value: string
 ): [number, number, number] {
-    const parts = normalizeVersion(value)
-        .split(".")
-        .map((part) =>
-            Number.parseInt(part, 10)
-        );
+    const parts = normalizeVersion(value).split(".").map((part) => Number.parseInt(part, 10));
 
     return [
-        Number.isFinite(parts[0])
-            ? parts[0]
-            : 0,
-        Number.isFinite(parts[1])
-            ? parts[1]
-            : 0,
-        Number.isFinite(parts[2])
-            ? parts[2]
-            : 0
+        Number.isFinite(parts[0]) ? parts[0] : 0,
+        Number.isFinite(parts[1]) ? parts[1] : 0,
+        Number.isFinite(parts[2]) ? parts[2] : 0
     ];
 }

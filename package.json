@@ -3,7 +3,7 @@
   "displayName": "SATO Secrets",
   "description": "Browse password vaults and crypto files directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
@@ -222,6 +222,11 @@
           "type": "boolean",
           "default": false,
           "description": "Reveal passwords automatically in the entry details pane."
+        },
+        "sato.showEmptyValuesByDefault": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show empty values by default when selecting an entry."
         },
         "sato.showStatusBar": {
           "type": "boolean",

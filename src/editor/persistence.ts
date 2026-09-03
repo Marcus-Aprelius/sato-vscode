@@ -16,21 +16,13 @@ export async function persistKdbx(
         const buffer = await db.save();
         const bytes = new Uint8Array(buffer);
 
-        await vscode.workspace.fs.writeFile(
-            document.uri,
-            bytes
-        );
-
-        vscode.window.setStatusBarMessage(
-            `SATO: ${successMessage}`,
-            2500
-        );
+        await vscode.workspace.fs.writeFile(document.uri, bytes);
+        vscode.window.setStatusBarMessage(`SATO: ${successMessage}`, 2500);
 
         return true;
+
     } catch (err) {
-        await vscode.window.showErrorMessage(
-            `SATO: save failed - ${describeError(err)}`
-        );
+        await vscode.window.showErrorMessage(`SATO: save failed - ${describeError(err)}`);
 
         return false;
     }

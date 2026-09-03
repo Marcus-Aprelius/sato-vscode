@@ -84,13 +84,9 @@ export async function openButtercupVault(
         await Buttercup.init();
     }
 
-    const bytes = await vscode.workspace.fs.readFile(
-        uri
-    );
+    const bytes = await vscode.workspace.fs.readFile(uri);
 
-    const content = Buffer.from(bytes).toString(
-        "utf8"
-    );
+    const content = Buffer.from(bytes).toString("utf8");
 
     if (!content.trim()) {
         throw new Error(
@@ -98,39 +94,16 @@ export async function openButtercupVault(
         );
     }
 
-    const datasourceCredentials =
-        Buttercup.Credentials.fromDatasource(
-            {
-                content
-            },
-            password
-        );
-
-    const datasource =
-        new Buttercup.TextDatasource(
-            datasourceCredentials
-        );
+    const datasourceCredentials = Buttercup.Credentials.fromDatasource({content}, password);
+    const datasource = new Buttercup.TextDatasource(datasourceCredentials);
 
     datasource.setContent(content);
 
-    const vaultCredentials =
-        Buttercup.Credentials.fromPassword(
-            password
-        );
+    const vaultCredentials = Buttercup.Credentials.fromPassword(password);
+    const loaded = await datasource.load(vaultCredentials);
+    const vault = Buttercup.Vault.createFromHistory(loaded.history, loaded.Format);
 
-    const loaded = await datasource.load(
-        vaultCredentials
-    );
-
-    const vault = Buttercup.Vault.createFromHistory(
-        loaded.history,
-        loaded.Format
-    );
-
-    return mapButtercupVault(
-        uri,
-        vault
-    );
+    return mapButtercupVault(uri, vault);
 }
 
 function mapButtercupVault(
@@ -145,9 +118,7 @@ function mapButtercupVault(
         entries: []
     };
 
-    const entries =
-        new Map<string, ImportedVaultEntry>();
-
+    const entries = new Map<string, ImportedVaultEntry>();
     const sourceGroups = vault.getGroups();
 
     for (let index = 0; index < sourceGroups.length; index++) {
@@ -168,10 +139,7 @@ function mapButtercupVault(
         name: fileNameWithoutExtension(uri),
         readOnly: true,
         tree: root,
-        stats: buildImportedVaultStats(
-            root,
-            entries
-        ),
+        stats: buildImportedVaultStats(root, entries),
         entries
     };
 }
@@ -182,15 +150,12 @@ function mapButtercupGroup(
     entries: Map<string, ImportedVaultEntry>,
     fallbackId: string
 ): GroupView {
-    const groupId =
-        source.id || fallbackId;
+    const groupId = source.id || fallbackId;
 
     const group: GroupView = {
         id: groupId,
         parentId,
-        name:
-            safeString(source.getTitle()) ||
-            "(unnamed)",
+        name: safeString(source.getTitle()) || "(unnamed)",
         groups: [],
         entries: []
     };
@@ -202,23 +167,9 @@ function mapButtercupGroup(
         index < sourceEntries.length;
         index++
     ) {
-        const importedEntry =
-            mapButtercupEntry(
-                sourceEntries[index],
-                groupId,
-                index
-            );
-
-        entries.set(
-            importedEntry.id,
-            importedEntry
-        );
-
-        group.entries.push(
-            createImportedEntryView(
-                importedEntry
-            )
-        );
+        const importedEntry = mapButtercupEntry(sourceEntries[index], groupId, index);
+        entries.set(importedEntry.id, importedEntry);
+        group.entries.push(createImportedEntryView(importedEntry));
     }
 
     const childGroups = source.getGroups();
@@ -228,14 +179,7 @@ function mapButtercupGroup(
         index < childGroups.length;
         index++
     ) {
-        group.groups.push(
-            mapButtercupGroup(
-                childGroups[index],
-                groupId,
-                entries,
-                `${groupId}-group-${index}`
-            )
-        );
+        group.groups.push(mapButtercupGroup(childGroups[index], groupId, entries, `${groupId}-group-${index}`));
     }
 
     sortGroups(group);
@@ -248,88 +192,24 @@ function mapButtercupEntry(
     groupId: string,
     index: number
 ): ImportedVaultEntry {
-    const properties =
-        readStringRecord(
-            source.getProperty()
-        );
+    const properties = readStringRecord(source.getProperty());
+    const attributes = typeof source.getAttribute === "function" ? readStringRecord(source.getAttribute()) : {};
+    const title = takeProperty(properties, ["title", "name"]) || `Entry ${index + 1}`;
+    const username = takeProperty( properties, ["username", "user", "login"]);
+    const password = takeProperty(properties, ["password", "pass", "passwd"]);
+    const url = takeProperty(properties, ["url", "website", "location"]);
+    const notes = takeProperty(properties, ["notes", "note", "description"]);
 
-    const attributes =
-        typeof source.getAttribute === "function"
-            ? readStringRecord(
-                source.getAttribute()
-            )
-            : {};
-
-    const title =
-        takeProperty(
-            properties,
-            [
-                "title",
-                "name"
-            ]
-        ) ||
-        `Entry ${index + 1}`;
-
-    const username =
-        takeProperty(
-            properties,
-            [
-                "username",
-                "user",
-                "login"
-            ]
-        );
-
-    const password =
-        takeProperty(
-            properties,
-            [
-                "password",
-                "pass",
-                "passwd"
-            ]
-        );
-
-    const url =
-        takeProperty(
-            properties,
-            [
-                "url",
-                "website",
-                "location"
-            ]
-        );
-
-    const notes =
-        takeProperty(
-            properties,
-            [
-                "notes",
-                "note",
-                "description"
-            ]
-        );
-
-    const fields: Record<string, string> = {
-        ...properties
-    };
+    const fields: Record<string, string> = {...properties};
 
     for (
-        const [name, value]
-        of Object.entries(attributes)
+        const [name, value] of Object.entries(attributes)
     ) {
-        fields[
-            uniqueFieldName(
-                fields,
-                `Attribute: ${name}`
-            )
-        ] = value;
+        fields[uniqueFieldName(fields, `Attribute: ${name}`)] = value;
     }
 
     return {
-        id:
-            source.id ||
-            `${groupId}-entry-${index}`,
+        id: source.id || `${groupId}-entry-${index}`,
         groupId,
         title,
         username,
@@ -344,15 +224,8 @@ function takeProperty(
     properties: Record<string, string>,
     names: string[]
 ): string {
-    for (
-        const [name, value]
-        of Object.entries(properties)
-    ) {
-        if (
-            !names.includes(
-                name.toLowerCase()
-            )
-        ) {
+    for (const [name, value] of Object.entries(properties)) {
+        if (!names.includes(name.toLowerCase())) {
             continue;
         }
 
@@ -367,22 +240,13 @@ function takeProperty(
 function readStringRecord(
     value: unknown
 ): Record<string, string> {
-    if (
-        !value ||
-        typeof value !== "object" ||
-        Array.isArray(value)
-    ) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
         return {};
     }
 
     const output: Record<string, string> = {};
 
-    for (
-        const [name, fieldValue]
-        of Object.entries(
-            value as Record<string, unknown>
-        )
-    ) {
+    for (const [name, fieldValue] of Object.entries(value as Record<string, unknown>)) {
         const text = safeString(fieldValue);
 
         if (text) {
@@ -403,9 +267,7 @@ function uniqueFieldName(
 
     let index = 2;
 
-    while (
-        `${requestedName} ${index}` in fields
-    ) {
+    while (`${requestedName} ${index}` in fields) {
         index++;
     }
 
@@ -413,47 +275,22 @@ function uniqueFieldName(
 }
 
 function sortGroups(group: GroupView): void {
-    group.groups.sort((left, right) =>
-        left.name.localeCompare(
-            right.name,
-            undefined,
-            {
-                sensitivity: "base"
-            }
-        )
-    );
-
-    group.entries.sort((left, right) =>
-        left.title.localeCompare(
-            right.title,
-            undefined,
-            {
-                sensitivity: "base"
-            }
-        )
-    );
+    group.groups.sort((left, right) => left.name.localeCompare(right.name, undefined, {sensitivity: "base"}));
+    group.entries.sort((left, right) => left.title.localeCompare(right.title, undefined, {sensitivity: "base"}));
 }
 
 function fileNameWithoutExtension(
     uri: vscode.Uri
 ): string {
-    const fileName =
-        uri.path.split("/").pop() ||
-        "Buttercup Vault";
+    const fileName = uri.path.split("/").pop() || "Buttercup Vault";
 
-    return fileName.replace(
-        /\.bcup$/i,
-        ""
-    );
+    return fileName.replace(/\.bcup$/i, "");
 }
 
 function safeString(
     value: unknown
 ): string {
-    if (
-        value === undefined ||
-        value === null
-    ) {
+    if (value === undefined || value === null) {
         return "";
     }
 
@@ -461,10 +298,7 @@ function safeString(
         return value.trim();
     }
 
-    if (
-        typeof value === "number" ||
-        typeof value === "boolean"
-    ) {
+    if (typeof value === "number" || typeof value === "boolean") {
         return String(value);
     }
 

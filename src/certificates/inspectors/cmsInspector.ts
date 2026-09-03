@@ -28,10 +28,10 @@ export function inspectCms(
     }
 
     const contentType = extractContentType(inspected.details);
-
     const signerCount = countMatches(inspected.details, /signerInfos:/g);
     const recipientCount = countMatches(inspected.details, /recipientInfos:/g);
     const certificateCount = inspected.certificateCount;
+
     const status =
         contentType === "encryptedData" || contentType === "envelopedData"
             ? "Encrypted" : contentType === "signedData" ? "Signed" : "Parsed";
@@ -67,9 +67,7 @@ export function inspectCms(
 
     values.Details = inspected.details;
 
-    return {
-        values
-    };
+    return {values};
 }
 
 interface CmsInspectionResult {
@@ -111,8 +109,10 @@ function inspectWithOpenSsl(
             issuers: certificates.map((certificate) => certificate.issuer),
             certificateCount: certificates.length
         };
+
     } catch {
         return undefined;
+
     } finally {
         removeTemporaryDirectory(temporaryDirectory);
     }
@@ -134,8 +134,10 @@ function readCertificates(
 
     try {
         content = fs.readFileSync(certificatesPath, "utf8");
+
     } catch {
         return [];
+
     }
 
     const pemCertificates = content.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g) || [];
@@ -146,6 +148,7 @@ function readCertificates(
             const certificate = new crypto.X509Certificate(pem);
 
             certificates.push({subject:certificate.subject, issuer:certificate.issuer});
+
         } catch {
             // Ignore invalid certificates.
         }
@@ -162,13 +165,8 @@ function detectEncoding(
         .toString("utf8")
         .trimStart();
 
-    if (text.includes("-----BEGIN PKCS7-----") || text.includes("-----BEGIN CMS-----")) {
-        return "PEM";
-    }
-
-    if (/^content-type:/im.test(text) || /^mime-version:/im.test(text)) {
-        return "SMIME";
-    }
+    if (text.includes("-----BEGIN PKCS7-----") || text.includes("-----BEGIN CMS-----")) {return "PEM";}
+    if (/^content-type:/im.test(text) || /^mime-version:/im.test(text)) {return "SMIME";}
 
     return "DER";
 }
@@ -279,11 +277,7 @@ function countMatches(
 function cmsDisplayType(
     filePath: string
 ): string {
-    return filePath
-        .toLowerCase()
-        .endsWith(".p7s")
-        ? "PKCS#7 Digital Signature"
-        : "CMS/S/MIME Message";
+    return filePath.toLowerCase().endsWith(".p7s") ? "PKCS#7 Digital Signature" : "CMS/S/MIME Message";
 }
 
 function buildSummary(
@@ -296,7 +290,6 @@ function buildSummary(
     const certificateText = certificateCount > 0 ? ` Contains ${certificateCount} certificate(s).` : "";
 
     return (
-        `${type}. Content type: ${formattedContentType}.` +
-        certificateText
+        `${type}. Content type: ${formattedContentType}.` + certificateText
     );
 }

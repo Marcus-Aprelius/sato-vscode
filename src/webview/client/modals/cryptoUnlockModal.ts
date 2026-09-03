@@ -1,5 +1,5 @@
-import { vscode } from "../globals";
 import { maybeById } from "../dom";
+import { vscode } from "../globals";
 import { entryIndex } from "../state";
 import { closeModal, openModal } from "./modalLifecycle";
 import { modalState, resetCryptoUnlockState } from "./state";
@@ -63,7 +63,14 @@ export function openCryptoContainerUnlockModal(entryId: string): void {
     updateCryptoUnlockOkState();
     openModal("crypto-unlock-modal");
 
-    setTimeout(() => {password?.focus();}, 0);
+    setTimeout(() => {
+        if (password) {
+            password.value = "";
+            password.focus();
+        }
+
+        updateCryptoUnlockOkState();
+    }, 0);
 }
 
 export function closeCryptoContainerUnlockModal(): void {
@@ -197,8 +204,7 @@ export function bindCryptoUnlockModalActions(): void {
     maybeById("crypto-unlock-cancel")?.addEventListener("click", closeCryptoContainerUnlockModal);
     maybeById("crypto-unlock-ok")?.addEventListener("click", submitCryptoContainerPassword);
 
-    maybeById("crypto-unlock-key-browse")?.addEventListener(
-        "click",
+    maybeById("crypto-unlock-key-browse")?.addEventListener("click",
         () => {
             if (!modalState.cryptoUnlockEntryId) {
                 return;
@@ -208,8 +214,7 @@ export function bindCryptoUnlockModalActions(): void {
         }
     );
 
-    const cryptoUnlockPassword =
-        maybeById<HTMLInputElement>("crypto-unlock-password");
+    const cryptoUnlockPassword = maybeById<HTMLInputElement>("crypto-unlock-password");
 
     if (cryptoUnlockPassword) {
         cryptoUnlockPassword.addEventListener("keydown", (event) => {
@@ -237,9 +242,7 @@ export function bindCryptoUnlockModalActions(): void {
         });
 
         cryptoUnlockPassword.addEventListener("focus", () => {
-            setCryptoKeyboardLayout(
-                detectKeyboardLayoutFromText(cryptoUnlockPassword.value) || "ENG"
-            );
+            setCryptoKeyboardLayout(detectKeyboardLayoutFromText(cryptoUnlockPassword.value) || "ENG");
         });
     }
 }

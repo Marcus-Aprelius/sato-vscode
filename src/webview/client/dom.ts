@@ -17,15 +17,9 @@ export function closestElement(target: EventTarget | null, selector: string): El
         return null;
     }
 
-    const element = target instanceof Element
-        ? target
-        : target instanceof Node
-            ? target.parentElement
-            : null;
+    const element = target instanceof Element ? target : target instanceof Node ? target.parentElement : null;
 
-    return element && typeof element.closest === "function"
-        ? element.closest(selector)
-        : null;
+    return element && typeof element.closest === "function" ? element.closest(selector) : null;
 }
 
 export function clearElement(element: HTMLElement): void {

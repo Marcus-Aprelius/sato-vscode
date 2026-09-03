@@ -137,16 +137,8 @@ function exportPrivateKeyPem(
 function detectEncoding(
     bytes: Uint8Array
 ): "PEM" | "DER" {
-    const prefix = Buffer.from(bytes)
-        .subarray(
-            0,
-            Math.min(
-                bytes.length,
-                256
-            )
-        )
-        .toString("ascii");
-
+    
+    const prefix = Buffer.from(bytes).subarray(0, Math.min(bytes.length, 256)).toString("ascii");
     return prefix.includes("-----BEGIN") ? "PEM" : "DER";
 }
 
@@ -164,6 +156,7 @@ function detectEncryption(
         createPrivateKey(bytes, encoding);
 
         return false;
+
     } catch {
         return true;
     }

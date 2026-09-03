@@ -13,7 +13,7 @@ export function renderModals(
                 Master password
 
                 <div class="unlock-password-field">
-                    <input type="password" id="unlock-password" />
+                    <input type="password" id="unlock-password" autocomplete="new-password"/>
                     <span id="unlock-layout" class="keyboard-layout-indicator">ENG</span>
                 </div>
             </label>
@@ -22,9 +22,7 @@ export function renderModals(
         </div>
 
         <div class="modal-footer unlock-modal-footer">
-            <div id="unlock-capslock-warning" class="capslock-warning" style="display:none;">
-                Caps Lock is ON
-            </div>
+            <div id="unlock-capslock-warning" class="capslock-warning" style="display:none;">Caps Lock is ON</div>
 
             <div class="unlock-modal-actions">
                 <button type="button" class="btn" id="unlock-cancel">Cancel</button>
@@ -34,15 +32,13 @@ export function renderModals(
     </div>
 
     <div class="modal" id="crypto-unlock-modal" style="width:420px;">
-        <div class="modal-title" id="crypto-unlock-title">
-            Unlock Crypto Container
-        </div>
+        <div class="modal-title" id="crypto-unlock-title">Unlock Crypto Container</div>
 
         <div class="modal-body">
             <label>
                 <span id="crypto-unlock-password-label">Container password</span>
                 <div class="unlock-password-field">
-                    <input type="password" id="crypto-unlock-password" autocomplete="off"/>
+                    <input type="password" id="crypto-unlock-password" autocomplete="new-password"/>
                     <span id="crypto-unlock-layout" class="keyboard-layout-indicator">ENG</span>
                 </div>
             </label>
@@ -62,9 +58,7 @@ export function renderModals(
         </div>
 
         <div class="modal-footer unlock-modal-footer">
-            <div id="crypto-unlock-capslock-warning" class="capslock-warning" style="display:none;">
-                Caps Lock is ON
-            </div>
+            <div id="crypto-unlock-capslock-warning" class="capslock-warning" style="display:none;">Caps Lock is ON</div>
 
             <div class="unlock-modal-actions">
                 <button type="button" class="btn" id="crypto-unlock-cancel">Cancel</button>
@@ -136,6 +130,7 @@ export function renderModals(
             </label>
             <label class="checkbox"><input type="checkbox" id="s-confirmdel"> Confirm before delete</label>
             <label class="checkbox"><input type="checkbox" id="s-showpw"> Show passwords by default</label>
+            <label class="checkbox"><input type="checkbox" id="s-showempty"> Show empty values by default</label>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn" id="s-cancel">Cancel</button>
@@ -153,58 +148,66 @@ export function renderModals(
         </div>
     </div>
 
-    <div class="modal" id="about-modal" style="width:380px;">
-        <div class="modal-title">About SATO</div>
-        <div class="modal-body" style="align-items:center; text-align:center; gap:8px; padding:16px;">
+    <div class="modal about-modal" id="about-modal">
+        <div class="modal-title">[SATO] Secure Access Task Operator</div>
+            <div class="about-tabs">
+                <button type="button" class="about-tab active" id="about-tab-about">About</button>
+                <button type="button" class="about-tab" id="about-tab-supported-formats">Supported Formats</button>
+            </div>
+
+        <div class="modal-body" id="about-content" style="align-items:center; text-align:center; gap:8px; padding:16px;">
         <img class="about-logo" src="${logoSrc}" alt="SATO logo" />
-            Secure Access Task Operator
-            <div>VS Code extension for secure vaults and crypto file viewing</div>
+            <div>
+                VS Code extension for viewing<br>
 
-            <div class="about-supports">
-                <div class="about-supports-title">
-                    <strong>Supports:</strong>
-                </div>
-
-                <div class="about-supports-row"><strong>Vaults:</strong>
-                    <span>.kdbx .psafe3 .ibak .1pif .bcup</span>
-                </div>
-
-                <div class="about-supports-row"><strong>Files:</strong>
-                    <span>
-                        .crt .cer .der .pem .csr .p10 .key .age<br>
-                        .ppk .jks .pgp .gpg .pk8 .asc .sig .p8<br>
-                        .p12 .pfx .p7b .p7c .p7s .p7m .jceks
-                    </span>
-                </div>
-                <div class="about-supports-row"><strong>SSH:</strong>
-                    <span>id_rsa id_ecdsa id_ed25519</span>
-                </div>
+                <button type="button" class="about-inline-link" id="about-open-supported-formats">
+                    secure storage and cryptographic files
+                </button>
             </div>
 
-            <div style="margin-top:12px;">
-                See 
-                <a
-                    href="https://github.com/Marcus-Aprelius/sato"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style="color: var(--vscode-textLink-foreground); text-decoration:none;"
-                >
-                    sato Linux command line tool &gt;&gt;&gt;
-                </a>
-            </div>
             <div class="about-spacer"></div>
-            <div>Version: ${escapeHtml(versionLabel)}</div>
+            <div class="about-version">
+                <span>
+                    Version: <span id="about-version-value">${escapeHtml(versionLabel)}</span>
+                </span>
+
+                <button type="button" class="icon-btn" id="about-version-copy" title="Copy Version" aria-label="Copy Version">
+                    <span class="codicon codicon-copy"></span>
+                </button>
+            </div>
             <div class="about-spacer"></div>
             <div style="margin-top:12px;">
                 © 2026
-                <a
-                    href="https://github.com/Marcus-Aprelius/sato-vscode"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style="color: var(--vscode-textLink-foreground); text-decoration:none;"
-                >
+                <a href="https://github.com/Marcus-Aprelius/sato-vscode"
+                    target="_blank" rel="noopener noreferrer" style="color: var(--vscode-textLink-foreground); text-decoration:none;">
                     Marcus-Aprelius
                 </a>
+            </div>
+        </div>
+
+        <div class="modal-body" id="supported-formats-content" style="display:none; align-items:center; padding:16px;">
+        <img class="about-logo" src="${logoSrc}" alt="SATO logo" />
+            <div class="about-supports">
+                <div class="about-supports-row">
+                    <strong>Vaults:</strong>
+                    <span>.kdbx .psafe3 .ibak .1pif .bcup</span>
+                </div>
+
+                <div class="about-supports-row">
+                    <strong>SSH:</strong>
+                    <span>id_rsa id_ecdsa id_ed25519</span>
+                </div>
+
+                <div class="about-supports-row">
+                    <strong>Files:</strong>
+                    <span>
+                        .crt .cer .der .pem .csr .p10 .key .ppk .jks .pgp<br>
+                        .p12 .pfx .p7b .p7c .p7s .p7m .gpg .pk8 .asc .jceks<br>
+                        .sig .age .p8
+                    </span>
+                </div>
+
+
             </div>
         </div>
 
@@ -212,5 +215,8 @@ export function renderModals(
             <button type="button" class="btn primary" id="about-close">Close</button>
         </div>
     </div>
+
+
+
 </div>`;
 }

@@ -51,23 +51,11 @@ export function openGroupMenu(
         x,
         y,
         [
-            {
-                label: "New Entry",
-                action: () => {openEntryModal(null, groupId);}
-            },
-            {
-                label: "New Folder",
-                action: () => {vscode.postMessage({type: "createGroup", parentId: groupId});}
-            },
-            { sep: true },
-            {
-                label: "Rename",
-                action: () => {vscode.postMessage({type: "renameGroup", groupId});}
-            },
-            {
-                label: "Delete",
-                action: () => {vscode.postMessage({type: "deleteGroup", groupId});}
-            }
+            {label: "New Entry", action: () => {openEntryModal(null, groupId);}},
+            {label: "New Folder", action: () => {vscode.postMessage({type: "createGroup", parentId: groupId});}},
+            {sep: true},
+            {label: "Rename", action: () => {vscode.postMessage({type: "renameGroup", groupId});}},
+            {label: "Delete", action: () => {vscode.postMessage({type: "deleteGroup", groupId});}}
         ]
     );
 }

@@ -14,36 +14,26 @@ export async function openOnePifFile(
     let bytes: Uint8Array;
 
     try {
-        bytes =
-            await vscode.workspace.fs.readFile(
-                document.uri
-            );
-    } catch (err) {
-        vscode.window.showErrorMessage(
-            `SATO: failed to read 1PIF file - ${describeError(err)}`
-        );
+        bytes = await vscode.workspace.fs.readFile(document.uri);
+
+        } catch (err) {
+        vscode.window.showErrorMessage(`SATO: failed to read 1PIF file - ${describeError(err)}`);
 
         return false;
     }
 
     try {
-        const vault = await openOnePifVault(
-            document.uri,
-            bytes
-        );
+        const vault = await openOnePifVault(document.uri, bytes);
 
         clearDocumentState(document);
         document.importedVault = vault;
 
-        vscode.window.showWarningMessage(
-            "SATO: 1PIF exports are unencrypted. Keep this file secure."
-        );
+        vscode.window.showWarningMessage("SATO: 1PIF exports are unencrypted. Keep this file secure.");
 
         return true;
+
     } catch (err) {
-        vscode.window.showErrorMessage(
-            `SATO: failed to open 1PIF file - ${describeError(err)}`
-        );
+        vscode.window.showErrorMessage(`SATO: failed to open 1PIF file - ${describeError(err)}`);
 
         return false;
     }
@@ -57,43 +47,23 @@ export async function unlockVaultWithPassword(
     let bytes: Uint8Array;
 
     try {
-        bytes =
-            await vscode.workspace.fs.readFile(
-                document.uri
-            );
+        bytes = await vscode.workspace.fs.readFile(document.uri);
+
     } catch (err) {
-        panel.webview.postMessage({
-            type: "unlockFailed",
-            message:
-                `Failed to read file: ${describeError(err)}`
-        });
+        panel.webview.postMessage({type: "unlockFailed", message: `Failed to read file: ${describeError(err)}`});
 
         return false;
     }
 
     if (isButtercupUri(document.uri)) {
-        return unlockButtercupVault(
-            document,
-            panel,
-            password
-        );
+        return unlockButtercupVault(document, panel, password);
     }
 
     if (isPsafeUri(document.uri)) {
-        return unlockPasswordSafeVault(
-            document,
-            panel,
-            bytes,
-            password
-        );
+        return unlockPasswordSafeVault(document, panel, bytes, password);
     }
 
-    return unlockKeePassVault(
-        document,
-        panel,
-        bytes,
-        password
-    );
+    return unlockKeePassVault(document, panel, bytes, password);
 }
 
 export function clearDocumentState(
@@ -112,22 +82,17 @@ async function unlockButtercupVault(
     password: string
 ): Promise<boolean> {
     try {
-        const vault = await openButtercupVault(
-            document.uri,
-            password
-        );
+        const vault = await openButtercupVault(document.uri, password);
 
         clearDocumentState(document);
         document.importedVault = vault;
 
         return true;
+
     } catch (err) {
         const message = describeError(err);
 
-        console.error(
-            "SATO: failed to unlock Buttercup vault:",
-            err
-        );
+        console.error("SATO: failed to unlock Buttercup vault:", err);
 
         panel.webview.postMessage({
             type: "unlockFailed",
@@ -149,19 +114,12 @@ async function unlockPasswordSafeVault(
     try {
         clearDocumentState(document);
 
-        await unlockPsafeVault(
-            document,
-            bytes,
-            password
-        );
+        await unlockPsafeVault(document, bytes, password);
 
         return true;
+
     } catch {
-        panel.webview.postMessage({
-            type: "unlockFailed",
-            message:
-                "Wrong password or unsupported Password Safe file."
-        });
+        panel.webview.postMessage({type: "unlockFailed", message: "Wrong password or unsupported Password Safe file."});
 
         return false;
     }
@@ -176,26 +134,18 @@ async function unlockKeePassVault(
     try {
         clearDocumentState(document);
 
-        await unlockKdbxVault(
-            document,
-            bytes,
-            password
-        );
+        await unlockKdbxVault(document, bytes, password);
 
         return true;
+
     } catch (err) {
         const message = describeError(err);
 
-        console.error(
-            "SATO: failed to unlock KDBX:",
-            err
-        );
+        console.error("SATO: failed to unlock KDBX:", err);
 
         panel.webview.postMessage({
             type: "unlockFailed",
-            message: message
-                ? `Failed to open KDBX: ${message}`
-                : "Wrong password or unsupported KDBX file."
+            message: message ? `Failed to open KDBX: ${message}` : "Wrong password or unsupported KDBX file."
         });
 
         return false;

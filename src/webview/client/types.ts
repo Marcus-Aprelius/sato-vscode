@@ -31,9 +31,7 @@ export type MenuItem =
           disabled?: boolean;
           action: () => void;
       }
-    | {
-          sep: true;
-      };
+    | { sep: true;};
 
 export interface EntryFormFields {
     title: string;

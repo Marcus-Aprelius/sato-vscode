@@ -16,9 +16,7 @@ export function updateToolbarForMode(): void {
         return;
     }
 
-    const disabled =
-        isCryptoFileView() ||
-        isReadOnlyVault();
+    const disabled = isCryptoFileView() || isReadOnlyVault();
 
     entryButton.disabled = disabled;
     folderButton.disabled = disabled;

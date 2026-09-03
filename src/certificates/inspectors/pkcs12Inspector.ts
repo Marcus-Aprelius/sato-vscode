@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import { runWithTempFile } from "../cli";
 import { containerMetadata } from "../fileMetadata";
 
@@ -44,11 +45,13 @@ export function inspectPkcs12Unlocked(
     }
 
     const details = sanitizeOpenSslDetails(output.text);
+    const privateKeyPem = extractPrivateKey(bytes, password);
     const friendlyNames = uniqueValues(collectOpenSslValues(output.text, /friendlyName:\s*([^\r\n]+)/gi));
     const subjects = uniqueValues(collectOpenSslValues(output.text, /subject=([^\r\n]+)/gi));
     const issuers = uniqueValues(collectOpenSslValues(output.text, /issuer=([^\r\n]+)/gi));
     const certificateCount = (output.text.match(/-----BEGIN CERTIFICATE-----/g) || []).length;
     const privateKeyBagCount = (output.text.match(/Shrouded Keybag|Key bag/gi) || []).length;
+    const extractedPrivateKeyCount = privateKeyPem ? 1 : 0;
 
     return {
         values: {
@@ -56,6 +59,7 @@ export function inspectPkcs12Unlocked(
             Status: "Unlocked",
             "Certificate count": String(certificateCount),
             "Private key bags": String(privateKeyBagCount),
+            "Extracted private keys": String(extractedPrivateKeyCount),
             "Friendly names": friendlyNames.join(", "),
             Subjects: subjects.join("\n"),
             Issuers: issuers.join("\n"),
@@ -65,6 +69,38 @@ export function inspectPkcs12Unlocked(
                 certificateCount > 0
                     ? `PKCS#12 container unlocked. Certificates: ${certificateCount}.`
                     : "PKCS#12 container unlocked."
-        }
+        },
+        privateKeyPem
     };
+}
+
+function extractPrivateKey(
+    bytes: Uint8Array,
+    password: string
+): string | undefined {
+    const output = runWithTempFile(bytes, "container.p12", "openssl", (tmpFile) =>
+        ["pkcs12", "-in", tmpFile, "-nocerts", "-nodes", "-passin", `pass:${password}`]
+    );
+
+    if (!output.ok) {
+        return undefined;
+    }
+
+    const match = output.text.match(
+        /-----BEGIN (?:PRIVATE KEY|RSA PRIVATE KEY|EC PRIVATE KEY)-----[\s\S]*?-----END (?:PRIVATE KEY|RSA PRIVATE KEY|EC PRIVATE KEY)-----/
+    );
+
+    if (!match) {
+        return undefined;
+    }
+
+    try {
+        const privateKey = crypto.createPrivateKey(match[0]);
+        const exported = privateKey.export({type: "pkcs8", format: "pem"});
+
+        return typeof exported === "string" ? exported : exported.toString("utf8");
+
+    } catch {
+        return undefined;
+    }
 }

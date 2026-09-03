@@ -59,10 +59,7 @@ body {
     opacity: 0.45;
     cursor: default;
     background: var(--vscode-button-secondaryBackground);
-    color: var(
-        --vscode-disabledForeground,
-        var(--vscode-descriptionForeground)
-    );
+    color: var(--vscode-disabledForeground, var(--vscode-descriptionForeground));
 }
 
 .btn.danger:disabled,
@@ -71,10 +68,7 @@ body {
     opacity: 0.45;
     cursor: default;
     background: var(--vscode-button-secondaryBackground);
-    color: var(
-        --vscode-disabledForeground,
-        var(--vscode-descriptionForeground)
-    );
+    color: var(--vscode-disabledForeground, var(--vscode-descriptionForeground));
 }
 
 .btn.primary:disabled,
@@ -83,10 +77,7 @@ body {
     opacity: 0.45;
     cursor: default;
     background: var(--vscode-button-secondaryBackground);
-    color: var(
-        --vscode-disabledForeground,
-        var(--vscode-descriptionForeground)
-    );
+    color: var(--vscode-disabledForeground, var(--vscode-descriptionForeground));
 }
 
 .icon-btn {
@@ -105,9 +96,7 @@ body {
 }
 
 .icon-btn:hover {
-    background: var(
-        --vscode-toolbar-hoverBackground,
-        var(--vscode-list-hoverBackground)
+    background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground)
     );
 }
 

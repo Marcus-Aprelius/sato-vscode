@@ -158,6 +158,7 @@ function extractPublicKey(
         );
     } catch {
         return undefined;
+
     } finally {
         removeTemporaryDirectory(temporaryDirectory);
     }
@@ -191,8 +192,10 @@ function createUnlockedPrivateKeyCopy(
         }
 
         return `${privateKey}\n`;
+
     } catch {
         return undefined;
+
     } finally {
         removeTemporaryDirectory(temporaryDirectory);
     }
@@ -212,6 +215,7 @@ function parsePublicKey(
 
     try {
         keyBlob = Buffer.from(encodedKey, "base64");
+
     } catch {
         return undefined;
     }

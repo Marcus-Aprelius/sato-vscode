@@ -1,8 +1,14 @@
 import { byId, closestElement } from "./dom";
-import { app, entryIndex, groupIndex, resetCryptoUiState } from "./state";
 import { renderDetails } from "./details";
 import { updateMainActionButton } from "./buttons";
 import { openEntryMenu } from "./contextMenu";
+
+import {
+    app,
+    groupIndex,
+    resetCryptoUiState,
+    isCryptoFileView
+} from "./state";
 
 import type { EntryView, GroupView } from "../../vault";
 
@@ -11,7 +17,7 @@ export function renderEntries(): void {
     const titleEl = byId<HTMLElement>("entries-title");
 
     list.oncontextmenu = (event) => {
-        if (app.vaultLocked) {
+        if (app.vaultLocked || isCryptoFileView()) {
             return;
         }
 
@@ -36,18 +42,23 @@ export function renderEntries(): void {
     if (app.searchQuery) {
         collectMatchingEntries(app.state.tree, entries);
         titleEl.textContent = "Search results (" + entries.length + ")";
+
     } else {
         const group = groupIndex.get(app.selectedGroupId);
         entries = group ? group.entries.slice() : [];
-        titleEl.textContent = (group ? group.name : "Entries") + " (" + entries.length + ")";
+
+        if (isCryptoFileView()) {
+            titleEl.textContent = group ? group.name : "Crypto File";
+
+        } else {
+            titleEl.textContent = (group ? group.name : "Entries") + " (" + entries.length + ")";
+        }
     }
 
     if (!entries.length) {
         const empty = document.createElement("div");
         empty.className = "empty";
-        empty.textContent = app.searchQuery
-            ? "No entries match."
-            : "No entries in this group.";
+        empty.textContent = app.searchQuery ? "No entries match." : "No entries in this group.";
         list.appendChild(empty);
         return;
     }
@@ -93,11 +104,13 @@ function renderEntryRow(entry: EntryView): HTMLElement {
         row.appendChild(badge);
     }
 
-    row.addEventListener("click", () => {
-        selectEntry(entry.id);
-    });
+    row.addEventListener("click", () => {selectEntry(entry.id);});
 
     row.addEventListener("contextmenu", (event) => {
+        if (isCryptoFileView()) {
+            return;
+        }
+
         event.preventDefault();
         event.stopPropagation();
 
@@ -116,7 +129,7 @@ export function selectEntry(entryId: string): void {
     app.selectedEntryId = entryId;
 
     resetCryptoUiState();
-    app.showVaultEmptyValues = true;
+    app.showVaultEmptyValues = app.settings.showEmptyValuesByDefault;
 
     renderEntries();
     renderDetails();
@@ -129,20 +142,13 @@ function entryMatches(entry: EntryView): boolean {
     }
 
     const query = app.searchQuery.toLowerCase();
-
-    const valuesText = entry.values
-        ? Object.values(entry.values).join(" ")
-        : "";
+    const valuesText = entry.values ? Object.values(entry.values).join(" ") : "";
 
     return (
-        entry.title +
-        " " +
-        entry.username +
-        " " +
-        entry.url +
-        " " +
-        entry.notes +
-        " " +
+        entry.title + " " +
+        entry.username + " " +
+        entry.url + " " +
+        entry.notes + " " +
         valuesText
     )
         .toLowerCase()

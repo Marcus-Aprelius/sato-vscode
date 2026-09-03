@@ -22,20 +22,12 @@ export function buildCertificateVault(
     uri: vscode.Uri,
     bytes: Uint8Array
 ): CertificateVault {
-    return buildSingleVault(
-        uri,
-        bytes,
-        inspectCryptoFile
-    );
+    return buildSingleVault(uri, bytes, inspectCryptoFile);
 }
 
 export function buildCertificateDirectoryVault(
     files: CryptoFileInput[],
     selectedUri: vscode.Uri
 ): CertificateVault {
-    return buildVaultDirectory(
-        files,
-        selectedUri,
-        inspectCryptoFile
-    );
+    return buildVaultDirectory(files, selectedUri, inspectCryptoFile);
 }

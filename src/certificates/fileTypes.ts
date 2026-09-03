@@ -5,21 +5,17 @@ import { CRYPTO_FILE_EXTENSIONS, SSH_PRIVATE_KEY_FILE_NAMES } from "../fileForma
 export function isCertificateLikeUri(
     uri: vscode.Uri
 ): boolean {
-    return isCertificateLikeFileName(
-        fileNameOf(uri)
-    );
+    return isCertificateLikeFileName(fileNameOf(uri));
 }
 
 export function isCertificateLikeFileName(
     fileName: string
 ): boolean {
-    const normalizedName =
-        fileName.toLowerCase();
+    const normalizedName = fileName.toLowerCase();
 
     return (
         CRYPTO_FILE_EXTENSIONS.some((extension) => normalizedName.endsWith(`.${extension}`)) ||
-        SSH_PRIVATE_KEY_FILE_NAMES.some((supportedName) => normalizedName === supportedName
-        )
+        SSH_PRIVATE_KEY_FILE_NAMES.some((supportedName) => normalizedName === supportedName)
     );
 }
 
@@ -28,17 +24,11 @@ export function isSshPrivateKeyFilePath(
 ): boolean {
     const fileName = filePath.replace(/\\/g, "/").split("/").pop()?.toLowerCase() || "";
 
-    return SSH_PRIVATE_KEY_FILE_NAMES.some(
-        (supportedName) => fileName === supportedName
-    );
+    return SSH_PRIVATE_KEY_FILE_NAMES.some((supportedName) => fileName === supportedName);
 }
 
 export function fileNameOf(
     uri: vscode.Uri
 ): string {
-    return (
-        uri.path.split("/").pop() ??
-        uri.fsPath.split(/[\\/]/).pop() ??
-        "crypto-file"
-    );
+    return (uri.path.split("/").pop() ?? uri.fsPath.split(/[\\/]/).pop() ?? "crypto-file");
 }

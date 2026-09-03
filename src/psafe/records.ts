@@ -3,19 +3,20 @@ export function readRecordField(
     methodNames: string[],
     fallback: string
 ): string {
-    const obj =
-        record as Record<string, unknown>;
+    const obj = record as Record<string, unknown>;
 
     for (const methodName of methodNames) {
         const method = obj[methodName];
 
         if (typeof method === "function") {
+
             try {
                 const value = method.call(record);
 
                 if (value !== undefined && value !== null) {
                     return String(value);
                 }
+
             } catch {
                 // Ignore and try the next method.
             }
@@ -77,6 +78,7 @@ export function readHeaderEmptyGroups(
                 addEmptyGroup(result, item);
             }
         }
+
     } catch {
         // Ignore unsupported header formats.
     }
