@@ -116,22 +116,44 @@ export function renderModals(
         </div>
     </div>
 
-    <div class="modal" id="settings-modal">
+    <div class="modal settings-modal" id="settings-modal">
         <div class="modal-title">Settings</div>
-        <div class="modal-body">
-            <label>Auto-lock timeout (minutes, 0 = disabled)
-                <input type="number" id="s-autolock" min="0" max="240" step="1" />
-            </label>
-            <label>Clipboard clear timeout (seconds, 0 = disabled)
-                <input type="number" id="s-clipclear" min="0" max="600" step="5" />
-            </label>
-            <label>Password generator length
-                <input type="number" id="s-genlen" min="4" max="128" step="1" />
-            </label>
-            <label class="checkbox"><input type="checkbox" id="s-confirmdel"> Confirm before delete</label>
-            <label class="checkbox"><input type="checkbox" id="s-showpw"> Show passwords by default</label>
-            <label class="checkbox"><input type="checkbox" id="s-showempty"> Show empty values by default</label>
+        <div class="settings-tabs">
+            <button type="button" class="settings-tab active" id="settings-tab-general">General</button>
+            <button type="button" class="settings-tab" id="settings-tab-password-generator">Password Generator</button>
         </div>
+
+        <div class="modal-body settings-tab-content" id="settings-content-general">
+            <label class="settings-number-row">
+                <span>Auto-lock timeout (minutes, 0 = disabled)</span>
+                <input type="number" id="s-autolock" min="0" max="240" step="1"/>
+            </label>
+
+            <label class="settings-number-row">
+                <span>Clipboard clear timeout (seconds, 0 = disabled)</span>
+                <input type="number" id="s-clipclear" min="0" max="600" step="5"/>
+            </label>
+
+            <label class="checkbox">
+                <input type="checkbox" id="s-confirmdel">Confirm before delete
+            </label>
+
+            <label class="checkbox">
+                <input type="checkbox" id="s-showpw">Show passwords by default
+            </label>
+
+            <label class="checkbox">
+                <input type="checkbox" id="s-showempty">Show empty values by default
+            </label>
+        </div>
+
+        <div class="modal-body settings-tab-content" id="settings-content-password-generator" style="display:none;">
+            <label class="settings-number-row">
+                <span>Password generator length</span>
+                <input type="number" id="s-genlen" min="4" max="128" step="1"/>
+            </label>
+        </div>
+
         <div class="modal-footer">
             <button type="button" class="btn" id="s-cancel">Cancel</button>
             <button type="button" class="btn primary" id="s-save">Save</button>
@@ -140,9 +162,9 @@ export function renderModals(
 
     <div class="modal" id="dbinfo-modal">
         <div class="modal-title" id="dbinfo-title">Database Info</div>
-        <div class="modal-body" id="dbinfo-body">
-            <div class="empty">Loading…</div>
-        </div>
+            <div class="modal-body" id="dbinfo-body">
+                <div class="empty">Loading…</div>
+            </div>
         <div class="modal-footer">
             <button type="button" class="btn primary" id="dbinfo-close">Close</button>
         </div>
@@ -159,10 +181,7 @@ export function renderModals(
         <img class="about-logo" src="${logoSrc}" alt="SATO logo" />
             <div>
                 VS Code extension for viewing<br>
-
-                <button type="button" class="about-inline-link" id="about-open-supported-formats">
-                    secure storage and cryptographic files
-                </button>
+                <button type="button" class="about-inline-link" id="about-open-supported-formats">secure storage and cryptographic files</button>
             </div>
 
             <div class="about-spacer"></div>
@@ -203,10 +222,9 @@ export function renderModals(
                     <span>
                         .crt .cer .der .pem .csr .p10 .key .ppk .jks .pgp<br>
                         .p12 .pfx .p7b .p7c .p7s .p7m .gpg .pk8 .asc .jceks<br>
-                        .sig .age .p8
+                        .sig .age .pub .p8   
                     </span>
                 </div>
-
 
             </div>
         </div>
@@ -216,7 +234,98 @@ export function renderModals(
         </div>
     </div>
 
+    <div class="modal" id="converter-modal" style="width:720px;">
+        <div class="modal-title">Converter</div>
+        <div class="modal-body">
+            <div class="converter-columns">
+                <section class="converter-section">
+                    <h3>Source</h3>
+                    <div class="converter-source-actions">
+                        <button type="button" class="btn" id="converter-source-browse">
+                            Browse
+                        </button>
+                    </div>
+                    
+                    <div id="converter-source-details">
 
+                        <div class="converter-field">
+                            <span class="converter-label">File</span>
+                            <span class="converter-value" id="converter-source-file"></span>
+                        </div>
+
+                        <div class="converter-field">
+                            <span class="converter-label">Type</span>
+                            <span class="converter-value" id="converter-source-type"></span>
+                        </div>
+
+                        <div class="converter-field">
+                            <span class="converter-label">Format</span>
+                            <span class="converter-value" id="converter-source-format"></span>
+                        </div>
+
+                        <div class="converter-field">
+                            <span class="converter-label">Subject</span>
+                            <span class="converter-value" id="converter-source-subject"></span>
+                        </div>
+
+                        <div class="converter-field">
+                            <span class="converter-label">Issuer</span>
+                            <span class="converter-value" id="converter-source-issuer"></span>
+                        </div>
+
+                        <div class="converter-field">
+                            <span class="converter-label">Valid to</span>
+                            <span class="converter-value" id="converter-source-valid-to"></span>
+                        </div>
+
+                        <div class="converter-field">
+                            <span class="converter-label">SHA-256</span>
+                            <span class="converter-value converter-hash" id="converter-source-sha256"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="converter-section" id="converter-output-section">
+                    <h3>Output</h3>
+
+                    <label class="converter-input-field">Format
+                        <select id="converter-output-format">
+                            <option value="PEM">PEM</option>
+                            <option value="DER">DER</option>
+                        </select>
+                    </label>
+
+                    <div class="converter-input-field">
+                        <span>File path</span>
+
+                        <div class="converter-path-row">
+                            <input type="text" id="converter-output-file-path" autocomplete="off"/>
+                            <button type="button" class="btn converter-browse-btn" id="converter-output-file-path-browse">Browse</button>
+                        </div>
+                    </div>
+
+                    <div class="converter-input-field">
+                        <span>File name</span>
+
+                        <div class="converter-file-name-row">
+                            <input type="text" id="converter-output-file-name" autocomplete="off"/>
+                            <button type="button" class="icon-btn converter-copy-btn" id="converter-output-file-name-copy" title="Copy File Name" aria-label="Copy File Name">
+                                <span class="codicon codicon-copy"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="converter-note">The source file will not be modified. Click Convert to save the converted file.</div>
+                </section>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn" id="converter-cancel">Cancel</button>
+            <button type="button" class="btn primary" id="converter-convert">Convert</button>
+        </div>
+    </div>
 
 </div>`;
+
 }

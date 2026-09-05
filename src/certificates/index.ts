@@ -1,15 +1,22 @@
 import { inspectCryptoFile } from "./inspectionRouter";
 
+import type * as vscode from "vscode";
+import type { CertificateVault, CryptoFileInput } from "./types";
+
 import {
     buildCertificateDirectoryVault as buildVaultDirectory,
     buildCertificateVault as buildSingleVault
 } from "./vaultBuilder";
 
-import type * as vscode from "vscode";
-import type { CertificateVault, CryptoFileInput } from "./types";
-
-export { lockCryptoContainer, unlockCryptoContainer } from "./containerActions";
 export { isCertificateLikeFileName, isCertificateLikeUri } from "./fileTypes";
+export { lockCryptoContainer, unlockCryptoContainer } from "./containerActions";
+
+export {
+    certificateOutputFormat,
+    convertCertificate,
+    convertOpenSshPublicKey,
+    openSshPublicKeyOutputFormats
+} from "./converter";
 
 export type {
     CertificateVault,
@@ -17,6 +24,14 @@ export type {
     CryptoFileInput,
     CryptoInspection
 } from "./types";
+
+export type {
+    AvailableOutputFormat,
+    CryptoConversionResult,
+    CertificateOutputFormat,
+    CryptoOutputFormat,
+    OpenSshPublicKeyOutputFormat
+} from "./converter";
 
 export function buildCertificateVault(
     uri: vscode.Uri,

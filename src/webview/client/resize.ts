@@ -1,10 +1,19 @@
 import { byId } from "./dom";
-import { app } from "./state";
+import { app, isCryptoFileView } from "./state";
 
 export function applyColumnWidths(): void {
     const layout = byId<HTMLElement>("layout");
+    const cryptoMode = isCryptoFileView();
 
-    layout.style.gridTemplateColumns = app.groupsWidth + "px 4px " + app.entriesWidth + "px 4px 1fr";
+    layout.classList.toggle("crypto-layout", cryptoMode);
+
+    if (cryptoMode) {
+        layout.style.gridTemplateColumns = app.groupsWidth + "px 4px minmax(0, 1fr)";
+
+        return;
+    }
+
+    layout.style.gridTemplateColumns = app.groupsWidth + "px 4px " + app.entriesWidth + "px 4px minmax(0, 1fr)";
 }
 
 export function setupColumnResize(): void {

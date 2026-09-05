@@ -20,6 +20,12 @@ import {
 } from "./cryptoUnlockModal";
 
 import {
+    bindConverterModalActions,
+    openCryptoConverter,
+    openEmptyCryptoConverter
+} from "./converterModal";
+
+import {
     bindEntryModalActions,
     fillEntryModal,
     openEntryModal
@@ -39,7 +45,9 @@ export {
     submitCryptoContainerPassword,
     fillEntryModal,
     openEntryModal,
-    openAboutTab
+    openAboutTab,
+    openCryptoConverter,
+    openEmptyCryptoConverter
 };
 
 export function bindModalActions(): void {
@@ -53,6 +61,7 @@ export function bindModalActions(): void {
     bindUnlockModalActions();
     bindCryptoUnlockModalActions();
     bindAboutModalActions();
+    bindConverterModalActions();
 
     maybeById("dbinfo-close")?.addEventListener("click", closeModal);
     maybeById("about-close")?.addEventListener("click", closeModal);

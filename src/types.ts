@@ -28,6 +28,10 @@ export type FromWebview =
     | { type: "selectOpenPgpPrivateKey"; entryId: string; }
     | { type: "unlockCryptoContainer"; entryId: string; password: string; privateKeyPath?: string; }
     | { type: "lockCryptoContainer"; entryId: string; }
+    | { type: "selectCryptoConversionSource"; }
+    | { type: "prepareCryptoConversion"; entryId: string;}
+    | { type: "selectCryptoConversionDirectory"; initialPath: string; }
+    | { type: "convertCryptoFile"; entryId: string; outputFormat: | "PEM" | "DER" | "RFC4716" | "PKCS8"; outputFilePath: string; outputFileName: string; }
     | { type: "revealSecret"; entryId: string; field: string; }
     | { type: "revealPrivateKey"; entryId?: string; }
     | { type: "copySecret"; entryId: string; field: string; }

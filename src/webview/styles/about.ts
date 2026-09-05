@@ -15,7 +15,6 @@ export const ABOUT_STYLES = `
 
 .about-supports-title {margin-bottom: 2px; text-align: left;}
 .about-supports-row {display: grid; grid-template-columns: 58px minmax(0, 1fr); column-gap: 8px; align-items: start; text-align: left;}
-
 .about-supports strong {color: var(--vscode-foreground); font-weight: 600;}
 .about-supports span {min-width: 0; overflow-wrap: anywhere;}
 

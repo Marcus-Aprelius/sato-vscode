@@ -14,6 +14,7 @@ export const CRYPTO_FILE_EXTENSIONS = [
     "csr",
     "p10",
     "key",
+    "pub",
     "pfx",
     "p12",
     "p7b",
