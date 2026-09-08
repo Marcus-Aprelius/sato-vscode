@@ -70,15 +70,12 @@ export function decryptGpgWithPrivateKey(
             stdout: "",
             stderr: message
         };
+
     } finally {
         if (tmp) {
             const gpgHome = path.join(tmp, "gnupg");
 
-            spawnSync(
-                "gpgconf",
-                ["--homedir", gpgHome, "--kill", "gpg-agent"],
-                {encoding: "utf8", timeout: 3000}
-            );
+            spawnSync("gpgconf", ["--homedir", gpgHome, "--kill", "gpg-agent"], {encoding: "utf8", timeout: 3000});
         }
         removeTemporaryDirectory(tmp);
     }

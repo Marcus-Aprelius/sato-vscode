@@ -3,7 +3,6 @@ import { fileMetadata } from "../fileMetadata";
 import { inspectPrivateKey } from "./privateKeyInspector";
 import { inspectCertificate, isDerCertificatePath } from "./certificateInspector";
 
-
 import type { CryptoInspection } from "../types";
 
 export function inspectPemCryptoFile(

@@ -6,6 +6,7 @@ import { inspectGpg, inspectGpgUnlocked } from "./inspectors/gpgInspector";
 import { inspectJks, inspectJksUnlocked } from "./inspectors/jksInspector";
 import { inspectPkcs8, inspectPkcs8Unlocked } from "./inspectors/pkcs8Inspector";
 import { inspectPkcs12, inspectPkcs12Unlocked } from "./inspectors/pkcs12Inspector";
+import { inspectPrivateKey, inspectPrivateKeyUnlocked } from "./inspectors/privateKeyInspector";
 import { inspectSshPrivateKey, inspectSshPrivateKeyUnlocked } from "./inspectors/sshKeyInspector";
 
 import type { GroupView } from "../vault";
@@ -26,10 +27,7 @@ export function unlockCryptoContainer(
     const file = vault.filesByEntryId?.[entryId];
 
     if (!file) {
-        return {
-            ok: false,
-            message: "Crypto file is not available."
-        };
+        return {ok: false, message: "Crypto file is not available."};
     }
 
     const filePath = file.uri.fsPath;
@@ -49,39 +47,30 @@ export function unlockCryptoContainer(
     } else if (isSshPrivateKeyFilePath(filePath)) {
         inspected = inspectSshPrivateKeyUnlocked(fileText(file), file.bytes, filePath, password);
 
+    } else if (lowerPath.endsWith(".pem") || lowerPath.endsWith(".key")) {
+        inspected = inspectPrivateKeyUnlocked(fileText(file), file.bytes, filePath, password);
+
     } else if (lowerPath.endsWith(".jks") || lowerPath.endsWith(".jceks")) {
         inspected = inspectJksUnlocked(file.bytes, filePath, password);
 
     } else if (lowerPath.endsWith(".gpg") || lowerPath.endsWith(".pgp") || lowerPath.endsWith(".asc")) {
         if (!privateKeyFile) {
-            return {
-                ok: false,
-                message: "OpenPGP private key file is required."
-            };
+            return {ok: false, message: "OpenPGP private key file is required."};
         }
 
         inspected = inspectGpgUnlocked(file.bytes, filePath, password, privateKeyFile.bytes);
     } else {
-        return {
-            ok: false,
-            message: "This file type does not require container unlock."
-        };
+        return {ok: false, message: "This file type does not require container unlock."};
     }
 
     if (inspected.values.Status !== "Unlocked") {
-        return {
-            ok: false,
-            message: inspected.values.Summary || "Failed to unlock encrypted file."
-        };
+        return {ok: false, message: inspected.values.Summary || "Failed to unlock encrypted file."};
     }
 
     const entry = findEntryInTree(vault.tree, entryId);
 
     if (!entry) {
-        return {
-            ok: false,
-            message: "Crypto entry was not found."
-        };
+        return {ok: false, message: "Crypto entry was not found."};
     }
 
     applyInspection(entry, inspected);
@@ -98,9 +87,7 @@ export function unlockCryptoContainer(
         }
     }
 
-    return {
-        ok: true
-    };
+    return {ok: true};
 }
 
 export function lockCryptoContainer(
@@ -110,10 +97,7 @@ export function lockCryptoContainer(
     const file = vault.filesByEntryId?.[entryId];
 
     if (!file) {
-        return {
-            ok: false,
-            message: "Crypto file is not available."
-        };
+        return {ok: false, message: "Crypto file is not available."};
     }
 
     const filePath = file.uri.fsPath;
@@ -133,6 +117,9 @@ export function lockCryptoContainer(
     } else if (isSshPrivateKeyFilePath(filePath)) {
         inspected = inspectSshPrivateKey(fileText(file), file.bytes, filePath);
 
+    } else if (lowerPath.endsWith(".pem") || lowerPath.endsWith(".key")) {
+        inspected = inspectPrivateKey(fileText(file), file.bytes, filePath);
+
     } else if (lowerPath.endsWith(".jks") || lowerPath.endsWith(".jceks")) {
         inspected = inspectJks(file.bytes, filePath);
 
@@ -140,19 +127,13 @@ export function lockCryptoContainer(
         inspected = inspectGpg(file.bytes, filePath);
 
     } else {
-        return {
-            ok: false,
-            message: "This file type is not a lockable crypto container."
-        };
+        return {ok: false, message: "This file type is not a lockable crypto container."};
     }
 
     const entry = findEntryInTree(vault.tree, entryId);
 
     if (!entry) {
-        return {
-            ok: false,
-            message: "Crypto entry was not found."
-        };
+        return {ok: false, message: "Crypto entry was not found."};
     }
 
     applyInspection(entry, inspected);
@@ -165,9 +146,7 @@ export function lockCryptoContainer(
         vault.privateKeyPem = undefined;
     }
 
-    return {
-        ok: true
-    };
+    return {ok: true};
 }
 
 function applyInspection(
@@ -205,7 +184,5 @@ function findEntryInTree(
 function fileText(
     file: CryptoFileInput
 ): string {
-    return Buffer.from(
-        file.bytes
-    ).toString("utf8");
+    return Buffer.from(file.bytes).toString("utf8");
 }

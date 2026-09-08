@@ -4,5 +4,6 @@ export interface Settings {
     passwordGeneratorLength: number;
     confirmBeforeDelete: boolean;
     showPasswordsByDefault: boolean;
+    showEmptyValuesByDefault: boolean;
     showStatusBar: boolean;
 }

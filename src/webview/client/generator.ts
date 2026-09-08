@@ -130,9 +130,7 @@ export function bindGeneratorActions(): void {
     });
 
     document.querySelectorAll("#gen-upper, #gen-lower, #gen-digits, #gen-symbols")
-        .forEach((element) => {
-            element.addEventListener("change", regenGen);
-        });
+        .forEach((element) => {element.addEventListener("change", regenGen);});
 
     byId("gen-regen").addEventListener("click", regenGen);
     byId("gen-close").addEventListener("click", closeModal);
@@ -141,10 +139,7 @@ export function bindGeneratorActions(): void {
         const password = byId<HTMLInputElement>("gen-output").value;
 
         if (password) {
-            vscode.postMessage({
-                type: "copyText",
-                text: password
-            });
+            vscode.postMessage({type: "copyText", text: password});
         }
     });
 

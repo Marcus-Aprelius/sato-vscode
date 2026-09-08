@@ -12,9 +12,7 @@ export function tryInspectCsrWithOpenSsl(
 
     try {
         tmp = createTemporaryDirectory("sato-csr-");
-
         const csrPath = path.join(tmp, encoding === "DER" ? "request.p10" : "request.csr");
-
         fs.writeFileSync(csrPath, typeof content === "string" ? content : Buffer.from(content) );
 
         const output = execFileSync(
@@ -23,11 +21,11 @@ export function tryInspectCsrWithOpenSsl(
             {encoding: "utf8", timeout: 5000, windowsHide: true}
         );
 
-        return {
-            Details: output
-        };
+        return {Details: output };
+
     } catch {
         return undefined;
+
     } finally {
         removeTemporaryDirectory(tmp);
     }

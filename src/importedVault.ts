@@ -64,15 +64,8 @@ export function buildImportedVaultStats(
     tree: GroupView,
     entries: Map<string, ImportedVaultEntry>
 ): VaultStats {
-    const stats: VaultStats = {
-        groups: 0,
-        entries: 0,
-        duplicates: 0,
-        expired: 0,
-        emptyGroups: 0,
-        weak: 0
-    };
-
+    
+    const stats: VaultStats = {groups: 0, entries: 0, duplicates: 0, expired: 0, emptyGroups: 0, weak: 0};
     const passwordCounts = new Map<string, number>();
 
     const walk = (group: GroupView): void => {
@@ -96,10 +89,7 @@ export function buildImportedVaultStats(
                 stats.weak++;
             }
 
-            passwordCounts.set(
-                password,
-                (passwordCounts.get(password) || 0) + 1
-            );
+            passwordCounts.set(password, (passwordCounts.get(password) || 0) + 1);
         }
 
         for (const child of group.groups) {
@@ -122,14 +112,7 @@ export function createImportedEntryView(
     entry: ImportedVaultEntry
 ): GroupView["entries"][number] {
     const customFields = Object.keys(entry.fields).filter(
-        (field) =>
-            ![
-                "Title",
-                "UserName",
-                "Password",
-                "URL",
-                "Notes"
-            ].includes(field)
+        (field) => !["Title", "UserName", "Password", "URL", "Notes"].includes(field)
     );
 
     return {
@@ -139,20 +122,11 @@ export function createImportedEntryView(
         username: entry.username,
         url: entry.url,
         notes: entry.notes,
-        fields: [
-            "Title",
-            "UserName",
-            "Password",
-            "URL",
-            "Notes",
-            ...customFields
-        ],
+        fields: ["Title", "UserName", "Password", "URL", "Notes", ...customFields],
         hasPassword: entry.password.length > 0,
         passwordLength: entry.password.length,
         weak: isWeakPassword(entry.password),
         expired: false,
-        values: {
-            ...entry.fields
-        }
+        values: {...entry.fields}
     };
 }

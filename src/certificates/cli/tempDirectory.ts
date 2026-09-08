@@ -5,12 +5,7 @@ import * as path from "path";
 export function createTemporaryDirectory(
     prefix: string
 ): string {
-    return fs.mkdtempSync(
-        path.join(
-            os.tmpdir(),
-            prefix
-        )
-    );
+    return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 }
 
 export function removeTemporaryDirectory(
@@ -21,13 +16,8 @@ export function removeTemporaryDirectory(
     }
 
     try {
-        fs.rmSync(
-            temporaryDirectory,
-            {
-                recursive: true,
-                force: true
-            }
-        );
+        fs.rmSync(temporaryDirectory, {recursive: true, force: true});
+
     } catch {
         // Ignore temporary file cleanup errors.
     }

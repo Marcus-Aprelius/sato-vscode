@@ -4,7 +4,5 @@ export function hasExtension(
     uri: vscode.Uri,
     extension: string
 ): boolean {
-    return uri.fsPath
-        .toLowerCase()
-        .endsWith(extension);
+    return uri.fsPath.toLowerCase().endsWith(extension);
 }

@@ -1,8 +1,8 @@
 import * as crypto from "crypto";
 import { sshAlgorithmFromFilePath } from "../sshFormat";
 import { normalizeAlgorithm, sha256Hex } from "../format";
-
 import { fileMetadata } from "../fileMetadata";
+
 import type { CryptoInspection } from "../types";
 
 export function inspectPrivateKey(
@@ -94,6 +94,7 @@ function isEncryptedOpenSshPrivateKey(
         const cipherName = readOpenSshString(decoded, marker.length);
 
         return cipherName.value !== "none";
+
     } catch {
         return false;
     }
@@ -122,4 +123,58 @@ function readOpenSshString(
         value: buffer.subarray(start,end).toString("utf8"),
         nextOffset: end
     };
+}
+
+export function inspectPrivateKeyUnlocked(
+    text: string,
+    bytes: Uint8Array,
+    filePath: string,
+    password: string
+): CryptoInspection {
+    try {
+        
+        const key = crypto.createPrivateKey({key: text, format: "pem", passphrase: password});
+        const publicKey = crypto.createPublicKey(key);
+        const publicDer = publicKey.export({type: "spki", format: "der"}) as Buffer;
+
+        const details =
+            key.asymmetricKeyDetails as
+                | {modulusLength?: number; namedCurve?: string;}
+                | undefined;
+
+        const privateKeyPem = exportPrivateKeyPem(key);
+
+        return {
+            values: {
+                Type: "Private Key",
+                Status: "Unlocked",
+                Protection: "Password encrypted",
+                Algorithm: normalizeAlgorithm(key.asymmetricKeyType || ""),
+                "Key size": details?.modulusLength ? `${details.modulusLength} bits` : "",
+                Curve: details?.namedCurve || "",
+                "Public key SHA-256": sha256Hex(publicDer),
+                ...fileMetadata(bytes, filePath),
+                Summary: "Encrypted private key unlocked. Raw private key content is hidden."
+            },
+            privateKeyPem
+        };
+    } catch {
+        return {
+            values: {
+                Type: "Private Key",
+                Status: "Unlock failed",
+                Protection: "Password encrypted",
+                Summary: "Failed to unlock private key. The password may be incorrect or the key format may be unsupported.",
+                ...fileMetadata(bytes, filePath)
+            }
+        };
+    }
+}
+
+function exportPrivateKeyPem(
+    privateKey: crypto.KeyObject
+): string {
+    const exported = privateKey.export({type: "pkcs8", format: "pem"});
+
+    return typeof exported === "string" ? exported : exported.toString("utf8");
 }

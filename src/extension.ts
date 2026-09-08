@@ -26,10 +26,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.registerCustomEditorProvider(
             KdbxEditorProvider.viewType,
             provider,
-            {
-                webviewOptions: { retainContextWhenHidden: true },
-                supportsMultipleEditorsPerDocument: false
-            }
+            {webviewOptions: { retainContextWhenHidden: true }, supportsMultipleEditorsPerDocument: false}
         )
     );
 
@@ -44,11 +41,7 @@ export function activate(context: vscode.ExtensionContext): void {
                 return;
             }
 
-            await vscode.commands.executeCommand(
-                "vscode.openWith",
-                target,
-                KdbxEditorProvider.viewType
-            );
+            await vscode.commands.executeCommand("vscode.openWith", target, KdbxEditorProvider.viewType);
         })
     );
 

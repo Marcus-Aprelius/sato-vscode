@@ -1,5 +1,6 @@
 import { byId, maybeById } from "../dom";
 import { closeModal, openModal } from "./modalLifecycle";
+import { bindAboutModalActions, openAboutTab } from "./aboutModal";
 
 import {
     bindUnlockModalActions,
@@ -37,7 +38,8 @@ export {
     showCryptoContainerUnlockError,
     submitCryptoContainerPassword,
     fillEntryModal,
-    openEntryModal
+    openEntryModal,
+    openAboutTab
 };
 
 export function bindModalActions(): void {
@@ -50,6 +52,7 @@ export function bindModalActions(): void {
     bindEntryModalActions();
     bindUnlockModalActions();
     bindCryptoUnlockModalActions();
+    bindAboutModalActions();
 
     maybeById("dbinfo-close")?.addEventListener("click", closeModal);
     maybeById("about-close")?.addEventListener("click", closeModal);

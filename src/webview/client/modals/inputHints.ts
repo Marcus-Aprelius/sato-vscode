@@ -54,9 +54,7 @@ export function updateKeyboardLayoutFromEvent(
         return;
     }
 
-    const input = maybeById<HTMLInputElement>(
-        inputId
-    );
+    const input = maybeById<HTMLInputElement>(inputId);
 
     if (!input) {
         return;
@@ -79,10 +77,7 @@ export function updateCapsLockWarning(
         return;
     }
 
-    const isOn =
-        typeof event.getModifierState === "function"
-            ? event.getModifierState("CapsLock")
-            : false;
+    const isOn = typeof event.getModifierState === "function" ? event.getModifierState("CapsLock") : false;
 
     warning.style.display = isOn ? "" : "none";
 }

@@ -39,10 +39,7 @@ export function getVaultDetailFields(entry: ClientEntry): string[] {
         "URL",
         "Password",
         "Notes",
-        ...fields.filter((field) =>
-                !STANDARD_VAULT_FIELDS.includes(
-                    field
-                )
+        ...fields.filter((field) => !STANDARD_VAULT_FIELDS.includes(field)
         )
     ];
 }
@@ -82,9 +79,7 @@ export function emptyValuesButtonText(
         return "Show Empty Values (0)";
     }
 
-    return visible
-        ? `Hide Empty Values (${count})`
-        : `Show Empty Values (${count})`;
+    return visible ? `Hide Empty Values (${count})` : `Show Empty Values (${count})`;
 }
 
 export function emptyValuesButtonTitle(
@@ -95,7 +90,5 @@ export function emptyValuesButtonTitle(
         return "No empty values";
     }
 
-    return visible
-        ? "Hide empty values"
-        : "Show empty values";
+    return visible ? "Hide empty values" : "Show empty values";
 }

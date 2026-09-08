@@ -23,11 +23,7 @@ export function inspectCertificate(
             "Fingerprint SHA-256": certificate.fingerprint256,
             "Fingerprint SHA-1": certificate.fingerprint,
             ...fileMetadata(bytes, filePath),
-            Summary: [
-                certificate.subject,
-                `Issued by: ${certificate.issuer}`,
-                `Valid: ${certificate.validFrom} - ${certificate.validTo}`
-            ].join("\n")
+            Summary: [certificate.subject, `Issued by: ${certificate.issuer}`, `Valid: ${certificate.validFrom} - ${certificate.validTo}`].join("\n")
         };
     } catch {
         return {

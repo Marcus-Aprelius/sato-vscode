@@ -20,53 +20,34 @@ export function openFileMenu(button: HTMLElement): void {
         {
             label: "Open",
             title: "Open vault or crypto file",
-
-            action: () => {
-                vscode.postMessage({
-                    type: "openDb"
-                });
-            }
+            action: () => {vscode.postMessage({type: "openDb"});}
         },
 
         {
             label: "Open with Default Editor",
             title: "Reopen current file with the default VS Code editor",
-
-            action: () => {
-                vscode.postMessage({
-                    type: "openWithDefaultEditor"
-                });
-            }
+            action: () => {vscode.postMessage({type: "openWithDefaultEditor"});}
         },
 
         { sep: true },
 
         {
             label: "Find in Directory",
-            title: crypto
-                ? "Detect crypto files in directory"
-                : "Available only in crypto mode",
+            title: crypto ? "Detect crypto files in directory" : "Available only in crypto mode",
             disabled: !crypto,
             action: () => {
                 if (!crypto) {
                     return;
                 }
 
-                vscode.postMessage({
-                    type: "openDirectory"
-                });
+                vscode.postMessage({type: "openDirectory"});
             }
         },
 
         {
             label: "Reload from Disk",
-            title: readOnly
-                ? "Reload read-only vault from disk"
-                : "Reload current file from disk",
-            action: () => {
-                vscode.postMessage({
-                    type: "reload"
-                });
+            title: readOnly ? "Reload read-only vault from disk" : "Reload current file from disk",
+            action: () => {vscode.postMessage({type: "reload"});
             }
         },
 
@@ -83,21 +64,12 @@ export function openFileMenu(button: HTMLElement): void {
                     return;
                 }
 
-                byId("dbinfo-body").innerHTML =
-                    '<div class="empty">Loading...</div>';
-
-                byId("dbinfo-title").textContent = crypto
-                    ? "File Info"
-                    : readOnly
-                        ? "Vault Info"
-                        : "Database Info";
+                byId("dbinfo-body").innerHTML = '<div class="empty">Loading...</div>';
+                byId("dbinfo-title").textContent = crypto ? "File Info" : readOnly ? "Vault Info" : "Database Info";
 
                 openModal("dbinfo-modal");
 
-                vscode.postMessage({
-                    type: "getDbInfo",
-                    entryId: app.selectedEntryId
-                });
+                vscode.postMessage({type: "getDbInfo", entryId: app.selectedEntryId});
             }
         }
     ];

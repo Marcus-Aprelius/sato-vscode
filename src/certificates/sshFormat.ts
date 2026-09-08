@@ -1,11 +1,7 @@
 export function sshAlgorithmFromFilePath(
     filePath: string
 ): string {
-    const fileName = filePath
-        .replace(/\\/g, "/")
-        .split("/")
-        .pop()
-        ?.toLowerCase();
+    const fileName = filePath.replace(/\\/g, "/").split("/").pop() ?.toLowerCase();
 
     switch (fileName) {
         case "id_rsa":

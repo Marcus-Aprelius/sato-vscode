@@ -24,10 +24,7 @@ export function rebuildPsafeVault(
         entries.set(entry.id, entry);
     }
 
-    const tree = buildPsafeTree(
-        entries,
-        vault.emptyGroups
-    );
+    const tree = buildPsafeTree(entries, vault.emptyGroups);
 
     vault.entries = entries;
     vault.tree = tree;
@@ -73,17 +70,8 @@ export function computePsafeStats(
     root: GroupView,
     entries: Map<string, PsafeEntry>
 ): VaultStats {
-    const stats: VaultStats = {
-        groups: 0,
-        entries: 0,
-        duplicates: 0,
-        expired: 0,
-        emptyGroups: 0,
-        weak: 0
-    };
-
+    const stats: VaultStats = {groups: 0, entries: 0, duplicates: 0, expired: 0, emptyGroups: 0, weak: 0};
     const passwordCounts = new Map<string, number>();
-
     const walk = (group: GroupView): void => {
         stats.groups++;
 

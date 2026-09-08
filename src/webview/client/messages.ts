@@ -55,9 +55,7 @@ export function bindInboundMessages(): void {
         }
 
         if (msg.type === "cryptoContainerUnlockFailed") {
-            showCryptoContainerUnlockError(
-                String(msg.message || "Failed to unlock crypto container.")
-            );
+            showCryptoContainerUnlockError(String(msg.message || "Failed to unlock crypto container."));
             return;
         }
 
@@ -80,10 +78,7 @@ export function bindInboundMessages(): void {
                 return;
             }
 
-            setOpenPgpPrivateKeyPath(
-                entryId,
-                filePath
-            );
+            setOpenPgpPrivateKeyPath(entryId, filePath);
 
             return;
         }
@@ -104,6 +99,8 @@ export function bindInboundMessages(): void {
 
         if (msg.type === "settingsUpdated") {
             app.settings = msg.settings as ClientInitialState["settings"];
+            app.showEmptyValues = app.settings.showEmptyValuesByDefault;
+            app.showVaultEmptyValues = app.settings.showEmptyValuesByDefault;
 
             if (app.selectedEntryId) {
                 renderDetails();
@@ -125,9 +122,7 @@ export function bindInboundMessages(): void {
                 input.value = String(msg.value || "");
 
                 const container = input.parentElement;
-                const reveal = container
-                    ? container.querySelector(".field-action-btn")
-                    : null;
+                const reveal = container ? container.querySelector(".field-action-btn") : null;
 
                 if (reveal) {
                     reveal.textContent = "Hide";
@@ -147,10 +142,7 @@ export function bindInboundMessages(): void {
 
             app.privateKeyVisible = true;
 
-            setPrivateKeyValue(
-                entryId,
-                value
-            );
+            setPrivateKeyValue(entryId, value);
 
             renderDetails();
             renderStatus();
@@ -189,10 +181,8 @@ function renderVaultLockedState(): void {
 
     byId("tree").innerHTML = '<div class="empty">Vault is locked.</div>';
     byId("entries-title").textContent = "Entries";
-    byId("entry-list").innerHTML =
-        '<div class="empty">Unlock database to view secrets.</div>';
-    byId("details").innerHTML =
-        '<div class="empty">Unlock database to view details.</div>';
+    byId("entry-list").innerHTML = '<div class="empty">Unlock database to view secrets.</div>';
+    byId("details").innerHTML = '<div class="empty">Unlock database to view details.</div>';
 
     const bar = byId("statusbar");
     bar.innerHTML = '<span class="item"><strong>Locked</strong></span>';
@@ -273,20 +263,16 @@ function appendInfoRow(
     key: string,
     value: string
 ): void {
-    const tr = document.createElement("tr");
 
+    const tr = document.createElement("tr");
     const tdKey = document.createElement("td");
+
     tdKey.className = "label";
     tdKey.textContent = key;
 
     const tdValue = document.createElement("td");
 
-    if (
-        key === "File" ||
-        key === "File path" ||
-        key === "SHA-256" ||
-        key === "Fingerprint SHA-256"
-    ) {
+    if (key === "File" || key === "File path" || key === "SHA-256" || key === "Fingerprint SHA-256") {
         const wrap = document.createElement("div");
         wrap.style.display = "flex";
         wrap.style.alignItems = "center";
@@ -306,19 +292,13 @@ function appendInfoRow(
 
         const copyIcon = document.createElement("span");
         copyIcon.className = "codicon codicon-copy";
-
         copy.appendChild(copyIcon);
-
-        copy.addEventListener("click", () => {
-            vscode.postMessage({
-                type: "copyText",
-                text: value
-            });
-        });
+        copy.addEventListener("click", () => {vscode.postMessage({type: "copyText", text: value});});
 
         wrap.appendChild(span);
         wrap.appendChild(copy);
         tdValue.appendChild(wrap);
+
     } else {
         tdValue.textContent = value;
     }

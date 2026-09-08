@@ -35,16 +35,8 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
             context,
             {
                 editors: this.editors,
-
-                readSettings: () =>
-                    this.readSettings(),
-
-                scheduleAutoLock: (
-                    editor
-                ) =>
-                    this.scheduleAutoLock(
-                        editor
-                    )
+                readSettings: () => this.readSettings(),
+                scheduleAutoLock: (editor) => this.scheduleAutoLock(editor)
             }
         );
     }
@@ -80,44 +72,20 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         configureEditorLifecycle(
             editor,
             {
-                clearAutoLock: (
-                    targetEditor
-                ) => {
-                    this.clearAutoLock(
-                        targetEditor
-                    );
+                clearAutoLock: (targetEditor) => {
+                    this.clearAutoLock(targetEditor);
                 },
 
-                openCertificateFile: (
-                    targetDocument,
-                    targetPanel
-                ) => {
-                    return this.openCertificateFile(
-                        targetDocument,
-                        targetPanel
-                    );
+                openCertificateFile: (targetDocument, targetPanel) => {
+                    return this.openCertificateFile(targetDocument, targetPanel);
                 },
 
-                openOnePifFile: (
-                    targetDocument,
-                    targetPanel
-                ) => {
-                    return this.openOnePifFile(
-                        targetDocument,
-                        targetPanel
-                    );
+                openOnePifFile: (targetDocument, targetPanel) => {
+                    return this.openOnePifFile(targetDocument, targetPanel);
                 },
 
-                renderLockedShell: (
-                    targetDocument,
-                    targetPanel,
-                    openUnlockModal
-                ) => {
-                    this.renderLockedShell(
-                        targetDocument,
-                        targetPanel,
-                        openUnlockModal
-                    );
+                renderLockedShell: (targetDocument, targetPanel, openUnlockModal) => {
+                    this.renderLockedShell(targetDocument, targetPanel, openUnlockModal);
                 }
             }
         );
@@ -130,44 +98,22 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
                 extensionUri:
                     this.context.extensionUri,
 
-                scheduleAutoLock: (
-                    targetEditor
-                ) => {
-                    this.scheduleAutoLock(
-                        targetEditor
+                scheduleAutoLock: (targetEditor) => {
+                    this.scheduleAutoLock(targetEditor);
+                },
+
+                clearAutoLock: (targetEditor) => {
+                    this.clearAutoLock(targetEditor);
+                },
+
+                handleMessage: (msg) => {
+                    return this.handleMessage(document, panel, msg, editor.reload, editor.lock,() =>
+                        this.scheduleAutoLock(editor)
                     );
                 },
 
-                clearAutoLock: (
-                    targetEditor
-                ) => {
-                    this.clearAutoLock(
-                        targetEditor
-                    );
-                },
-
-                handleMessage: (
-                    msg
-                ) => {
-                    return this.handleMessage(
-                        document,
-                        panel,
-                        msg,
-                        editor.reload,
-                        editor.lock,
-                        () =>
-                            this.scheduleAutoLock(
-                                editor
-                            )
-                    );
-                },
-
-                removeEditor: (
-                    targetEditor
-                ) => {
-                    this.editors.delete(
-                        targetEditor
-                    );
+                removeEditor: (targetEditor) => {
+                    this.editors.delete(targetEditor);
                 }
             }
         );
@@ -191,16 +137,8 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         openUnlockModal: boolean
     ): void {
         renderLockedShell(
-            {
-                extensionUri:
-                    this.context.extensionUri,
-
-                readSettings: () =>
-                    this.readSettings()
-            },
-            document,
-            panel,
-            openUnlockModal
+            {extensionUri: this.context.extensionUri, readSettings: () => this.readSettings()},
+            document, panel, openUnlockModal
         );
     }
 
@@ -217,47 +155,15 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
             panel,
             msg,
             {
-                viewType:
-                    KdbxEditorProvider.viewType,
-
-                reload,
-                lock,
-
-                scheduleAutoLock:
-                    scheduleAutoLockCallback,
-
-                readSettings: () =>
-                    this.readSettings(),
-
-                updateSettings: (
-                    settings
-                ) =>
-                    this.updateSettings(
-                        settings
-                    ),
-
-                checkForUpdates: () =>
-                    this.checkForUpdates(),
-
-                openExternalUrl: (
-                    url
-                ) =>
-                    this.openExternalUrl(
-                        url
-                    ),
-
-                unlockWithPassword: (
-                    password
-                ) =>
-                    this.unlockWithPassword(
-                        document,
-                        panel,
-                        password,
-                        scheduleAutoLockCallback
-                    ),
-
-                adapterRuntime:
-                    this.adapterRuntime()
+                viewType: KdbxEditorProvider.viewType,
+                reload, lock,
+                scheduleAutoLock: scheduleAutoLockCallback,
+                readSettings: () => this.readSettings(),
+                updateSettings: (settings) => this.updateSettings(settings),
+                checkForUpdates: () => this.checkForUpdates(),
+                openExternalUrl: (url) => this.openExternalUrl(url),
+                unlockWithPassword: (password) => this.unlockWithPassword(document, panel, password, scheduleAutoLockCallback),
+                adapterRuntime: this.adapterRuntime()
             }
         );
     }
@@ -266,19 +172,13 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         document: VaultDocument,
         panel: vscode.WebviewPanel
     ): Promise<void> {
-        const opened = await openOnePifFile(
-            document
-        );
+        const opened = await openOnePifFile(document);
 
         if (!opened) {
             return;
         }
 
-        this.renderState(
-            document,
-            panel,
-            true
-        );
+        this.renderState(document, panel, true);
     }
 
     private async openCertificateFile(
@@ -291,11 +191,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
             return;
         }
 
-        this.renderState(
-            document,
-            panel,
-            true
-        );
+        this.renderState(document, panel, true);
     }
 
     private async unlockWithPassword(
@@ -304,23 +200,13 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         password: string,
         scheduleAutoLock: () => void
     ): Promise<void> {
-        const unlocked =
-            await unlockVaultWithPassword(
-                document,
-                panel,
-                password
-            );
+        const unlocked = await unlockVaultWithPassword(document, panel, password);
 
         if (!unlocked) {
             return;
         }
 
-        this.renderState(
-            document,
-            panel,
-            true
-        );
-
+        this.renderState(document, panel, true);
         scheduleAutoLock();
     }
 
@@ -339,20 +225,13 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         message: string,
         settings: Settings
     ): Promise<void> {
-        await copyToClipboard(
-            value,
-            message,
-            settings
-        );
+        await copyToClipboard(value, message, settings );
     }
 
     private scheduleAutoLock(
         editor: ActiveEditor
     ): void {
-        scheduleAutoLock(
-            editor,
-            this.readSettings().autoLockTimeout
-        );
+        scheduleAutoLock(editor, this.readSettings().autoLockTimeout);
     }
 
     private clearAutoLock(editor: ActiveEditor): void {
@@ -374,20 +253,13 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         panel: vscode.WebviewPanel,
         successMessage: string
     ): Promise<void> {
-        const saved = await persistKdbx(
-            document,
-            successMessage
-        );
+        const saved = await persistKdbx(document, successMessage);
 
         if (!saved) {
             return;
         }
 
-        this.renderState(
-            document,
-            panel,
-            false
-        );
+        this.renderState(document, panel, false);
     }
 
     private renderState(
@@ -396,16 +268,8 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         initialLoad: boolean
     ): void {
         renderEditorState(
-            {
-                extensionUri:
-                    this.context.extensionUri,
-
-                readSettings: () =>
-                    this.readSettings()
-            },
-            document,
-            panel,
-            initialLoad
+            {extensionUri: this.context.extensionUri, readSettings: () => this.readSettings()},
+            document, panel, initialLoad
         );
     }
 }

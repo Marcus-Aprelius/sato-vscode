@@ -7,10 +7,7 @@ export function createVaultDocument(
 ): VaultDocument {
     const document: VaultDocument = {
         uri,
-
-        dispose: () => {
-            clearDocumentState(document);
-        }
+        dispose: () => {clearDocumentState(document);}
     };
 
     return document;

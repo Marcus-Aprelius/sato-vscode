@@ -1,5 +1,26 @@
 # Change Log
 
+# 0.1.5
+
+## Changed
+  * Improved internal code structure
+  * Updated `README.md`
+  * Fixed private key unlocking for `.pem`, `.key`, and related files
+  * Simplified the `About` window
+  * Replaced the `Show Private Key` and `Hide Private Key` buttons with a `Private Key` tab
+  * Moved extended inspection output to a separate `Details` tab
+  * Improved the formatting of values in the `Details` tab
+## Added
+  * automatic password field clearing when reopening unlock dialogs
+  * private key extraction from unlocked PKCS#12/PFX containers
+  * tooltips showing elapsed or remaining days for the `Valid from` and `Valid to` fields
+  * converted-size tooltips for the `File size`, `Container size`, and `Key size` fields
+  * the `Supported Formats` window
+  * the `Show empty values by default` setting for vault and crypto file details
+  * separately copyable fields in the `Details` tab
+
+---
+
 # 0.1.4
 
 ## Changed:

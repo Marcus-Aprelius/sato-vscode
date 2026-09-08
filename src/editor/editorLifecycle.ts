@@ -31,39 +31,22 @@ export function configureEditorLifecycle(
     editor: ActiveEditor,
     runtime: EditorLifecycleRuntime
 ): void {
-    const {
-        document,
-        panel
-    } = editor;
+    const {document, panel} = editor;
 
     editor.unlock = async () => {
-        await openDocument(
-            document,
-            panel,
-            runtime
-        );
+        await openDocument(document, panel, runtime);
     };
 
     editor.lock = () => {
         runtime.clearAutoLock(editor);
-
         clearDocumentState(document);
-
-        panel.webview.postMessage({
-            type: "vaultLocked"
-        });
+        panel.webview.postMessage({type: "vaultLocked"});
     };
 
     editor.reload = async () => {
         runtime.clearAutoLock(editor);
-
         clearDocumentState(document);
-
-        await openDocument(
-            document,
-            panel,
-            runtime
-        );
+        await openDocument(document, panel, runtime);
     };
 }
 
@@ -73,26 +56,16 @@ async function openDocument(
     runtime: EditorLifecycleRuntime
 ): Promise<void> {
     if (isCertificateLikeUri(document.uri)) {
-        await runtime.openCertificateFile(
-            document,
-            panel
-        );
+        await runtime.openCertificateFile(document, panel);
 
         return;
     }
 
     if (isOnePifUri(document.uri)) {
-        await runtime.openOnePifFile(
-            document,
-            panel
-        );
+        await runtime.openOnePifFile(document, panel);
 
         return;
     }
 
-    runtime.renderLockedShell(
-        document,
-        panel,
-        true
-    );
+    runtime.renderLockedShell(document, panel, true);
 }

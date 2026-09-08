@@ -87,10 +87,7 @@ function checkPuttygen(): boolean {
 function isSshPrivateKeyPath(
     filePath: string
 ): boolean {
-    const fileName = filePath
-        .replace(/\\/g, "/")
-        .split("/")
-        .pop() || "";
+    const fileName = filePath.replace(/\\/g, "/").split("/").pop() || "";
 
     return SSH_PRIVATE_KEY_FILE_NAMES.some((supportedName) => fileName === supportedName);
 }

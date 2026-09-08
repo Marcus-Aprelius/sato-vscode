@@ -1,6 +1,6 @@
 import { vscode } from "../globals";
-import { openDropdown } from "../contextMenu";
 import { openEntryModal } from "../modals";
+import { openDropdown } from "../contextMenu";
 
 import type { MenuItem } from "../types";
 
@@ -15,15 +15,8 @@ export function openEntryMenu(button: HTMLElement): void {
     const crypto = isCryptoFileView();
     const readOnly = isReadOnlyVault();
     const entry = getSelectedEntry();
-
-    const unavailable =
-        crypto || readOnly;
-
-    const unavailableTitle = crypto
-        ? "Not available for crypto files"
-        : readOnly
-            ? "Not available in read-only mode"
-            : "";
+    const unavailable = crypto || readOnly;
+    const unavailableTitle = crypto ? "Not available for crypto files" : readOnly ? "Not available in read-only mode" : "";
 
     const items: MenuItem[] = [
         {
@@ -44,20 +37,11 @@ export function openEntryMenu(button: HTMLElement): void {
 
         {
             label: "Edit",
-
-            title: unavailable
-                ? unavailableTitle
-                : "Edit selected entry",
-
-            disabled:
-                unavailable ||
-                !entry,
+            title: unavailable ? unavailableTitle : "Edit selected entry",
+            disabled: unavailable || !entry,
 
             action: () => {
-                if (
-                    unavailable ||
-                    !entry
-                ) {
+                if (unavailable || !entry) {
                     return;
                 }
 
@@ -67,25 +51,15 @@ export function openEntryMenu(button: HTMLElement): void {
 
         {
             label: "Duplicate",
-            title: unavailable
-                ? unavailableTitle
-                : "Duplicate selected entry",
-            disabled:
-                unavailable ||
-                !entry,
+            title: unavailable ? unavailableTitle : "Duplicate selected entry",
+            disabled: unavailable || !entry,
 
             action: () => {
-                if (
-                    unavailable ||
-                    !entry
-                ) {
+                if (unavailable || !entry) {
                     return;
                 }
 
-                vscode.postMessage({
-                    type: "duplicateEntry",
-                    entryId: entry.id
-                });
+                vscode.postMessage({type: "duplicateEntry", entryId: entry.id});
             }
         },
 
@@ -93,19 +67,14 @@ export function openEntryMenu(button: HTMLElement): void {
 
         {
             label: "Delete",
-            title: unavailable
-                ? unavailableTitle
-                : "Delete selected entry",
+            title: unavailable ? unavailableTitle : "Delete selected entry",
             disabled: unavailable || !entry,
             action: () => {
                 if (unavailable || !entry ) {
                     return;
                 }
 
-                vscode.postMessage({
-                    type: "deleteEntry",
-                    entryId: entry.id
-                });
+                vscode.postMessage({type: "deleteEntry", entryId: entry.id});
             }
         }
     ];

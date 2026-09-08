@@ -16,8 +16,10 @@ export const app = {
     entriesWidth: 300,
 
     privateKeyVisible: false,
-    showEmptyValues: false,
-    showVaultEmptyValues: true,
+    detailsTab: "info" as | "info" | "details" | "privateKey",
+
+    showEmptyValues: initialState.settings.showEmptyValuesByDefault,
+    showVaultEmptyValues: initialState.settings.showEmptyValuesByDefault,
 
     editingEntryId: null as string | null,
     editingGroupId: null as string | null
@@ -51,11 +53,14 @@ export function selectedEntryHasPrivateKey(): boolean {
 
 export function resetPrivateKeyState(): void {
     app.privateKeyVisible = false;
+    app.detailsTab = "info";
 }
 
 export function resetCryptoUiState(): void {
     app.privateKeyVisible = false;
-    app.showEmptyValues = false;
+    app.detailsTab = "info";
+
+    app.showEmptyValues = app.settings.showEmptyValuesByDefault;
 }
 
 export function reindex(): void {

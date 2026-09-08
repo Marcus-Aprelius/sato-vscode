@@ -4,7 +4,6 @@ import * as crypto from "crypto";
 import { spawnSync } from "child_process";
 import { fileMetadata } from "../fileMetadata";
 import { normalizeAlgorithm } from "../format";
-
 import { createTemporaryDirectory, removeTemporaryDirectory} from "../cli/tempDirectory";
 
 import type { CryptoInspection } from "../types";
@@ -61,13 +60,9 @@ export function inspectPkcs7(
         };
     }
 
-    const subjects = parsedCertificates
-        .map((certificate) => certificate.subject)
-        .filter(Boolean);
+    const subjects = parsedCertificates.map((certificate) => certificate.subject).filter(Boolean);
 
-    const issuers = parsedCertificates
-        .map((certificate) => certificate.issuer)
-        .filter(Boolean);
+    const issuers = parsedCertificates.map((certificate) => certificate.issuer).filter(Boolean);
 
     const values: Record<string, string> = {
         Type: "PKCS#7 Certificate Chain",
@@ -141,8 +136,10 @@ function inspectWithOpenSsl(
         }
 
         return result.stdout;
+
     } catch {
         return undefined;
+
     } finally {
         removeTemporaryDirectory(temporaryDirectory);
     }
@@ -151,9 +148,7 @@ function inspectWithOpenSsl(
 function extractCertificates(
     output: string
 ): string[] {
-    return output.match(
-        /-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g
-    ) || [];
+    return output.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g) || [];
 }
 
 function parseCertificate(
@@ -171,6 +166,7 @@ function parseCertificate(
             publicKeyAlgorithm: normalizeAlgorithm(certificate.publicKey.asymmetricKeyType || ""),
             fingerprint256: certificate.fingerprint256
         };
+
     } catch {
         return undefined;
     }
@@ -179,9 +175,7 @@ function parseCertificate(
 function detectEncoding(
     bytes: Uint8Array
 ): "PEM" | "DER" {
-    const text = Buffer.from(bytes)
-        .subarray(0, 128)
-        .toString("ascii");
+    const text = Buffer.from(bytes).subarray(0, 128).toString("ascii");
 
     return text.includes("-----BEGIN") ? "PEM" : "DER";
 }

@@ -31,11 +31,7 @@ export async function handleImportedVaultMessage(
                 return;
             }
 
-            await runtime.copyToClipboard(
-                value,
-                `SATO: copied ${msg.field}`,
-                settings
-            );
+            await runtime.copyToClipboard(value, `SATO: copied ${msg.field}`, settings);
 
             return;
         }
@@ -45,40 +41,25 @@ export async function handleImportedVaultMessage(
                 return;
             }
 
-            await runtime.copyToClipboard(
-                msg.text,
-                "SATO: copied text",
-                settings
-            );
+            await runtime.copyToClipboard(msg.text, "SATO: copied text", settings);
 
             return;
         }
 
         case "revealSecret": {
-            const value = readImportedVaultField(
-                vault,
-                msg.entryId,
-                msg.field
-            );
+            const value = readImportedVaultField(vault, msg.entryId, msg.field);
 
             if (value === undefined) {
                 return;
             }
 
-            panel.webview.postMessage({
-                type: "secretRevealed",
-                entryId: msg.entryId,
-                field: msg.field,
-                value
-            });
+            panel.webview.postMessage({type: "secretRevealed", entryId: msg.entryId, field: msg.field, value});
 
             return;
         }
 
         case "getEntryDetail": {
-            const entry = vault.entries.get(
-                msg.entryId
-            );
+            const entry = vault.entries.get(msg.entryId);
 
             if (!entry) {
                 return;
@@ -105,14 +86,7 @@ export async function handleImportedVaultMessage(
                 document
             );
 
-            panel.webview.postMessage({
-                type: "dbInfo",
-                info: buildImportedVaultInfo(
-                    document,
-                    vault,
-                    fileSize
-                )
-            });
+            panel.webview.postMessage({type: "dbInfo", info: buildImportedVaultInfo(document, vault, fileSize)});
 
             return;
         }
@@ -141,42 +115,15 @@ function buildImportedVaultInfo(
     return {
         title: "Vault Info",
         rows: [
-            [
-                "Name",
-                vault.name
-            ],
-            [
-                "Format",
-                formatName(vault.format)
-            ],
-            [
-                "Mode",
-                "Read-only"
-            ],
-            [
-                "File path",
-                document.uri.fsPath
-            ],
-            [
-                "File size",
-                `${fileSize} bytes`
-            ],
-            [
-                "Groups",
-                String(vault.stats.groups)
-            ],
-            [
-                "Entries",
-                String(vault.stats.entries)
-            ],
-            [
-                "Weak passwords",
-                String(vault.stats.weak)
-            ],
-            [
-                "Duplicate passwords",
-                String(vault.stats.duplicates)
-            ]
+            ["Name", vault.name],
+            ["Format", formatName(vault.format)],
+            ["Mode", "Read-only"],
+            ["File path", document.uri.fsPath],
+            ["File size", `${fileSize} bytes`],
+            ["Groups", String(vault.stats.groups)],
+            ["Entries", String(vault.stats.entries)],
+            ["Weak passwords", String(vault.stats.weak)],
+            ["Duplicate passwords", String(vault.stats.duplicates)]
         ]
     };
 }
@@ -185,11 +132,10 @@ async function readFileSize(
     document: VaultDocument
 ): Promise<number> {
     try {
-        const stat = await vscode.workspace.fs.stat(
-            document.uri
-        );
+        const stat = await vscode.workspace.fs.stat(document.uri);
 
         return stat.size;
+
     } catch {
         return 0;
     }

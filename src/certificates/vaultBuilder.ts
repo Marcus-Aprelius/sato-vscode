@@ -21,13 +21,7 @@ export function buildCertificateVault(
     bytes: Uint8Array,
     inspectFile: CryptoFileInspector
 ): CertificateVault {
-    return buildCertificateDirectoryVault(
-        [
-            { uri, bytes }
-        ],
-        uri,
-        inspectFile
-    );
+    return buildCertificateDirectoryVault([{ uri, bytes }], uri, inspectFile);
 }
 
 export function buildCertificateDirectoryVault(
@@ -35,15 +29,11 @@ export function buildCertificateDirectoryVault(
     selectedUri: vscode.Uri,
     inspectFile: CryptoFileInspector
 ): CertificateVault {
-    const sortedFiles = files
-        .slice()
-        .sort((left, right) => fileNameOf(left.uri).localeCompare(fileNameOf(right.uri)));
+    const sortedFiles = files.slice().sort((left, right) => fileNameOf(left.uri).localeCompare(fileNameOf(right.uri)));
 
-    const privateKeysByEntryId:
-        Record<string, string> = {};
+    const privateKeysByEntryId:Record<string, string> = {};
 
-    const filesByEntryId:
-        Record<string, CryptoFileInput> = {};
+    const filesByEntryId:Record<string, CryptoFileInput> = {};
 
     let selectedEntryId = "";
 
@@ -60,8 +50,7 @@ export function buildCertificateDirectoryVault(
             const inspected = inspectFile(text, file.bytes, file.uri.fsPath);
 
             if (inspected.privateKeyPem) {
-                privateKeysByEntryId[entryId] =
-                    inspected.privateKeyPem;
+                privateKeysByEntryId[entryId] = inspected.privateKeyPem;
             }
 
             if (file.uri.fsPath === selectedUri.fsPath) {
@@ -98,13 +87,7 @@ export function buildCertificateDirectoryVault(
         selectedEntryId = groups[0].entries[0].id;
     }
 
-    const root: GroupView = {
-        id: "root",
-        parentId: null,
-        name: "Crypto Files",
-        groups,
-        entries: []
-    };
+    const root: GroupView = {id: "root", parentId: null, name: "Crypto Files", groups, entries: []};
 
     const stats: VaultStats = {
         groups: groups.length + 1,

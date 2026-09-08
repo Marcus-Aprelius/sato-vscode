@@ -23,10 +23,9 @@ export function inspectAge(
             Status: "Locked",
             Protection: recipientType,
             ...fileMetadata(bytes, filePath),
-            Summary:
-                recipientType === "Passphrase"
-                    ? "Passphrase-encrypted age file detected."
-                    : "Recipient-encrypted age file detected. An identity file may be required."
+            Summary: recipientType === "Passphrase"
+                ? "Passphrase-encrypted age file detected."
+                : "Recipient-encrypted age file detected. An identity file may be required."
         }
     };
 }
@@ -68,10 +67,7 @@ export function inspectAgeUnlocked(
         };
     }
 
-    const content =
-        formatDecryptedContent(
-            decrypted
-        );
+    const content = formatDecryptedContent(decrypted);
 
     return {
         values: {
@@ -99,19 +95,12 @@ function decryptAgeWithPassphrase(
         temporaryDirectory = createTemporaryDirectory("sato-age-");
 
         const inputPath = path.join(temporaryDirectory, "encrypted.age");
-
         fs.writeFileSync(inputPath, Buffer.from(bytes), {mode: 0o600});
 
         const result = spawnSync(
             "age",
             ["--decrypt", inputPath ],
-            {
-                env: {...process.env, AGE_PASSPHRASE: password },
-                encoding: null,
-                maxBuffer: 32 * 1024 * 1024,
-                timeout: 30000,
-                windowsHide: true
-            }
+            {env: {...process.env, AGE_PASSPHRASE: password }, encoding: null, maxBuffer: 32 * 1024 * 1024, timeout: 30000, windowsHide: true}
         );
 
         if (result.error || result.status !== 0 || !result.stdout) {
@@ -119,8 +108,10 @@ function decryptAgeWithPassphrase(
         }
 
         return new Uint8Array(result.stdout);
+
     } catch {
         return undefined;
+
     } finally {
         removeTemporaryDirectory(temporaryDirectory);
     }
@@ -160,6 +151,7 @@ function ageHeaderText(
 
     try {
         return Buffer.from(armoredBody, "base64").toString("utf8");
+
     } catch {
         return prefix;
     }

@@ -13,10 +13,7 @@ export async function copyToClipboard(
 
     lastClipboardCopy = value;
 
-    vscode.window.setStatusBarMessage(
-        message,
-        2500
-    );
+    vscode.window.setStatusBarMessage(message, 2500);
 
     if (settings.clipboardClearTimeout <= 0) {
         return;
@@ -35,8 +32,7 @@ async function clearClipboardIfUnchanged(
     expected: string
 ): Promise<void> {
     try {
-        const current =
-            await vscode.env.clipboard.readText();
+        const current = await vscode.env.clipboard.readText();
 
         if (current !== expected) {
             return;
@@ -48,10 +44,8 @@ async function clearClipboardIfUnchanged(
             lastClipboardCopy = undefined;
         }
 
-        vscode.window.setStatusBarMessage(
-            "SATO: clipboard cleared",
-            1500
-        );
+        vscode.window.setStatusBarMessage("SATO: clipboard cleared", 1500);
+
     } catch {
         // Ignore clipboard access errors.
     }

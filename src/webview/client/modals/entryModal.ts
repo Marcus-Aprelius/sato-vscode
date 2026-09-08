@@ -38,6 +38,7 @@ export function openEntryModal(entryId: string | null, groupId?: string): void {
 
     if (entryId) {
         vscode.postMessage({type: "getEntryDetail", entryId});
+
     } else {
         byId<HTMLInputElement>("ef-title").focus();
     }
@@ -64,6 +65,7 @@ export function bindEntryModalActions(): void {
         if (password.type === "password") {
             password.type = "text";
             toggle.textContent = "Hide";
+
         } else {
             password.type = "password";
             toggle.textContent = "Show";
@@ -93,6 +95,7 @@ export function bindEntryModalActions(): void {
 
         if (app.editingEntryId) {
             vscode.postMessage({type: "updateEntry", entryId: app.editingEntryId, fields});
+
         } else {
             vscode.postMessage({type: "createEntry", groupId: app.editingGroupId, fields});
         }

@@ -4,8 +4,7 @@ import { app } from "./state";
 export function applyColumnWidths(): void {
     const layout = byId<HTMLElement>("layout");
 
-    layout.style.gridTemplateColumns =
-        app.groupsWidth + "px 4px " + app.entriesWidth + "px 4px 1fr";
+    layout.style.gridTemplateColumns = app.groupsWidth + "px 4px " + app.entriesWidth + "px 4px 1fr";
 }
 
 export function setupColumnResize(): void {
@@ -30,15 +29,9 @@ export function setupColumnResize(): void {
             const dx = moveEvent.clientX - startX;
 
             if (kind === "groups") {
-                app.groupsWidth = Math.max(
-                    160,
-                    Math.min(520, startGroupsWidth + dx)
-                );
+                app.groupsWidth = Math.max(160, Math.min(520, startGroupsWidth + dx));
             } else {
-                app.entriesWidth = Math.max(
-                    200,
-                    Math.min(650, startEntriesWidth + dx)
-                );
+                app.entriesWidth = Math.max(200, Math.min(650, startEntriesWidth + dx));
             }
 
             applyColumnWidths();
@@ -58,13 +51,8 @@ export function setupColumnResize(): void {
         window.addEventListener("pointercancel", onUp);
     };
 
-    resizeGroups.addEventListener("pointerdown", (event) => {
-        startResize("groups", event);
-    });
-
-    resizeEntries.addEventListener("pointerdown", (event) => {
-        startResize("entries", event);
-    });
+    resizeGroups.addEventListener("pointerdown", (event) => {startResize("groups", event);});
+    resizeEntries.addEventListener("pointerdown", (event) => {startResize("entries", event);});
 
     applyColumnWidths();
 }

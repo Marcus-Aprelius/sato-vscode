@@ -74,22 +74,14 @@ export async function openOnePifVault(
         const record = records[index];
         const entry = mapOnePifRecord(record, index);
 
-        const groupName = normalizeGroupName(
-            stringValue(record.typeName) || "Items"
-        );
+        const groupName = normalizeGroupName(stringValue(record.typeName) || "Items");
 
-        const group = ensureGroup(
-            root,
-            groups,
-            groupName
-        );
+        const group = ensureGroup(root, groups, groupName);
 
         entry.groupId = group.id;
 
         entries.set(entry.id, entry);
-        group.entries.push(
-            createImportedEntryView(entry)
-        );
+        group.entries.push(createImportedEntryView(entry));
     }
 
     sortImportedTree(root);
@@ -99,18 +91,13 @@ export async function openOnePifVault(
         name: fileNameWithoutExtension(uri),
         readOnly: true,
         tree: root,
-        stats: buildImportedVaultStats(
-            root,
-            entries
-        ),
+        stats: buildImportedVaultStats(root, entries),
         entries
     };
 }
 
 function parseOnePifRecords(text: string): OnePifRecord[] {
-    const trimmed = text
-        .replace(/^\uFEFF/, "")
-        .trim();
+    const trimmed = text.replace(/^\uFEFF/, "").trim();
 
     if (!trimmed) {
         return [];
@@ -119,9 +106,7 @@ function parseOnePifRecords(text: string): OnePifRecord[] {
     const parsedDocument = tryParseJson(trimmed);
 
     if (Array.isArray(parsedDocument)) {
-        return parsedDocument.filter(
-            isOnePifRecord
-        );
+        return parsedDocument.filter(isOnePifRecord);
     }
 
     if (isOnePifRecord(parsedDocument)) {
@@ -134,12 +119,7 @@ function parseOnePifRecords(text: string): OnePifRecord[] {
     for (const line of lines) {
         const value = line.trim();
 
-        if (
-            !value ||
-            value.startsWith("***") ||
-            value.startsWith("//") ||
-            value.startsWith("#")
-        ) {
+        if (!value || value.startsWith("***") || value.startsWith("//") || value.startsWith("#")) {
             continue;
         }
 
@@ -157,25 +137,12 @@ function mapOnePifRecord(
     record: OnePifRecord,
     index: number
 ): ImportedVaultEntry {
-    const secure = objectValue(
-        record.secureContents
-    ) as OnePifSecureContents;
-
-    const open = objectValue(
-        record.openContents
-    ) as OnePifOpenContents;
-
+    const secure = objectValue(record.secureContents) as OnePifSecureContents;
+    const open = objectValue(record.openContents) as OnePifOpenContents;
     const customFields: Record<string, string> = {};
 
-    collectOnePifFields(
-        secure.fields,
-        customFields
-    );
-
-    collectOnePifSections(
-        secure.sections,
-        customFields
-    );
+    collectOnePifFields(secure.fields, customFields);
+    collectOnePifSections(secure.sections, customFields);
 
     const title =
         stringValue(record.title) ||
@@ -186,43 +153,19 @@ function mapOnePifRecord(
     const username =
         stringValue(secure.username) ||
         stringValue(open.username) ||
-        takeKnownField(
-            customFields,
-            [
-                "username",
-                "user",
-                "login"
-            ]
-        );
+        takeKnownField(customFields, ["username", "user", "login"]);
 
     const password =
         stringValue(secure.password) ||
-        takeKnownField(
-            customFields,
-            [
-                "password",
-                "pass",
-                "passwd"
-            ]
-        );
+        takeKnownField(customFields, ["password", "pass", "passwd"]);
 
     const url =
         stringValue(record.location) ||
         stringValue(secure.URL) ||
         stringValue(secure.url) ||
-        takeKnownField(
-            customFields,
-            [
-                "url",
-                "website",
-                "location"
-            ]
-        );
+        takeKnownField(customFields, ["url", "website", "location"]);
 
-    const notes =
-        stringValue(secure.notesPlain) ||
-        stringValue(secure.notes);
-
+    const notes = stringValue(secure.notesPlain) || stringValue(secure.notes);
     const tags = stringArray(open.tags);
 
     if (tags.length > 0) {
@@ -236,9 +179,7 @@ function mapOnePifRecord(
     }
 
     return {
-        id:
-            stringValue(record.uuid) ||
-            `onepif-entry-${index}`,
+        id: stringValue(record.uuid) || `onepif-entry-${index}`,
         groupId: "",
         title,
         username,
@@ -259,29 +200,17 @@ function collectOnePifFields(
     }
 
     for (let index = 0; index < value.length; index++) {
-        const field = objectValue(
-            value[index]
-        ) as OnePifField;
-
-        const name =
-            stringValue(field.name) ||
-            stringValue(field.designation) ||
-            `Field ${index + 1}`;
-
-        const fieldValue = displayValue(
-            field.value
-        );
+        const field = objectValue(value[index]) as OnePifField;
+        const name = stringValue(field.name) || stringValue(field.designation) || `Field ${index + 1}`;
+        const fieldValue = displayValue(field.value);
 
         if (!fieldValue) {
             continue;
         }
 
-        const key = prefix
-            ? `${prefix}: ${name}`
-            : name;
+        const key = prefix ? `${prefix}: ${name}` : name;
 
-        result[uniqueFieldName(result, key)] =
-            fieldValue;
+        result[uniqueFieldName(result, key)] = fieldValue;
     }
 }
 
@@ -294,20 +223,10 @@ function collectOnePifSections(
     }
 
     for (let index = 0; index < value.length; index++) {
-        const section = objectValue(
-            value[index]
-        ) as OnePifSection;
+        const section = objectValue(value[index]) as OnePifSection;
+        const sectionName = stringValue(section.title) || stringValue(section.name) || `Section ${index + 1}`;
 
-        const sectionName =
-            stringValue(section.title) ||
-            stringValue(section.name) ||
-            `Section ${index + 1}`;
-
-        collectOnePifFields(
-            section.fields,
-            result,
-            sectionName
-        );
+        collectOnePifFields(section.fields, result, sectionName);
     }
 }
 
@@ -337,26 +256,10 @@ function ensureGroup(
 }
 
 function sortImportedTree(root: GroupView): void {
-    root.groups.sort((left, right) =>
-        left.name.localeCompare(
-            right.name,
-            undefined,
-            {
-                sensitivity: "base"
-            }
-        )
-    );
+    root.groups.sort((left, right) => left.name.localeCompare(right.name, undefined, {sensitivity: "base"}));
 
     for (const group of root.groups) {
-        group.entries.sort((left, right) =>
-            left.title.localeCompare(
-                right.title,
-                undefined,
-                {
-                    sensitivity: "base"
-                }
-            )
-        );
+        group.entries.sort((left, right) => left.title.localeCompare(right.title, undefined, {sensitivity: "base"}));
     }
 }
 
@@ -365,9 +268,7 @@ function takeKnownField(
     names: string[]
 ): string {
     for (const [key, value] of Object.entries(fields)) {
-        const normalizedKey = key
-            .trim()
-            .toLowerCase();
+        const normalizedKey = key.trim().toLowerCase();
 
         if (!names.includes(normalizedKey)) {
             continue;
@@ -403,23 +304,16 @@ function normalizeGroupName(value: string): string {
         .replace(/^webforms?\./i, "")
         .replace(/^wallet\./i, "")
         .replace(/[._-]+/g, " ")
-        .replace(/\b\w/g, (character) =>
-            character.toUpperCase()
-        )
+        .replace(/\b\w/g, (character) => character.toUpperCase())
         .trim() || "Items";
 }
 
 function fileNameWithoutExtension(
     uri: vscode.Uri
 ): string {
-    const fileName =
-        uri.path.split("/").pop() ||
-        "1Password Export";
+    const fileName = uri.path.split("/").pop() || "1Password Export";
 
-    return fileName.replace(
-        /\.1pif$/i,
-        ""
-    );
+    return fileName.replace(/\.1pif$/i, "");
 }
 
 function slug(value: string): string {
@@ -433,6 +327,7 @@ function slug(value: string): string {
 function tryParseJson(value: string): unknown {
     try {
         return JSON.parse(value);
+
     } catch {
         return undefined;
     }
@@ -441,11 +336,7 @@ function tryParseJson(value: string): unknown {
 function isOnePifRecord(
     value: unknown
 ): value is OnePifRecord {
-    if (
-        !value ||
-        typeof value !== "object" ||
-        Array.isArray(value)
-    ) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
         return false;
     }
 
@@ -463,11 +354,7 @@ function isOnePifRecord(
 function objectValue(
     value: unknown
 ): Record<string, unknown> {
-    if (
-        value &&
-        typeof value === "object" &&
-        !Array.isArray(value)
-    ) {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
         return value as Record<string, unknown>;
     }
 
@@ -475,10 +362,7 @@ function objectValue(
 }
 
 function stringValue(value: unknown): string {
-    if (
-        value === undefined ||
-        value === null
-    ) {
+    if (value === undefined || value === null) {
         return "";
     }
 
@@ -486,10 +370,7 @@ function stringValue(value: unknown): string {
         return value.trim();
     }
 
-    if (
-        typeof value === "number" ||
-        typeof value === "boolean"
-    ) {
+    if (typeof value === "number" || typeof value === "boolean") {
         return String(value);
     }
 
@@ -501,16 +382,11 @@ function stringArray(value: unknown): string[] {
         return [];
     }
 
-    return value
-        .map(stringValue)
-        .filter(Boolean);
+    return value.map(stringValue).filter(Boolean);
 }
 
 function displayValue(value: unknown): string {
-    if (
-        value === undefined ||
-        value === null
-    ) {
+    if (value === undefined || value === null) {
         return "";
     }
 
@@ -518,15 +394,13 @@ function displayValue(value: unknown): string {
         return value;
     }
 
-    if (
-        typeof value === "number" ||
-        typeof value === "boolean"
-    ) {
+    if (typeof value === "number" || typeof value === "boolean") {
         return String(value);
     }
 
     try {
         return JSON.stringify(value);
+
     } catch {
         return "";
     }

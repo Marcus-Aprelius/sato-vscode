@@ -18,9 +18,7 @@ export async function unlockKdbxVault(
     bytes: Uint8Array,
     password: string
 ): Promise<void> {
-    const credentials = new kdbxweb.Credentials(
-        kdbxweb.ProtectedValue.fromString(password)
-    );
+    const credentials = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString(password));
 
     const db = await kdbxweb.Kdbx.load(toArrayBuffer(bytes), credentials);
 
@@ -51,11 +49,7 @@ export async function handleKdbxMessage(
                 return;
             }
 
-            await runtime.copyToClipboard(
-                value,
-                `SATO: copied ${msg.field}`,
-                settings
-            );
+            await runtime.copyToClipboard(value, `SATO: copied ${msg.field}`, settings);
 
             return;
         }
@@ -65,11 +59,7 @@ export async function handleKdbxMessage(
                 return;
             }
 
-            await runtime.copyToClipboard(
-                msg.text,
-                "SATO: password copied",
-                settings
-            );
+            await runtime.copyToClipboard(msg.text, "SATO: password copied", settings);
 
             return;
         }
@@ -81,12 +71,7 @@ export async function handleKdbxMessage(
                 return;
             }
 
-            panel.webview.postMessage({
-                type: "secretRevealed",
-                entryId: msg.entryId,
-                field: msg.field,
-                value
-            });
+            panel.webview.postMessage({type: "secretRevealed", entryId: msg.entryId, field: msg.field, value});
 
             return;
         }
@@ -95,10 +80,7 @@ export async function handleKdbxMessage(
             const detail = readEntryDetail(db, msg.entryId);
 
             if (detail) {
-                panel.webview.postMessage({
-                    type: "entryDetail",
-                    detail
-                });
+                panel.webview.postMessage({type: "entryDetail", detail});
             }
 
             return;
@@ -107,10 +89,7 @@ export async function handleKdbxMessage(
         case "getDbInfo": {
             const info = await collectKdbxDbInfo(document, db);
 
-            panel.webview.postMessage({
-                type: "dbInfo",
-                info
-            });
+            panel.webview.postMessage({type: "dbInfo", info});
 
             return;
         }
@@ -125,11 +104,7 @@ export async function handleKdbxMessage(
             const entry = db.createEntry(group);
             applyEntryFields(entry, msg.fields);
 
-            await runtime.persist(
-                document,
-                panel,
-                `Created “${msg.fields.title}”`
-            );
+            await runtime.persist(document, panel, `Created “${msg.fields.title}”`);
 
             return;
         }
@@ -143,11 +118,7 @@ export async function handleKdbxMessage(
 
             applyEntryFields(found.entry, msg.fields);
 
-            await runtime.persist(
-                document,
-                panel,
-                `Updated “${msg.fields.title}”`
-            );
+            await runtime.persist(document, panel, `Updated “${msg.fields.title}”`);
 
             return;
         }
@@ -175,11 +146,7 @@ export async function handleKdbxMessage(
 
             db.remove(found.entry);
 
-            await runtime.persist(
-                document,
-                panel,
-                `Deleted “${title}”`
-            );
+            await runtime.persist(document, panel, `Deleted “${title}”`);
 
             return;
         }
@@ -191,11 +158,7 @@ export async function handleKdbxMessage(
                 return;
             }
 
-            await runtime.persist(
-                document,
-                panel,
-                "Entry duplicated"
-            );
+            await runtime.persist(document, panel, "Entry duplicated");
 
             return;
         }
@@ -219,11 +182,7 @@ export async function handleKdbxMessage(
 
             db.createGroup(parent, name.trim());
 
-            await runtime.persist(
-                document,
-                panel,
-                `Created folder “${name.trim()}”`
-            );
+            await runtime.persist(document, panel, `Created folder “${name.trim()}”`);
 
             return;
         }
@@ -236,9 +195,7 @@ export async function handleKdbxMessage(
             }
 
             if (!group.parentGroup) {
-                vscode.window.showWarningMessage(
-                    "SATO: cannot rename the root group"
-                );
+                vscode.window.showWarningMessage("SATO: cannot rename the root group");
                 return;
             }
 
@@ -256,11 +213,7 @@ export async function handleKdbxMessage(
             group.name = name.trim();
             group.times.update();
 
-            await runtime.persist(
-                document,
-                panel,
-                `Renamed folder to “${name.trim()}”`
-            );
+            await runtime.persist(document, panel, `Renamed folder to “${name.trim()}”`);
 
             return;
         }
@@ -273,9 +226,7 @@ export async function handleKdbxMessage(
             }
 
             if (!group.parentGroup) {
-                vscode.window.showWarningMessage(
-                    "SATO: cannot delete the root group"
-                );
+                vscode.window.showWarningMessage("SATO: cannot delete the root group");
                 return;
             }
 
@@ -295,11 +246,7 @@ export async function handleKdbxMessage(
 
             db.remove(group);
 
-            await runtime.persist(
-                document,
-                panel,
-                `Deleted folder “${label}”`
-            );
+            await runtime.persist(document, panel, `Deleted folder “${label}”`);
 
             return;
         }
@@ -315,6 +262,7 @@ export async function collectKdbxDbInfo(
     try {
         const stat = await vscode.workspace.fs.stat(document.uri);
         fileSize = stat.size;
+
     } catch {
         // ignore
     }

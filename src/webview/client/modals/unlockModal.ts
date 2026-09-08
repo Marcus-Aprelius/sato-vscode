@@ -70,22 +70,15 @@ export function submitUnlockPassword(): void {
         return;
     }
 
-    vscode.postMessage({
-        type: "unlockWithPassword",
-        password
-    });
+    vscode.postMessage({type: "unlockWithPassword", password});
 }
 
 export function setKeyboardLayout(layout: string): void {
-    setInputKeyboardLayout(
-        "unlock-layout",
-        layout
-    );
+    setInputKeyboardLayout("unlock-layout", layout);
 }
 
 function updateUnlockInputHints(event: KeyboardEvent): void {
     updateKeyboardLayoutFromEvent(event, "unlock-password", "unlock-layout");
-
     updateCapsLockWarning(event, "unlock-capslock-warning");
 }
 
