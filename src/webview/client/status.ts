@@ -25,20 +25,31 @@ export function renderStatus(): void {
     const item = (
         label: string,
         value: string | number,
-        className = ""
+        className = "",
+        suffix = "",
+        suffixClassName = ""
     ): void => {
-        
         const element = document.createElement("span");
-        element.className = "item" + (className ? " " + className : "");
+        element.className = "item";
 
-        const labelElement = document.createElement("span");
+        const labelElement = document.createElement("strong");
+        labelElement.className = "status-label";
         labelElement.textContent = label + ":";
 
-        const valueElement = document.createElement("strong");
+        const valueElement = document.createElement("span");
+        valueElement.className = "status-value";
         valueElement.textContent = String(value);
 
         element.appendChild(labelElement);
         element.appendChild(valueElement);
+
+        if (suffix) {
+            const suffixElement = document.createElement("strong");
+
+            suffixElement.className = "validity-days" + (suffixClassName ? " " + suffixClassName : "");
+            suffixElement.textContent = suffix;
+            element.appendChild(suffixElement);
+        }
 
         bar.appendChild(element);
     };
@@ -73,7 +84,9 @@ function renderCryptoStatus(
     item: (
         label: string,
         value: string | number,
-        className?: string
+        className?: string,
+        suffix?: string,
+        suffixClassName?: string
     ) => void
 ): void {
     const entry = app.selectedEntryId ? entryIndex.get(app.selectedEntryId) : undefined;
@@ -102,8 +115,11 @@ function renderCryptoStatus(
     }
 
     if (values["Valid to"]) {
-        const expired = app.state.stats.expired > 0;
-        item("Valid to", values["Valid to"], expired ? "err" : "");
+        const validity = formatCertificateValidity( values["Valid to"]);
+
+        const validityClass = validity.expired ? "err" : validity.days <= 30 ? "warn" : "success";
+
+        item("Valid to", validity.date, "", validity.message, validityClass);
     }
 
     if (values["Public key algorithm"]) {
@@ -164,4 +180,47 @@ function formatVaultName(
         case "kdb": return "KeePass 1.x";
         default: return format || "Imported vault";
     }
+}
+
+function formatCertificateValidity(
+    value: string
+): {
+    date: string;
+    message: string;
+    expired: boolean;
+    days: number;
+} {
+    const expirationTime = Date.parse(value);
+
+    if (Number.isNaN(expirationTime)) {
+        return {
+            date: value,
+            message: "",
+            expired: false,
+            days: Number.POSITIVE_INFINITY
+        };
+    }
+
+    const difference = expirationTime - Date.now();
+    const dayMilliseconds = 24 * 60 * 60 * 1000;
+
+    if (difference < 0) {
+        const daysAgo = Math.max(1, Math.floor(Math.abs(difference) / dayMilliseconds));
+
+        return {
+            date: value,
+            message: daysAgo === 1 ? "(1 day ago)" : `(${daysAgo} days ago)`,
+            expired: true,
+            days: daysAgo
+        };
+    }
+
+    const daysLeft = Math.ceil(difference / dayMilliseconds);
+
+    return {
+        date: value,
+        message: daysLeft === 0 ? "(expires today)" : daysLeft === 1 ? "(1 day left)" : `(${daysLeft} days left)`,
+        expired: false,
+        days: daysLeft
+    };
 }

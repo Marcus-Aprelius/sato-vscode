@@ -3,7 +3,10 @@ import { renderStatus } from "./status";
 import { renderEntries } from "./entries";
 import { renderDetails } from "./details";
 
+import { applyColumnWidths } from "./resize";
+
 export function renderAll(): void {
+    applyColumnWidths();
     renderTree();
     renderEntries();
     renderDetails();
@@ -17,6 +20,7 @@ export function renderSelection(): void {
 }
 
 export function renderData(): void {
+    applyColumnWidths();
     renderTree();
     renderEntries();
     renderDetails();

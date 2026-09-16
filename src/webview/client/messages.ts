@@ -12,6 +12,7 @@ import {
     closeUnlockModal,
     fillEntryModal,
     openCryptoContainerUnlockModal,
+    openCryptoConverter,
     openUnlockModal,
     setOpenPgpPrivateKeyPath,
     showCryptoContainerUnlockError
@@ -79,18 +80,57 @@ export function bindInboundMessages(): void {
             }
 
             setOpenPgpPrivateKeyPath(entryId, filePath);
+            return;
+        }
+
+        if (msg.type === "cryptoConversionDirectorySelected") {
+            const filePath = String(msg.filePath || "");
+
+            if (!filePath) {
+                return;
+            }
+
+            const input = document.getElementById("converter-output-file-path") as HTMLInputElement | null;
+
+            if (input) {
+                input.value = filePath;
+                input.focus();
+            }
 
             return;
         }
 
+        if (msg.type === "cryptoConversionReady") {
+            openCryptoConverter(
+                msg.conversion as {
+                    entryId: string;
+                    fileName: string;
+                    filePath: string;
+                    type: string;
+                    sourceFormat: string;
+                    outputFormat: | "PEM" | "DER" | "RFC4716" | "PKCS8";
+                    availableOutputFormats: Array<{
+                        value: | "PEM" | "DER"| "RFC4716" | "PKCS8";
+                        label: string;
+                        extension: string;
+                    }>;
+                    outputFileName: string;
+                    subject: string;
+                    issuer: string;
+                    validTo: string;
+                    sha256: string;
+                }
+            );
+
+            return;
+        }
+
+
         if (msg.type === "vaultState") {
             clearAllPrivateKeyValues();
-
             setClientState(msg.state as ClientInitialState);
-
             closeUnlockModal();
             closeCryptoContainerUnlockModal();
-
             renderAll();
             updateToolbarForMode();
             updateMainActionButton();
@@ -143,7 +183,6 @@ export function bindInboundMessages(): void {
             app.privateKeyVisible = true;
 
             setPrivateKeyValue(entryId, value);
-
             renderDetails();
             renderStatus();
             updateMainActionButton();

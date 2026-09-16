@@ -1,8 +1,9 @@
 import { byId } from "./dom";
+import { vscode } from "./globals";
 import { renderStatus } from "./status";
 import { renderDetails } from "./details";
 import { renderEntries } from "./entries";
-import { openGroupMenu } from "./contextMenu";
+import { openGroupMenu, showMenu} from "./contextMenu";
 import { updateMainActionButton } from "./buttons";
 
 import { 
@@ -12,7 +13,7 @@ import {
     isCryptoFileView
 } from "./state";
 
-import type { GroupView } from "../../vault";
+import type { EntryView, GroupView} from "../../vault";
 
 export function renderTree(): void {
 
@@ -59,7 +60,6 @@ function renderGroupNode(group: GroupView, depth: number): HTMLElement {
     count.className = "group-count";
     count.textContent = group.entries.length ? String(group.entries.length) : "";
     row.appendChild(count);
-
     row.addEventListener("click", (event) => {event.stopPropagation(); selectGroup(group.id);});
 
     row.addEventListener("contextmenu", (event) => {
@@ -67,6 +67,19 @@ function renderGroupNode(group: GroupView, depth: number): HTMLElement {
         event.stopPropagation();
 
         selectGroup(group.id);
+
+        if (isCryptoFileView()) {
+            const entry = group.entries[0];
+
+            if (!entry) {
+                return;
+            }
+
+            openCryptoFileMenu(event.clientX, event.clientY, entry);
+
+            return;
+        }
+
         openGroupMenu(event.clientX, event.clientY, group.id);
     });
 
@@ -108,8 +121,34 @@ export function selectGroup(groupId: string): void {
     renderEntries();
     renderDetails();
     renderStatus();
-
     updateMainActionButton();
-        
-
 }
+
+function openCryptoFileMenu(
+    x: number,
+    y: number,
+    entry: EntryView
+): void {
+    const certificateConvertible = entry.values?.Type === "X.509 Certificate" && (entry.values.Encoding === "PEM" || entry.values.Encoding === "DER");
+    const openSshPublicKeyConvertible = entry.values?.Type === "OpenSSH Public Key";
+    const convertible = certificateConvertible || openSshPublicKeyConvertible;
+
+    showMenu(x, y,
+        [
+            {
+                label: "Convert...",
+                title: convertible ? "Convert certificate to another supported format" : "No conversions are available for this file",
+                disabled: !convertible,
+
+                action: () => {
+                    if (!convertible) {
+                        return;
+                    }
+
+                    vscode.postMessage({type:"prepareCryptoConversion", entryId: entry.id});
+                }
+            }
+        ]
+    );
+}
+

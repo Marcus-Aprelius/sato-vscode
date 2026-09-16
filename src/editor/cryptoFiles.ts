@@ -138,7 +138,7 @@ function cryptoDirectoryUri(
     );
 }
 
-function findCryptoEntry(
+export function findCryptoEntry(
     certificate: CertificateVault,
     entryId: string
 ): GroupView["entries"][number] | undefined {

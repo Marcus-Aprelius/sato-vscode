@@ -10,6 +10,10 @@ tools/*
 todo/
 todo/*
 
+.vscode/extensions.json
+.vscode/settings.json
+.code*/*
+
 tests/
 tests/*
 

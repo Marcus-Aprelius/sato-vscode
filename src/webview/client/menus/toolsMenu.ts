@@ -1,5 +1,5 @@
 import { vscode } from "../globals";
-import { openModal } from "../modals";
+import { openEmptyCryptoConverter, openModal } from "../modals";
 import { openDropdown } from "../contextMenu";
 
 import type { MenuItem } from "../types";
@@ -21,6 +21,7 @@ export function openToolsMenu(button: HTMLElement): void {
     const crypto = isCryptoFileView();
     const readOnly = isReadOnlyVault();
     const entry = getSelectedEntry();
+    const certificateConvertible = entry?.values?.Type === "X.509 Certificate" && (entry.values.Encoding === "PEM" || entry.values.Encoding === "DER");
     const cryptoContainer = isCryptoContainer(entry);
     const cryptoContainerUnlocked = isCryptoContainerUnlocked(entry);
     const openPgpMessage = isOpenPgpMessage(entry);
@@ -31,12 +32,9 @@ export function openToolsMenu(button: HTMLElement): void {
             label: app.vaultLocked ? "Unlock Database" : "Lock Database",
 
             title: crypto
-                ? "Not available for crypto files"
-                : readOnly
-                    ? "Not available for read-only vaults"
-                    : app.vaultLocked
-                        ? "Unlock current database"
-                        : "Lock current database",
+                ? "Not available for crypto files": readOnly
+                ? "Not available for read-only vaults" : app.vaultLocked
+                ? "Unlock current database" : "Lock current database",
 
             icon: app.vaultLocked ? "codicon-unlock" : "codicon-lock",
             iconPosition: "left",
@@ -89,6 +87,22 @@ export function openToolsMenu(button: HTMLElement): void {
 
         { sep: true },
 
+        {
+            label: "Converter",
+            title: "Open crypto file converter",
+            disabled: !crypto,
+
+            action: () => {
+                if (!crypto) {
+                    return;
+                }
+
+                openEmptyCryptoConverter();
+            }
+        },
+
+        { sep: true },
+        
         {
             label: "Password Generator",
             title: app.vaultLocked ? "Unlock the database first" : "Open password generator",

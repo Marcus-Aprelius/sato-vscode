@@ -1,5 +1,20 @@
 # Change Log
 
+# 0.2.0
+
+## Changed
+  * Updated `README.md`
+  * Simplified the Crypto Files view from three columns to two by removing the redundant entry list
+  * `Settings` button update
+  * Updated the Tools converter to support selecting a source file directly from the conversion dialog
+  * code refactoring and small improvements
+## Added
+  * Added support for OpenSSH RSA, ECDSA, and Ed25519 public key files with the `.pub` extension
+  * Added an X.509 certificate converter with PEM-to-DER and DER-to-PEM support
+  * Added a conversion dialog showing source certificate information and configurable output options
+
+---
+
 # 0.1.5
 
 ## Changed
@@ -185,11 +200,11 @@
 * Initial release
 
 * Added basic functionality:
-  * **Vault viewer** — three-pane layout: groups tree, entry list, entry details.
-  * **Entries** — create, edit, duplicate and delete. Show / copy Password, Username, URL, Notes and custom fields.
-  * **Folders** — create, rename and delete nested groups from the toolbar or the context menu.
-  * **Password generator** — configurable length and character classes, strength indicator, one-click copy and integration with the entry editor.
-  * **Global search** — filter by title, username, URL or notes.
-  * **Statistics bar** — groups, entries, duplicates, weak and expired passwords, empty folders.
-  * **Auto-save** — every change is written back to the `.kdbx` file immediately.
-  * **Local-first** — nothing leaves the extension host; no cloud, no telemetry.
+  * **Vault viewer** — three-pane layout: groups tree, entry list, entry details
+  * **Entries** — create, edit, duplicate and delete. Show / copy Password, Username, URL, Notes and custom fields
+  * **Folders** — create, rename and delete nested groups from the toolbar or the context menu
+  * **Password generator** — configurable length and character classes, strength indicator, one-click copy and integration with the entry editor
+  * **Global search** — filter by title, username, URL or notes
+  * **Statistics bar** — groups, entries, duplicates, weak and expired passwords, empty folders
+  * **Auto-save** — every change is written back to the `.kdbx` file immediately
+  * **Local-first** — nothing leaves the extension host; no cloud, no telemetry

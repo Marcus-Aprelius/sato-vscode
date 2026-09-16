@@ -10,6 +10,7 @@ import { inspectPkcs8 } from "./inspectors/pkcs8Inspector";
 import { inspectPkcs12 } from "./inspectors/pkcs12Inspector";
 import { inspectPemCryptoFile } from "./inspectors/pemInspector";
 import { inspectSshPrivateKey } from "./inspectors/sshKeyInspector";
+import { inspectOpenSshPublicKey } from "./inspectors/openSshPublicKeyInspector";
 
 import type { CryptoInspection } from "./types";
 
@@ -46,6 +47,10 @@ export function inspectCryptoFile(
 
     if (isSshPrivateKeyFilePath(filePath)) {
         return inspectSshPrivateKey(text, bytes, filePath);
+    }
+
+    if (lowerPath.endsWith(".pub")) {
+        return inspectOpenSshPublicKey(bytes, filePath);
     }
 
     if (lowerPath.endsWith(".jks") || lowerPath.endsWith(".jceks")) {

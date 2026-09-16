@@ -33,11 +33,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
     ) {
         registerConfigurationLifecycle(
             context,
-            {
-                editors: this.editors,
-                readSettings: () => this.readSettings(),
-                scheduleAutoLock: (editor) => this.scheduleAutoLock(editor)
-            }
+            {editors: this.editors, readSettings: () => this.readSettings(), scheduleAutoLock: (editor) => this.scheduleAutoLock(editor)}
         );
     }
 
@@ -72,18 +68,9 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         configureEditorLifecycle(
             editor,
             {
-                clearAutoLock: (targetEditor) => {
-                    this.clearAutoLock(targetEditor);
-                },
-
-                openCertificateFile: (targetDocument, targetPanel) => {
-                    return this.openCertificateFile(targetDocument, targetPanel);
-                },
-
-                openOnePifFile: (targetDocument, targetPanel) => {
-                    return this.openOnePifFile(targetDocument, targetPanel);
-                },
-
+                clearAutoLock: (targetEditor) => {this.clearAutoLock(targetEditor);},
+                openCertificateFile: (targetDocument, targetPanel) => {return this.openCertificateFile(targetDocument, targetPanel);},
+                openOnePifFile: (targetDocument, targetPanel) => {return this.openOnePifFile(targetDocument, targetPanel);},
                 renderLockedShell: (targetDocument, targetPanel, openUnlockModal) => {
                     this.renderLockedShell(targetDocument, targetPanel, openUnlockModal);
                 }
@@ -95,16 +82,9 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         configurePanelLifecycle(
             editor,
             {
-                extensionUri:
-                    this.context.extensionUri,
-
-                scheduleAutoLock: (targetEditor) => {
-                    this.scheduleAutoLock(targetEditor);
-                },
-
-                clearAutoLock: (targetEditor) => {
-                    this.clearAutoLock(targetEditor);
-                },
+                extensionUri: this.context.extensionUri,
+                scheduleAutoLock: (targetEditor) => {this.scheduleAutoLock(targetEditor);},
+                clearAutoLock: (targetEditor) => {this.clearAutoLock(targetEditor);},
 
                 handleMessage: (msg) => {
                     return this.handleMessage(document, panel, msg, editor.reload, editor.lock,() =>
@@ -112,8 +92,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
                     );
                 },
 
-                removeEditor: (targetEditor) => {
-                    this.editors.delete(targetEditor);
+                removeEditor: (targetEditor) => {this.editors.delete(targetEditor);
                 }
             }
         );
@@ -124,10 +103,8 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
     private adapterRuntime(): VaultAdapterRuntime {
         return {
             readSettings: () => this.readSettings(),
-            copyToClipboard: (value, message, settings) =>
-                this.copyToClipboard(value, message, settings),
-            persist: (document, panel, successMessage) =>
-                this.persist(document, panel, successMessage)
+            copyToClipboard: (value, message, settings) => this.copyToClipboard(value, message, settings),
+            persist: (document, panel, successMessage) => this.persist(document, panel, successMessage)
         };
     }
 
@@ -150,22 +127,17 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         lock: () => void,
         scheduleAutoLockCallback: () => void
     ): Promise<void> {
-        await handleEditorMessage(
-            document,
-            panel,
-            msg,
-            {
-                viewType: KdbxEditorProvider.viewType,
-                reload, lock,
-                scheduleAutoLock: scheduleAutoLockCallback,
-                readSettings: () => this.readSettings(),
-                updateSettings: (settings) => this.updateSettings(settings),
-                checkForUpdates: () => this.checkForUpdates(),
-                openExternalUrl: (url) => this.openExternalUrl(url),
-                unlockWithPassword: (password) => this.unlockWithPassword(document, panel, password, scheduleAutoLockCallback),
-                adapterRuntime: this.adapterRuntime()
-            }
-        );
+        await handleEditorMessage(document, panel, msg,{
+            viewType: KdbxEditorProvider.viewType,
+            reload, lock,
+            scheduleAutoLock: scheduleAutoLockCallback,
+            readSettings: () => this.readSettings(),
+            updateSettings: (settings) => this.updateSettings(settings),
+            checkForUpdates: () => this.checkForUpdates(),
+            openExternalUrl: (url) => this.openExternalUrl(url),
+            unlockWithPassword: (password) => this.unlockWithPassword(document, panel, password, scheduleAutoLockCallback),
+            adapterRuntime: this.adapterRuntime()
+        });
     }
 
     private async openOnePifFile(
@@ -214,23 +186,15 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         await checkForUpdates(APP_VERSION);
     }
 
-    private async openExternalUrl(
-        rawUrl: string
-    ): Promise<void> {
+    private async openExternalUrl(rawUrl: string): Promise<void> {
         await openExternalUrl(rawUrl);
     }
 
-    private async copyToClipboard(
-        value: string,
-        message: string,
-        settings: Settings
-    ): Promise<void> {
+    private async copyToClipboard(value: string, message: string, settings: Settings): Promise<void> {
         await copyToClipboard(value, message, settings );
     }
 
-    private scheduleAutoLock(
-        editor: ActiveEditor
-    ): void {
+    private scheduleAutoLock(editor: ActiveEditor): void {
         scheduleAutoLock(editor, this.readSettings().autoLockTimeout);
     }
 
@@ -242,9 +206,7 @@ export class KdbxEditorProvider implements vscode.CustomReadonlyEditorProvider<V
         return readSettings();
     }
 
-    private async updateSettings(
-        settings: Settings
-    ): Promise<void> {
+    private async updateSettings(settings: Settings): Promise<void> {
         await updateSettings(settings);
     }
 

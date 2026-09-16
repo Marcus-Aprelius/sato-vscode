@@ -25,6 +25,7 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 ![PEM](https://img.shields.io/badge/.pem-✓-2196F3)
 ![CSR](https://img.shields.io/badge/.csr-✓-2196F3)
 ![KEY](https://img.shields.io/badge/.key-✓-2196F3)
+![PUB](https://img.shields.io/badge/.pub-✓-2196F3)
 
 ![P7S](https://img.shields.io/badge/.p7s-✓-dd7889)
 ![P7M](https://img.shields.io/badge/.p7m-✓-dd7889)
@@ -80,54 +81,69 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 
 ---
 
-## Supported Formats
+## SATO Supported Formats And External Tools
 
-| Type        | Format       | Required tool | Status                                               |
-|-------------|--------------|---------------|------------------------------------------------------|
-| Vault       | `.kdbx`      | -             | Read and write                                       |
-| Vault       | `.psafe3`    | -             | Read and write (writing notes is limited)            |
-| Vault       | `.ibak`      | -             | Read and write backup file (edit with caution)       |
-| Vault       | `.1pif`      | -             | Read-only                                            |
-| Vault       | `.bcup`      | -             | Read-only                                            |
-| Crypto file | `.crt`       | -             | View X.509 certificate details                       |
-| Crypto file | `.cer`       | -             | View X.509 certificate details                       |
-| Crypto file | `.der`       | -             | View DER-encoded X.509 certificate details           |
-| Crypto file | `.pem`       | -             | View certificate, CSR, or private key details        |
-| Crypto file | `.key`       | -             | View private key metadata                            |
-| Crypto file | `.csr`       | `OpenSSL`     | View certificate signing request details             |
-| Crypto file | `.p10`       | `OpenSSL`     | View PKCS#10 certificate signing request details     |
-| Crypto file | `.p12`       | `OpenSSL`     | View and unlock PKCS#12 container                    |
-| Crypto file | `.pfx`       | `OpenSSL`     | View and unlock PKCS#12 container                    |
-| Crypto file | `.p7b`       | `OpenSSL`     | View PKCS#7 certificate chain                        |
-| Crypto file | `.p7c`       | `OpenSSL`     | View PKCS#7 certificate chain                        |
-| Crypto file | `.p7s`       | `OpenSSL`     | View PKCS#7 digital signature details                |
-| Crypto file | `.p7m`       | `OpenSSL`     | View CMS/S/MIME message details                      |
-| Crypto file | `.p8`        | -             | View PKCS#8 private key                              |
-| Crypto file | `.pk8`       | -             | View and unlock PKCS#8 private key                   |
-| Crypto file | `.age`       | -             | Read-only inspection; decryption is planned          |
-| Crypto file | `.ppk`       | `puttygen`    | View and unlock PuTTY private keys                   |
-| Crypto file | `id_rsa`     | `ssh-keygen`  | View and unlock OpenSSH RSA private keys             |
-| Crypto file | `id_ecdsa`   | `ssh-keygen`  | View and unlock OpenSSH ECDSA private keys           |
-| Crypto file | `id_ed25519` | `ssh-keygen`  | View and unlock OpenSSH Ed25519 private keys         |
-| Crypto file | `.jks`       | `keytool`     | View and unlock Java KeyStore                        |
-| Crypto file | `.jceks`     | `keytool`     | View and unlock Java Cryptography Extension KeyStore |
-| Crypto file | `.gpg`       | `GPG`         | View and decrypt OpenPGP messages                    |
-| Crypto file | `.pgp`       | `GPG`         | View and decrypt OpenPGP messages                    |
-| Crypto file | `.asc`       | `GPG`         | View OpenPGP public and private keys                 |
-| Crypto file | `.sig`       | `GPG`         | View OpenPGP signature details                       |
+### Supported Formats
 
-> **Note:** `.age` files are currently supported in read-only inspection mode. SATO detects the encoding and protection type, but does not decrypt file contents. Decryption support is planned through a secure built-in helper.
+| Format       | Description                                                  | `SATO` Base Actions                           | External tool |
+|--------------|--------------------------------------------------------------|-----------------------------------------------|---------------|
+| `.kdbx`      | KeePass `vault` database                                     | Read and write                                | None          |
+| `.psafe3`    | Password Safe `vault` database                               | Read and write                                | None          |
+| `.ibak`      | Password Safe backup `vault`                                 | Read and write with caution                   | None          |
+| `.1pif`      | 1Password Interchange Format `vault` export                  | Read-only (RO)                                | None          |
+| `.bcup`      | Buttercup `vault`                                            | Read-only (RO)                                | None          |
+| `.crt`       | X.509 `certificate`                                          | View and convert PEM/DER files                | None          |
+| `.cer`       | X.509 `certificate` in PEM or DER encoding                   | View and convert PEM/DER files                | None          |
+| `.der`       | DER-encoded X.509 `certificate`                              | View and convert to PEM                       | None          |
+| `.pem`       | `PEM certificate`, CSR, public key, or private key (PK)      | View, unlock PKs, and convert X.509 files     | None          |
+| `.p8`        | PKCS#8 `private key`                                         | View                                          | None          |
+| `.pk8`       | PKCS#8 `private key`                                         | View and unlock                               | None          |
+| `.key`       | PEM-encoded `private key`                                    | View and unlock                               | None          |
+| `.age`       | `Encrypted file` with encoding and protection type detection | RO inspection; file contents aren't decrypted | None          |
+| `.pub`       |  Ed25519 RSA, ECDSA, or `OpenSSH public key`                 | View metadata and SHA-256 fingerprint         | None          |
+| `.csr`       | `Certificate Signing Request` (`CSR`)                        | View                                          | `OpenSSL`     |
+| `.p10`       | PKCS#10 `Certificate Signing Request`                        | View                                          | `OpenSSL`     |
+| `.p12`       | PKCS#12 certificate and PK `container`                       | View, unlock, and show PK                     | `OpenSSL`     |
+| `.pfx`       | PKCS#12 certificate and PK `container`                       | View, unlock, and show PK                     | `OpenSSL`     |
+| `.p7b`       | PKCS#7 `certificate chain`                                   | View                                          | `OpenSSL`     |
+| `.p7c`       | PKCS#7 `certificate chain `                                  | View                                          | `OpenSSL`     |
+| `.p7s`       | PKCS#7/CMS `digital signature`                               | View                                          | `OpenSSL`     |
+| `.p7m`       | S/MIME or PKCS#7/`CMS message`                               | View                                          | `OpenSSL`     |
+| `.ppk`       | PuTTY `private key`                                          | View and unlock                               | `puttygen`    |
+| `id_rsa`     | OpenSSH RSA `private key`                                    | View and unlock                               | `ssh-keygen`  |
+| `id_ecdsa`   | OpenSSH ECDSA `private key`                                  | View and unlock                               | `ssh-keygen`  |
+| `id_ed25519` | OpenSSH Ed25519 `private key`                                | View and unlock                               | `ssh-keygen`  |
+| `.jks`       | Java `KeyStore`                                              | View and unlock                               | `keytool`     |
+| `.jceks`     | Java Cryptography Extension `KeyStore`                       | View and unlock                               | `keytool`     |
 
-## External Tools Installation
+Using external tools allows `SATO` to obtain more information regardless of the file type.
 
-| OS                  | Installation / Commands                                                                 |
-|---------------------|-----------------------------------------------------------------------------------------|
-| `Debian` / `Ubuntu` | `sudo apt install -y openssl gnupg default-jre-headless putty-tools openssh-client`     |
-| `Fedora` / `RHEL`   | `sudo dnf install -y openssl gnupg2 java-latest-openjdk-headless putty openssh-clients` |
-| `Arch Linux`        | `sudo pacman -S openssl gnupg jre-openjdk-headless putty openssh`                       |
-| `Alpine Linux`      | `sudo apk add openssl gnupg openjdk17-jre-headless putty openssh-client`                |
-| `macOS`             | `brew install openssl gnupg openjdk putty`                                              |
-| `Windows`           | **Install:**<br>- `Gpg4win`<br>- `OpenSSL for Windows`<br>- `OpenJDK or another Java Runtime`<br>- `PuTTY` (includes `puttygen`)<br>- `OpenSSH Client` Windows optional feature<br>**Ensure:**<br>- `openssl`, `gpg` and `keytool` are available in PATH<br>**Verify:**<br>- `openssl version`<br>- `gpg --version`<br>- `keytool -help`<br>- `puttygen --version`                              |
+### Additional Features of External Tools
+
+| External tool | Formats                            | `SATO` Extended Actions                                                 |
+|---------------|------------------------------------|-------------------------------------------------------------------------|
+| `OpenSSL`     | `.csr`, `.p10`                     | Parse and display CSR details                                           |
+| `OpenSSL`     | `.p12`, `.pfx`                     | Unlock containers, inspect certificates, and extract PK                 |
+| `OpenSSL`     | `.p7b`, `.p7c`                     | Extract and inspect certificate chains                                  |
+| `OpenSSL`     | `.p7s`                             | Inspect CMS signatures and signer information                           |
+| `OpenSSL`     | `.p7m`                             | Inspect CMS/S/MIME structure and embedded certificates                  |
+| `puttygen`    | `.ppk`                             | Unlock and inspect PuTTY PK                                             |
+| `ssh-keygen`  | `id_rsa`, `id_ecdsa`, `id_ed25519` | Unlock and inspect OpenSSH PK                                           |
+| `keytool`     | `.jks`, `.jceks`                   | Unlock KeyStores and inspect aliases, owners, issuers, and certificates |
+| `GPG`         | `.gpg`, `.pgp`                     | Inspect OpenPGP packets and decrypt supported messages                  |
+| `GPG`         | `.asc`                             | Inspect armored keys, signatures, and decrypt supported messages        |
+| `GPG`         | `.sig`                             | Inspect OpenPGP signature details                                       |
+
+### External Tools Installation
+
+| OS            | Installation/Commands                                                                 |
+|---------------|---------------------------------------------------------------------------------------|
+| Debian/Ubuntu | sudo apt install -y openssl gnupg default-jre-headless putty-tools openssh-client     |
+| Fedora/RHEL   | sudo dnf install -y openssl gnupg2 java-latest-openjdk-headless putty openssh-clients |
+| Arch Linux    | sudo pacman -S openssl gnupg jre-openjdk-headless putty openssh                       |
+| Alpine Linux  | sudo apk add openssl gnupg openjdk17-jre-headless putty openssh-client                |
+| macOS         | brew install openssl gnupg openjdk putty`                                             |
+|  Windows      | **Install:**<br>- [`Gpg4win`](https://www.gpg4win.org/), `OpenSSL for Windows`, [`PuTTY`](https://putty.org/index.html) (includes `puttygen`)<br>- `OpenJDK or another Java Runtime`<br>- `OpenSSH Client` Windows optional feature<br>**Ensure:**<br>- `openssl`, `gpg` and `keytool` are available in PATH<br>**Verify:**<br>- `openssl version`<br>- `gpg --version`<br>- `keytool -help`<br>- `puttygen --version`                            |
 
 ---
 
@@ -135,13 +151,14 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 
 | Feature                | Details |
 |------------------------|---------|
-| **Vault management**   | Three-pane viewer for groups, entries, and details<br>Read and write vaults from **Supported Formats**<br>Create, edit, duplicate, and delete entries<br>Create, rename, and delete groups |
-| **Crypto file viewer** | Inspect different crypto files from **Supported Formats**<br>Unlock crypto containers<br>Decrypt OpenPGP messages<br>View metadata, fingerprints, hashes, and decrypted content |
-| **Quick actions**      | Show, hide, and copy passwords or private keys<br>Copy usernames, URLs, notes, paths, and fingerprints<br>Open URLs directly from entry details<br>Show or hide empty values |
+| **Vault management**   | Three-pane viewer for groups, entries, and details<br>Read and write supported vault formats<br>Create, edit, duplicate, and delete entries<br>Create, rename, and delete groups |
+| **Crypto file viewer** | Two-pane viewer for crypto files and details and keys<br>Inspect files listed in **Supported Formats**<br>Unlock supported crypto containers and encrypted PK<br>View metadata, fingerprints, hashes, and decrypted content |
+| **Сonverter**          | Convert X.509 certificates between PEM and DER formats<br>View source certificate information before conversion<br>Configure the output format and file name<br>Access conversion from the Tools menu or crypto file context menu |
+| **Quick actions**      | Show, hide, and copy passwords<br>Copy PK, usernames, URLs, notes, paths and other values<br>Open URLs directly from entry details<br>Show or hide empty values |
 | **Search**             | Search vault entries and crypto metadata<br>Search titles, usernames, URLs<br>Search notes, subjects, issuers, paths, and fingerprints |
 | **Password generator** | Configurable length and character sets<br>Password strength indicator<br>Entry editor integration and one-click copy |
 | **Security controls**  | Lock and reload vaults<br>Lock containers and hide decrypted content<br>Configurable auto-lock and clipboard auto-clear<br>Checks for required external tools |
-| **Interface**          | File, Entry, Folder, Tools, View, and Help menus<br>File and database information<br>Status bar with vault statistics or crypto metadata<br>Update check from the Help menu |
+| **Interface**          | File, Entry, Folder, Tools, View, Settings, and Help menus<br>File and database information<br>Status bar with vault statistics or crypto metadata<br>Update check from the Help menu |
 
 ---
 
@@ -163,19 +180,19 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 
 Open folder `.devcontainer` in VSCode and use commands:
 
-| Action                            | Command                                                                 |
-|-----------------------------------|-------------------------------------------------------------------------|
-| 1. Install dependencies           | `npm install`                                                           |
-| 2. Build the project              | `npm run build`                                                         |
-| 3. Package `.vsix` extension      | `npm run package`                                                       |
-| 4. Install generated `.vsix` file | `code --install-extension files/sato-vscode-ext-<version>.vsix --force` |
+| Action                         | Command                                                                 |
+|--------------------------------|-------------------------------------------------------------------------|
+| Install dependencies           | `npm install`                                                           |
+| Build the project              | `npm run build`                                                         |
+| Package `.vsix` extension      | `npm run package`                                                       |
+| Install generated `.vsix` file | `code --install-extension files/sato-vscode-ext-<version>.vsix --force` |
 
 ---
 
 ## Links
 
-[[Git: sato-vscode](https://github.com/Marcus-Aprelius/sato-vscode)]
-[[Git: sato](https://github.com/Marcus-Aprelius/sato)]
+[[git: sato-vscode](https://github.com/Marcus-Aprelius/sato-vscode)]
+[[git: sato](https://github.com/Marcus-Aprelius/sato)]
 [[LICENSE (MIT)](LICENSE)]
 [[Teams (Skype)](marcus.aprelius.antoninus@gmail.com)]
 

@@ -8,10 +8,7 @@ export const TOOLBAR_STYLES = `
     background: var(--vscode-editor-background);
 }
 
-.brand {
-    font-weight: 600;
-    margin-right: 8px;
-}
+.brand {font-weight: 600; margin-right: 8px;}
 
 .toolbar-logo {
     width: 18px;
@@ -22,26 +19,16 @@ export const TOOLBAR_STYLES = `
     border-radius: 3px;
 }
 
-.toolbar button:disabled {
-    opacity: 0.5;
-    cursor: default;
-}
+.toolbar button:disabled {opacity: 0.5; cursor: default;}
 
 #btn-file,
 #btn-entry,
 #btn-folder,
 #btn-tools,
 #btn-view,
-#btn-help {
-    min-width: 60px;
-    text-align: center;
-}
+#btn-help {min-width: 60px; text-align: center;}
 
-#btn-settings .codicon {
-    font-size: 12px;
-    line-height: 1;
-    transform: translateY(1px);
-}
+#btn-settings .codicon {font-size: 12px; line-height: 1; transform: translateY(1px);}
 
 .toolbar .search-box {
     position: relative;
@@ -80,14 +67,10 @@ export const TOOLBAR_STYLES = `
     opacity: 0.45;
     cursor: default;
     background: var(--vscode-button-secondaryBackground);
-    color: var(
-        --vscode-disabledForeground,
-        var(--vscode-descriptionForeground)
-    );
+    color: var(--vscode-disabledForeground, var(--vscode-descriptionForeground));
 }
 
 .toolbar button:disabled:hover,
-.btn:disabled:hover {
-    background: var(--vscode-button-secondaryBackground);
-}
+.btn:disabled:hover {background: var(--vscode-button-secondaryBackground);}
+
 `;

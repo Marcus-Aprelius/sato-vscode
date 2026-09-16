@@ -11,6 +11,7 @@ export function openSettingsModal(): void {
     byId<HTMLInputElement>("s-showpw").checked = !!app.settings.showPasswordsByDefault;
     byId<HTMLInputElement>("s-showempty").checked = !!app.settings.showEmptyValuesByDefault;
 
+    setSettingsTab("general");
     openModal("settings-modal");
 }
 
@@ -32,4 +33,24 @@ export function bindSettingsActions(): void {
 
         closeModal();
     });
+
+    byId("settings-tab-general").addEventListener("click", () => {setSettingsTab("general");});
+    byId("settings-tab-password-generator").addEventListener("click",() => {setSettingsTab("passwordGenerator");});
+}
+
+type SettingsTab = | "general" | "passwordGenerator";
+
+function setSettingsTab(
+    tab: SettingsTab
+): void {
+    const generalTab = byId<HTMLButtonElement>("settings-tab-general");
+    const generatorTab = byId<HTMLButtonElement>("settings-tab-password-generator");
+    const generalContent = byId<HTMLElement>("settings-content-general");
+    const generatorContent = byId<HTMLElement>("settings-content-password-generator");
+    const showGeneral = tab === "general";
+
+    generalTab.classList.toggle("active", showGeneral);
+    generatorTab.classList.toggle("active", !showGeneral);
+    generalContent.style.display = showGeneral ? "" : "none";
+    generatorContent.style.display = showGeneral ? "none" : "";
 }
