@@ -29,9 +29,15 @@ export type FromWebview =
     | { type: "unlockCryptoContainer"; entryId: string; password: string; privateKeyPath?: string; }
     | { type: "lockCryptoContainer"; entryId: string; }
     | { type: "selectCryptoConversionSource"; }
-    | { type: "prepareCryptoConversion"; entryId: string;}
+    | { type: "prepareCryptoConversion"; entryId: string; initialTab?: "convert" | "extract";}
     | { type: "selectCryptoConversionDirectory"; initialPath: string; }
-    | { type: "convertCryptoFile"; entryId: string; outputFormat: | "PEM" | "DER" | "RFC4716" | "PKCS8"; outputFilePath: string; outputFileName: string; }
+    | { type: "convertCryptoFile"; entryId: string; outputFormat:
+        | "PEM" | "DER" | "RFC4716" | "PKCS8" | "RSA_PKCS1_PEM" | "RSA_PKCS1_DER"
+        | "RSA_PKCS8_PEM" | "RSA_PKCS8_DER" | "RSA_SPKI_PEM" | "RSA_SPKI_DER"
+        | "RSA_PUBLIC_PKCS1_PEM" | "RSA_PUBLIC_PKCS1_DER"| "EC_SEC1_PEM" | "EC_SEC1_DER"
+        | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER"
+        | "SPC_CMS_PEM" | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
+               outputFilePath: string; outputFileName: string;}
     | { type: "revealSecret"; entryId: string; field: string; }
     | { type: "revealPrivateKey"; entryId?: string; }
     | { type: "copySecret"; entryId: string; field: string; }

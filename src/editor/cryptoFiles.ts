@@ -127,7 +127,12 @@ export function collectCryptoFileInfo(
     addRow(rows, "File path", values["File path"]);
     addRow(rows, "Summary", values.Summary);
 
-    return {title: "File Info", rows};
+    return {
+        title: "File Info",
+        entryId: entry.id,
+        hasPrivateKey: entry.hasPrivateKey === true,
+        rows
+    };
 }
 
 function cryptoDirectoryUri(

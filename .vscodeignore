@@ -28,6 +28,7 @@ package-lock.json
 /tests/
 /tests/**
 
+.code*/**
 .git/**
 .github/**
 .gitignore

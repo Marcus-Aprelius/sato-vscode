@@ -3,7 +3,7 @@
   "displayName": "SATO Secrets",
   "description": "Browse password vaults and crypto files directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
@@ -24,49 +24,47 @@
     "keepass",
     "kdbx",
     "psafe3",
-    "password-safe",
     "1password",
     "1pif",
     "buttercup",
     "bcup",
     "secrets",
-    "password",
+    "password-manager",
     "vault",
     "certificate",
     "crt",
+    "crypto",
     "cer",
     "der",
     "csr",
     "p10",
     "private-key",
-    "pkcs12",
+    "public-key",
+    "rsa",
+    "ec",
     "p12",
     "pfx",
-    "pkcs7",
     "p7b",
     "p7c",
     "cms",
-    "smime",
+    "pem",
+    "der",
+    "pkcs",
     "p7s",
     "p7m",
-    "pkcs8",
     "p8",
     "pk8",
-    "putty",
     "ppk",
+    "age",
+    "pki",
     "ssh-key",
-    "age-encryption",
-    "age-file",
     "jks",
     "jceks",
-    "openpgp",
     "gpg",
     "pgp",
-    "signature",
     "ssh",
     "id-rsa",
-    "id-ecdsa",
-    "id-ed25519"
+    "certificates"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -112,7 +110,13 @@
             "filenamePattern": "*.key"
           },
           {
-          "filenamePattern": "*.pub"
+            "filenamePattern": "*.rsa"
+          },
+          {
+            "filenamePattern": "*.ec"
+          },
+          {
+            "filenamePattern": "*.pub"
           },
           {
             "filenamePattern": "*.p12"
@@ -133,6 +137,9 @@
             "filenamePattern": "*.p7m"
           },
           {
+            "filenamePattern": "*.spc"
+          },
+          {
             "filenamePattern": "*.p8"
           },
           {
@@ -148,7 +155,7 @@
             "filenamePattern": "*.jks"
           },
           {
-          "filenamePattern": "*.jceks"
+            "filenamePattern": "*.jceks"
           },
           {
             "filenamePattern": "*.gpg"
@@ -248,9 +255,9 @@
     "package": "npx @vscode/vsce package --out files/"
   },
   "devDependencies": {
-    "@types/node": "^22.20.1",
+    "@types/node": "^22.20.3",
     "@types/vscode": "^1.100.0",
-    "@vscode/vsce": "^3.9.2",
+    "@vscode/vsce": "^4.0.0",
     "concurrently": "^10.0.5",
     "esbuild": "^0.28.2",
     "typescript": "^7.0.2"

@@ -1,10 +1,11 @@
 import { byId } from "./dom";
 import { vscode } from "./globals";
+import { openModal } from "./modals";
 import { renderStatus } from "./status";
 import { renderDetails } from "./details";
 import { renderEntries } from "./entries";
-import { openGroupMenu, showMenu} from "./contextMenu";
 import { updateMainActionButton } from "./buttons";
+import { openGroupMenu, showMenu} from "./contextMenu";
 
 import { 
     app,
@@ -124,31 +125,73 @@ export function selectGroup(groupId: string): void {
     updateMainActionButton();
 }
 
+function isConvertibleCryptoFile(
+    entry: EntryView
+): boolean {
+    return (entry.values?.Type === "X.509 Certificate" && (entry.values.Encoding === "PEM" || entry.values.Encoding === "DER")) ||
+        entry.values?.Type === "OpenSSH Public Key" || entry.values?.Type === "RSA Private Key" || entry.values?.Type === "RSA Public Key" ||
+        entry.values?.Type === "EC Private Key" || entry.values?.Type === "EC Public Key" ||
+            (entry.values?.Type === "Private Key" && (entry.values.Algorithm === "RSA" || entry.values.Algorithm === "EC")) ||
+            entry.values?.Type === "Authenticode Certificate Container";
+}
+
+function isExtractableCryptoFile(
+    entry: EntryView
+): boolean {
+    return (
+        entry.values?.Type === "Authenticode Certificate Container" || entry.values?.Type === "RSA Private Key" || entry.values?.Type === "EC Private Key" ||
+        (entry.values?.Type === "Private Key" && (entry.values.Algorithm === "RSA" || entry.values.Algorithm === "EC"))
+    );
+}
+
 function openCryptoFileMenu(
     x: number,
     y: number,
     entry: EntryView
 ): void {
-    const certificateConvertible = entry.values?.Type === "X.509 Certificate" && (entry.values.Encoding === "PEM" || entry.values.Encoding === "DER");
-    const openSshPublicKeyConvertible = entry.values?.Type === "OpenSSH Public Key";
-    const convertible = certificateConvertible || openSshPublicKeyConvertible;
 
-    showMenu(x, y,
-        [
-            {
-                label: "Convert...",
-                title: convertible ? "Convert certificate to another supported format" : "No conversions are available for this file",
-                disabled: !convertible,
+    const convertible = isConvertibleCryptoFile(entry);
+    const extractable = isExtractableCryptoFile(entry);
+    showMenu(x, y, [
+        {
+            label: "Show Info",
+            title: "Show information about the selected crypto file",
 
-                action: () => {
-                    if (!convertible) {
-                        return;
-                    }
+            action: () => {
+                byId("dbinfo-body").innerHTML = '<div class="empty">Loading...</div>';
+                byId("dbinfo-title").textContent = "File Info";
+                openModal("dbinfo-modal");
 
-                    vscode.postMessage({type:"prepareCryptoConversion", entryId: entry.id});
-                }
+                vscode.postMessage({type: "getDbInfo", entryId: entry.id});
             }
-        ]
+        },
+        {sep: true},
+        {
+            label: "Convert...",
+            title: convertible ? "Convert the selected file" : "Conversion is not available for this file",
+            disabled: !convertible,
+
+            action: () => {
+                if (!convertible) {
+                    return;
+                }
+
+                vscode.postMessage({type: "prepareCryptoConversion", entryId: entry.id, initialTab: "convert"});
+            }
+        },
+        {
+            label: "Extract...",
+            title: extractable ? "Extract available content from the selected file" : "Extraction is not available for this file",
+            disabled: !extractable,
+
+            action: () => {
+                if (!extractable) {
+                    return;
+                }
+
+                vscode.postMessage({type: "prepareCryptoConversion", entryId: entry.id, initialTab: "extract"});
+            }
+        }]
     );
 }
 

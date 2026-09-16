@@ -8,20 +8,21 @@ import { clearAllPrivateKeyValues, renderDetails, setPrivateKeyValue } from "./d
 import type { ClientInitialState } from "./types";
 
 import {
-    closeCryptoContainerUnlockModal,
-    closeUnlockModal,
+    closeModal,
     fillEntryModal,
-    openCryptoContainerUnlockModal,
-    openCryptoConverter,
     openUnlockModal,
+    closeUnlockModal,
+    openCryptoConverter,
     setOpenPgpPrivateKeyPath,
-    showCryptoContainerUnlockError
+    openCryptoContainerUnlockModal,
+    showCryptoContainerUnlockError,
+    closeCryptoContainerUnlockModal
 } from "./modals";
 
 import {
     setLockButtonState,
-    updateMainActionButton,
-    updateToolbarForMode
+    updateToolbarForMode,
+    updateMainActionButton
 } from "./buttons";
 
 interface InboundMessage {
@@ -104,15 +105,25 @@ export function bindInboundMessages(): void {
             openCryptoConverter(
                 msg.conversion as {
                     entryId: string;
+                    initialTab?: "convert" | "extract";
                     fileName: string;
                     filePath: string;
                     type: string;
                     sourceFormat: string;
-                    outputFormat: | "PEM" | "DER" | "RFC4716" | "PKCS8";
+                    outputFormat: | "PEM" | "DER" | "RFC4716" | "PKCS8" | "RSA_PKCS1_PEM"
+                        | "RSA_PKCS1_DER" | "RSA_PKCS8_PEM" | "RSA_PKCS8_DER" | "RSA_SPKI_PEM"
+                        | "RSA_SPKI_DER" | "RSA_PUBLIC_PKCS1_PEM" | "RSA_PUBLIC_PKCS1_DER"| "EC_SEC1_PEM"
+                        | "EC_SEC1_DER" | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER"
+                        | "SPC_CMS_PEM" | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
                     availableOutputFormats: Array<{
-                        value: | "PEM" | "DER"| "RFC4716" | "PKCS8";
+                        value: | "PEM" | "DER" | "RFC4716" | "PKCS8" | "RSA_PKCS1_PEM"
+                            | "RSA_PKCS1_DER" | "RSA_PKCS8_PEM" | "RSA_PKCS8_DER" | "RSA_SPKI_PEM"
+                            | "RSA_SPKI_DER" | "RSA_PUBLIC_PKCS1_PEM" | "RSA_PUBLIC_PKCS1_DER" | "EC_SEC1_PEM"
+                            | "EC_SEC1_DER" | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER"
+                            | "SPC_CMS_PEM" | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
                         label: string;
                         extension: string;
+                        outputFileName: string;
                     }>;
                     outputFileName: string;
                     subject: string;
@@ -181,11 +192,11 @@ export function bindInboundMessages(): void {
             }
 
             app.privateKeyVisible = true;
-
             setPrivateKeyValue(entryId, value);
             renderDetails();
             renderStatus();
             updateMainActionButton();
+
             return;
         }
 
@@ -197,6 +208,7 @@ export function bindInboundMessages(): void {
                 url: string;
                 notes: string;
             });
+
             return;
         }
 
@@ -231,9 +243,7 @@ function renderVaultLockedState(): void {
 
 function renderDbInfo(info: Record<string, unknown>): void {
     const body = byId("dbinfo-body");
-
     body.innerHTML = "";
-
     const title = byId<HTMLElement>("dbinfo-title");
 
     if (typeof info.title === "string" && info.title.trim()) {
@@ -241,7 +251,8 @@ function renderDbInfo(info: Record<string, unknown>): void {
     }
 
     if (Array.isArray(info.rows)) {
-        renderInfoRows(info.rows as unknown[], body);
+        renderInfoRows(info.rows as unknown[], body, typeof info.entryId === "string" ? info.entryId : "", info.hasPrivateKey === true);
+
         return;
     }
 
@@ -250,7 +261,9 @@ function renderDbInfo(info: Record<string, unknown>): void {
 
 function renderInfoRows(
     rows: unknown[],
-    body: HTMLElement
+    body: HTMLElement,
+    entryId: string,
+    hasPrivateKey: boolean
 ): void {
     const table = document.createElement("table");
     table.className = "dbinfo-table";
@@ -262,8 +275,7 @@ function renderInfoRows(
 
         const key = String(row[0] || "");
         const value = String(row[1] || "");
-
-        appendInfoRow(table, key, value);
+        appendInfoRow(table, key, value, entryId, hasPrivateKey);
     }
 
     body.appendChild(table);
@@ -300,9 +312,10 @@ function renderLegacyDbInfo(
 function appendInfoRow(
     table: HTMLTableElement,
     key: string,
-    value: string
+    value: string,
+    entryId = "",
+    hasPrivateKey = false
 ): void {
-
     const tr = document.createElement("tr");
     const tdKey = document.createElement("td");
 
@@ -310,39 +323,134 @@ function appendInfoRow(
     tdKey.textContent = key;
 
     const tdValue = document.createElement("td");
+    const wrap = document.createElement("div");
 
-    if (key === "File" || key === "File path" || key === "SHA-256" || key === "Fingerprint SHA-256") {
-        const wrap = document.createElement("div");
-        wrap.style.display = "flex";
-        wrap.style.alignItems = "center";
-        wrap.style.width = "100%";
-        wrap.style.gap = "8px";
+    wrap.style.display = "flex";
+    wrap.style.alignItems = "center";
+    wrap.style.width = "100%";
+    wrap.style.gap = "8px";
 
-        const span = document.createElement("span");
-        span.textContent = value;
-        span.style.flex = "1";
-        span.style.minWidth = "0";
-        span.style.wordBreak = "break-all";
+    const span = document.createElement("span");
+    span.style.flex = "1";
+    span.style.minWidth = "0";
+    span.style.whiteSpace = "pre-wrap";
+    span.style.overflowWrap = "anywhere";
+    span.style.wordBreak = "break-word";
 
-        const copy = document.createElement("button");
-        copy.className = "icon-btn";
-        copy.title = "Copy";
-        copy.setAttribute("aria-label", "Copy");
+    if (key === "Summary" && hasPrivateKey &&entryId) {
+        const marker = " detected.";
+        const markerIndex = value.indexOf(marker);
 
-        const copyIcon = document.createElement("span");
-        copyIcon.className = "codicon codicon-copy";
-        copy.appendChild(copyIcon);
-        copy.addEventListener("click", () => {vscode.postMessage({type: "copyText", text: value});});
+        if (markerIndex >= 0) {
+            const linkText = value.slice(0, markerIndex + marker.length);
+            const remainder = value.slice(markerIndex + marker.length);
+            const link = document.createElement("button");
 
-        wrap.appendChild(span);
-        wrap.appendChild(copy);
-        tdValue.appendChild(wrap);
+            link.type = "button";
+            link.className = "details-inline-link";
+            link.textContent = linkText;
+            link.title = "Open the Private Key tab";
 
+            link.addEventListener("click", () => {
+                closeModal();
+
+                app.detailsTab = "privateKey";
+                app.privateKeyVisible = true;
+
+                vscode.postMessage({type: "revealPrivateKey", entryId});
+            });
+
+            span.appendChild(link);
+
+            if (remainder) {
+                span.appendChild(document.createTextNode(remainder));
+            }
+        } else {
+            span.textContent = value;
+        }
     } else {
-        tdValue.textContent = value;
+        span.textContent = value;
     }
 
+    if (key === "Key size" || key === "Key Size") {
+        const match = value.match(/^(\d+)\s+bits?$/i);
+
+        if (match) {
+            const bits = Number.parseInt(match[1], 10);
+
+            if (Number.isFinite(bits)) {
+                span.title = `${Math.ceil(bits / 8)} bytes`;
+            }
+        }
+    }
+
+    if (key === "File size" || key === "Container size") {
+        const match = value.match(/^(\d+)\s+bytes?$/i);
+
+        if (match) {
+            const bytes = Number.parseInt(match[1], 10);
+
+            if (Number.isFinite(bytes)) {
+                span.title = `${(bytes / 1024).toFixed(2)} KB`;
+            }
+        }
+    }
+
+    if (key === "Valid from") {
+        span.title = formatDateDistance(value, "from");
+    }
+
+    if (key === "Valid to") {
+        span.title = formatDateDistance(value, "to");
+    }
+
+    const copy = document.createElement("button");
+    copy.className = "icon-btn";
+    copy.title = `Copy ${key}`;
+    copy.setAttribute("aria-label", `Copy ${key}`);
+    copy.disabled = !value;
+
+    const copyIcon = document.createElement("span");
+    copyIcon.className = "codicon codicon-copy";
+    copy.appendChild(copyIcon);
+
+    copy.addEventListener("click", () => {
+        if (!value) {
+            return;
+        }
+
+        vscode.postMessage({
+            type: "copyText",
+            text: value
+        });
+    });
+
+    wrap.appendChild(span);
+    wrap.appendChild(copy);
+    tdValue.appendChild(wrap);
     tr.appendChild(tdKey);
     tr.appendChild(tdValue);
     table.appendChild(tr);
+}
+
+function formatDateDistance(
+    value: string,
+    mode: "from" | "to"
+): string {
+    const timestamp = Date.parse(value);
+
+    if (Number.isNaN(timestamp)) {
+        return "";
+    }
+
+    const dayMilliseconds = 24 * 60 * 60 * 1000;
+    const difference = timestamp - Date.now();
+    const days = Math.ceil(Math.abs(difference) / dayMilliseconds);
+    const unit = days === 1 ? "day" : "days";
+
+    if (mode === "from") {
+        return difference <= 0 ? `${days} ${unit} ago` : `in ${days} ${unit}`;
+    }
+
+    return difference >= 0 ? `${days} ${unit} left` : `${days} ${unit} ago`;
 }

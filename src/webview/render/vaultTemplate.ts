@@ -107,7 +107,7 @@ export function renderVault(
 
     <div class="ctx-menu" id="ctx-menu" role="menu"></div>
 
-    ${renderModals(logoSrc, versionLabel)}
+    ${renderModals(logoSrc, toolbarLogoSrc, versionLabel)}
 
     <script nonce="${value}">window.initialState = ${initialState};</script>
     <script nonce="${value}" src="${webviewClientSrc}"></script>
