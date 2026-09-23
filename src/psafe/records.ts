@@ -1,3 +1,5 @@
+import type { PsafeEntry } from "./types";
+
 export function readRecordField(
     record: unknown,
     methodNames: string[],
@@ -24,6 +26,21 @@ export function readRecordField(
     }
 
     return fallback;
+}
+
+export function createPsafeEntryFromRecord(
+    record: unknown,
+    index: number
+): PsafeEntry {
+    return {
+        id: `psafe-${index}`,
+        groupPath: readRecordField(record, ["getGroup", "getGroupName"], ""),
+        title: readRecordField(record, ["getTitle", "getName"], `Entry ${index + 1}`),
+        username: readRecordField(record, ["getUsername", "getUserName"], ""),
+        password: readRecordField(record, ["getPassword"], ""),
+        url: readRecordField(record, ["getUrl", "getURL"], ""),
+        notes: readRecordField(record, ["getNotes", "getNote", "getDescription"], "")
+    };
 }
 
 export function callRecordSetter(

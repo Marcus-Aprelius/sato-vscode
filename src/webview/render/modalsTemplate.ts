@@ -91,8 +91,13 @@ export function renderModals(
     </div>
 
     <div class="modal" id="gen-modal">
-        <div class="modal-title">
-            <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>Password Generator
+        <div class="modal-title modal-title-with-close">
+            <div>
+                <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>Password Generator
+            </div>
+            <button type="button" class="converter-close-button" id="gen-header-close" title="Close" aria-label="Close">
+                <span class="codicon codicon-close" aria-hidden="true"></span>
+            </button>
         </div>
         <div class="modal-body">
             <label>Length: <span id="gen-length-val">20</span>
@@ -120,8 +125,13 @@ export function renderModals(
     </div>
 
     <div class="modal settings-modal" id="settings-modal">
-        <div class="modal-title">
-            <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>Settings
+        <div class="modal-title modal-title-with-close">
+            <div>
+                <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>Settings
+            </div>
+            <button type="button" class="converter-close-button" id="settings-header-close" title="Close" aria-label="Close">
+                <span class="codicon codicon-close" aria-hidden="true"></span>
+            </button>
         </div>
 
         <div class="settings-tabs">
@@ -130,6 +140,7 @@ export function renderModals(
         </div>
 
         <div class="modal-body settings-tab-content" id="settings-content-general">
+
             <label class="settings-number-row">
                 <span>Auto-lock timeout (minutes, 0 = disabled)</span>
                 <input type="number" id="s-autolock" min="0" max="240" step="1"/>
@@ -140,17 +151,10 @@ export function renderModals(
                 <input type="number" id="s-clipclear" min="0" max="600" step="5"/>
             </label>
 
-            <label class="checkbox">
-                <input type="checkbox" id="s-confirmdel">Confirm before delete
-            </label>
+            <label class="checkbox"><input type="checkbox" id="s-confirmdel">Confirm before delete</label>
+            <label class="checkbox"><input type="checkbox" id="s-showpw">Show passwords by default</label>
+            <label class="checkbox"><input type="checkbox" id="s-showempty">Show empty values by default</label>
 
-            <label class="checkbox">
-                <input type="checkbox" id="s-showpw">Show passwords by default
-            </label>
-
-            <label class="checkbox">
-                <input type="checkbox" id="s-showempty">Show empty values by default
-            </label>
         </div>
 
         <div class="modal-body settings-tab-content" id="settings-content-password-generator" style="display:none;">
@@ -166,8 +170,13 @@ export function renderModals(
         </div>
     </div>
 
-    <div class="modal" id="dbinfo-modal">
-        <div class="modal-title" id="dbinfo-title">Database Info</div>
+    <div class="modal dbinfo-modal" id="dbinfo-modal">
+        <div class="modal-title modal-title-with-close" id="dbinfo-title">
+            <span id="dbinfo-title-label">Database Info</span>
+            <button type="button" class="converter-close-button" id="dbinfo-header-close" title="Close" aria-label="Close">
+                <span class="codicon codicon-close" aria-hidden="true"></span>
+            </button>
+        </div>
             <div class="modal-body" id="dbinfo-body">
                 <div class="empty">Loading…</div>
             </div>
@@ -177,8 +186,13 @@ export function renderModals(
     </div>
 
     <div class="modal about-modal" id="about-modal">
-        <div class="modal-title">
-            <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>[SATO] Secure Access Task Operator
+        <div class="modal-title modal-title-with-close">
+            <div>
+                <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>[SATO] Secure Access Task Operator
+            </div>
+            <button type="button" class="converter-close-button" id="about-header-close" title="Close" aria-label="Close">
+                <span class="codicon codicon-close" aria-hidden="true"></span>
+            </button>
         </div>
 
         <div class="about-tabs">
@@ -245,17 +259,25 @@ export function renderModals(
     </div>
 
     <div class="modal converter-modal" id="converter-modal">
-        <div class="modal-title">
-            <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>Converter
+        <div class="modal-title converter-modal-title">
+            <div class="converter-modal-title-content">
+                <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>Converter
+
+                <button type="button" class="converter-close-button" id="converter-close" title="Close" aria-label="Close">
+                    <span class="codicon codicon-close" aria-hidden="true"></span>
+                </button>
+            </div>
         </div>
 
         <div class="converter-tabs" id="converter-tabs">
             <button type="button" class="converter-tab active" id="converter-tab-convert" title="Convert the selected file to another supported format" aria-label="Convert the selected file to another supported format">Convert</button>
             <button type="button" class="converter-tab" id="converter-tab-extract" title="Extract available content from the selected file" aria-label="Extract available content from the selected file">Extract</button>
+            <button type="button" class="converter-tab" id="converter-tab-base64" title="Encode or decode Base64 text" aria-label="Encode or decode Base64 text">Base64</button>
         </div>
 
-        <div class="modal-body">
-            <div class="converter-columns">
+        <div class="modal-body converter-modal-body">
+            <div id="converter-file-content">
+                <div class="converter-columns">
                 <section class="converter-section">
                     <div class="converter-section-header">
                         <h3 title="The source file will not be modified">Source</h3>
@@ -357,7 +379,58 @@ export function renderModals(
             </div>
         </div>
 
-        <div class="modal-footer">
+        <div id="converter-base64-content" style="display:none;">
+            <div class="base64-toolbar">
+                <label class="base64-option">Operation
+                    <select id="base64-operation">
+                        <option value="encode">Encode</option>
+                        <option value="decode">Decode</option>
+                    </select>
+                </label>
+
+                <label class="base64-option">Format
+                    <select id="base64-format">
+                        <option value="base64url" selected>Base64URL</option>
+                        <option value="base64">Base64</option>
+                        <option value="base32">Base32</option>
+                        <option value="base32hex">Base32hex</option>
+                        <option value="hex">Hex</option>
+                    </select>
+                </label>
+
+                <button type="button" class="btn primary" id="base64-live-mode" title="Disable automatic Base64 conversion" aria-label="Disable automatic Base64 conversion" aria-pressed="true">Live Mode: ON</button>
+                <button type="button" class="btn" id="base64-swap" title="Swap input and output" aria-label="Swap input and output">⇄</button>
+            </div>
+
+            <div class="base64-columns">
+                <section class="base64-section">
+                    <div class="base64-section-header">
+                        <h3>Input</h3>
+                        <div class="base64-section-actions">
+                            <button type="button" class="btn" id="base64-paste">Paste</button>
+                            <button type="button" class="btn" id="base64-clear">Clear</button>
+                        </div>
+                    </div>
+                    <textarea id="base64-input" class="base64-textarea" spellcheck="false" placeholder="Enter text or Base64 data"></textarea>
+                    <div class="base64-character-count" id="base64-input-count">0 characters</div>
+                </section>
+
+                <section class="base64-section">
+                    <div class="base64-section-header">
+                        <h3>Output</h3>
+                        <button type="button" class="btn" id="base64-copy">Copy</button>
+                    </div>
+                    <textarea id="base64-output" class="base64-textarea" spellcheck="false" placeholder="Result" readonly></textarea>
+                    <div class="base64-character-count" id="base64-output-count">0 characters</div>
+                </section>
+            </div>
+
+            <div class="base64-message" id="base64-message">Encoding transforms data but does not encrypt or protect it.</div>
+            <div class="base64-error" id="base64-error" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div class="modal-footer">
             <button type="button" class="btn" id="converter-cancel">Cancel</button>
             <button type="button" class="btn primary" id="converter-convert">Convert</button>
         </div>

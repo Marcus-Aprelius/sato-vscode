@@ -18,6 +18,7 @@ export const DETAILS_STYLES = `
 }
 
 .dbinfo-table {width: 100%; border-collapse: collapse;}
+.dbinfo-modal > .modal-footer {border-top: none;}
 .details .actions {display: flex; gap: 6px; margin-top: 12px;}
 .details .value .field-action-btn {flex: 0 0 52px; width: 52px; min-width: 52px; text-align: center; justify-content: center;}
 .dbinfo-table td {padding: 4px 8px; vertical-align: top; border-bottom: 1px solid var(--vscode-panel-border); word-break: break-all;}

@@ -134,6 +134,7 @@ export function bindGeneratorActions(): void {
 
     byId("gen-regen").addEventListener("click", regenGen);
     byId("gen-close").addEventListener("click", closeModal);
+    byId("gen-header-close").addEventListener("click", closeModal);
 
     byId("gen-copy").addEventListener("click", () => {
         const password = byId<HTMLInputElement>("gen-output").value;

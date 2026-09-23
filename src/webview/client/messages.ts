@@ -1,8 +1,10 @@
-import { byId } from "./dom";
+import { byId, createCopyIconButton } from "./dom";
 import { vscode } from "./globals";
 import { renderAll } from "./render";
 import { renderStatus } from "./status";
 import { app, setClientState } from "./state";
+import { bitsToBytesTooltip, bytesToKilobytesTooltip } from "./sizeFormat";
+import { DAY_MILLISECONDS, daysUnitLabel, parseDateTimestamp } from "./dateFormat";
 import { clearAllPrivateKeyValues, renderDetails, setPrivateKeyValue } from "./details";
 
 import type { ClientInitialState } from "./types";
@@ -244,7 +246,7 @@ function renderVaultLockedState(): void {
 function renderDbInfo(info: Record<string, unknown>): void {
     const body = byId("dbinfo-body");
     body.innerHTML = "";
-    const title = byId<HTMLElement>("dbinfo-title");
+    const title = byId<HTMLElement>("dbinfo-title-label");
 
     if (typeof info.title === "string" && info.title.trim()) {
         title.textContent = info.title;
@@ -373,27 +375,11 @@ function appendInfoRow(
     }
 
     if (key === "Key size" || key === "Key Size") {
-        const match = value.match(/^(\d+)\s+bits?$/i);
-
-        if (match) {
-            const bits = Number.parseInt(match[1], 10);
-
-            if (Number.isFinite(bits)) {
-                span.title = `${Math.ceil(bits / 8)} bytes`;
-            }
-        }
+        span.title = bitsToBytesTooltip(value);
     }
 
     if (key === "File size" || key === "Container size") {
-        const match = value.match(/^(\d+)\s+bytes?$/i);
-
-        if (match) {
-            const bytes = Number.parseInt(match[1], 10);
-
-            if (Number.isFinite(bytes)) {
-                span.title = `${(bytes / 1024).toFixed(2)} KB`;
-            }
-        }
+        span.title = bytesToKilobytesTooltip(value);
     }
 
     if (key === "Valid from") {
@@ -404,15 +390,9 @@ function appendInfoRow(
         span.title = formatDateDistance(value, "to");
     }
 
-    const copy = document.createElement("button");
-    copy.className = "icon-btn";
-    copy.title = `Copy ${key}`;
-    copy.setAttribute("aria-label", `Copy ${key}`);
-    copy.disabled = !value;
+    const copy = createCopyIconButton(`Copy ${key}`);
 
-    const copyIcon = document.createElement("span");
-    copyIcon.className = "codicon codicon-copy";
-    copy.appendChild(copyIcon);
+    copy.disabled = !value;
 
     copy.addEventListener("click", () => {
         if (!value) {
@@ -437,16 +417,15 @@ function formatDateDistance(
     value: string,
     mode: "from" | "to"
 ): string {
-    const timestamp = Date.parse(value);
+    const timestamp = parseDateTimestamp(value);
 
-    if (Number.isNaN(timestamp)) {
+    if (timestamp === undefined) {
         return "";
     }
 
-    const dayMilliseconds = 24 * 60 * 60 * 1000;
     const difference = timestamp - Date.now();
-    const days = Math.ceil(Math.abs(difference) / dayMilliseconds);
-    const unit = days === 1 ? "day" : "days";
+    const days = Math.ceil(Math.abs(difference) / DAY_MILLISECONDS);
+    const unit = daysUnitLabel(days);
 
     if (mode === "from") {
         return difference <= 0 ? `${days} ${unit} ago` : `in ${days} ${unit}`;

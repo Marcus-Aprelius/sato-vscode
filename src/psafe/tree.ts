@@ -1,4 +1,4 @@
-import { readRecordField } from "./records";
+import { createPsafeEntryFromRecord } from "./records";
 import { isWeakPassword } from "../security/passwordStrength";
 
 import type { GroupView, VaultStats } from "../vault";
@@ -10,16 +10,7 @@ export function rebuildPsafeVault(
     const entries = new Map<string, PsafeEntry>();
 
     for (let index = 0; index < vault.databaseRecords.length; index++) {
-        const record = vault.databaseRecords[index];
-        const entry: PsafeEntry = {
-            id: `psafe-${index}`,
-            groupPath: readRecordField(record, ["getGroup", "getGroupName"], ""),
-            title: readRecordField(record, ["getTitle", "getName"], `Entry ${index + 1}`),
-            username: readRecordField(record, ["getUsername", "getUserName"], ""),
-            password: readRecordField(record, ["getPassword"], ""),
-            url: readRecordField(record, ["getUrl", "getURL"], ""),
-            notes: readRecordField(record, ["getNotes", "getNote", "getDescription"], "")
-        };
+        const entry = createPsafeEntryFromRecord(vault.databaseRecords[index], index);
 
         entries.set(entry.id, entry);
     }

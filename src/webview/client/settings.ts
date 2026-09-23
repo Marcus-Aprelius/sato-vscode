@@ -17,6 +17,7 @@ export function openSettingsModal(): void {
 
 export function bindSettingsActions(): void {
     byId("s-cancel").addEventListener("click", closeModal);
+    byId("settings-header-close").addEventListener("click", closeModal);
 
     byId("s-save").addEventListener("click", () => {
         const next = {

@@ -6,6 +6,7 @@ import { collectCryptoFileInfo, findCryptoEntry } from "./cryptoFiles";
 
 import type { FromWebview, VaultDocument } from "../types";
 import type { Settings } from "../webview";
+import { describeError } from "../utils/errors";
 
 import {
     buildCertificateDirectoryVault,
@@ -304,15 +305,6 @@ function postCertificateState(
     panel.webview.postMessage({type: "vaultState", state: {tree: certificate.tree, stats: certificate.stats, settings, selectedEntryId}});
 }
 
-function describeError(
-    err: unknown
-): string {
-    if (err instanceof Error) {
-        return err.message;
-    }
-
-    return String(err);
-}
 
 function prepareCryptoConversion(
     certificate: NonNullable<VaultDocument["certificate"]>,

@@ -21,6 +21,7 @@ import {
 
 import {
     bindConverterModalActions,
+    openBase64Converter,
     openCryptoConverter,
     openEmptyCryptoConverter
 } from "./converterModal";
@@ -46,6 +47,7 @@ export {
     fillEntryModal,
     openEntryModal,
     openAboutTab,
+    openBase64Converter,
     openCryptoConverter,
     openEmptyCryptoConverter
 };
@@ -64,5 +66,7 @@ export function bindModalActions(): void {
     bindConverterModalActions();
 
     maybeById("dbinfo-close")?.addEventListener("click", closeModal);
+    maybeById("dbinfo-header-close")?.addEventListener("click", closeModal);
     maybeById("about-close")?.addEventListener("click", closeModal);
+    maybeById("about-header-close")?.addEventListener("click", closeModal);
 }

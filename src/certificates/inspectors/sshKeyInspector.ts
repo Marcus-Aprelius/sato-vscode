@@ -6,6 +6,7 @@ import * as crypto from "crypto";
 import { spawnSync } from "child_process";
 import { fileMetadata } from "../fileMetadata";
 import { formatSshAlgorithm, sshAlgorithmFromFilePath } from "../sshFormat";
+import { isEncryptedOpenSshPrivateKey, readSshBinaryString } from "../sshBinary";
 import { createTemporaryDirectory, removeTemporaryDirectory } from "../cli/tempDirectory";
 
 import type { CryptoInspection } from "../types";
@@ -245,13 +246,13 @@ function keySizeFromPublicBlob(
     try {
         let offset = 0;
 
-        const type = readBinaryString(keyBlob, offset);
+        const type = readSshBinaryString(keyBlob, offset);
         offset = type.nextOffset;
 
-        const exponent = readBinaryString(keyBlob, offset);
+        const exponent = readSshBinaryString(keyBlob, offset);
         offset = exponent.nextOffset;
 
-        const modulus = readBinaryString(keyBlob, offset).value;
+        const modulus = readSshBinaryString(keyBlob, offset).value;
         const normalizedModulus = modulus[0] === 0 ? modulus.subarray(1) : modulus;
 
         if (!normalizedModulus.length) {
@@ -268,30 +269,6 @@ function keySizeFromPublicBlob(
     }
 }
 
-function readBinaryString(
-    buffer: Buffer,
-    offset: number
-): {
-    value: Buffer;
-    nextOffset: number;
-} {
-    if (offset + 4 > buffer.length) {
-        throw new Error("Invalid SSH public key.");
-    }
-
-    const length = buffer.readUInt32BE(offset);
-    const start = offset + 4;
-    const end = start + length;
-
-    if (end > buffer.length) {
-        throw new Error("Invalid SSH public key.");
-    }
-
-    return {
-        value: buffer.subarray(start, end), nextOffset: end
-    };
-}
-
 function isEncryptedOpenSshKey(
     text: string
 ): boolean {
@@ -299,26 +276,7 @@ function isEncryptedOpenSshKey(
         return (text.includes("-----BEGIN ENCRYPTED PRIVATE KEY-----") || /Proc-Type:\s*4,ENCRYPTED/i.test(text));
     }
 
-    try {
-        const base64 = text
-            .replace("-----BEGIN OPENSSH PRIVATE KEY-----","")
-            .replace("-----END OPENSSH PRIVATE KEY-----","")
-            .replace(/\s+/g, "");
-
-        const decoded = Buffer.from(base64, "base64");
-        const marker = Buffer.from("openssh-key-v1\0", "ascii");
-
-        if (decoded.length < marker.length || !decoded.subarray(0, marker.length).equals(marker)) {
-            return false;
-        }
-
-        const cipherName = readBinaryString(decoded, marker.length);
-
-        return (
-            cipherName.value.toString("utf8") !== "none");
-    } catch {
-        return false;
-    }
+    return isEncryptedOpenSshPrivateKey(text);
 }
 
 function detectKeyFormat(

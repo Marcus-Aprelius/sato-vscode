@@ -1,5 +1,5 @@
 import { buildPsafeTree, computePsafeStats } from "./tree";
-import { readHeaderEmptyGroups, readRecordField } from "./records";
+import { createPsafeEntryFromRecord, readHeaderEmptyGroups } from "./records";
 
 import type { PsafeEntry, PsafeVault } from "./types";
 
@@ -48,16 +48,7 @@ function createEntries(
     const entries = new Map<string, PsafeEntry>();
 
     for (let index = 0; index < records.length; index++) {
-        const record = records[index];
-        const entry: PsafeEntry = {
-            id: `psafe-${index}`,
-            groupPath: readRecordField(record, ["getGroup", "getGroupName"],""),
-            title: readRecordField(record, ["getTitle", "getName"], `Entry ${index + 1}`),
-            username: readRecordField(record, ["getUsername", "getUserName"], ""),
-            password: readRecordField(record, ["getPassword"], ""),
-            url: readRecordField(record, ["getUrl", "getURL"], ""),
-            notes: readRecordField(record, ["getNotes", "getNote", "getDescription"], "")
-        };
+        const entry = createPsafeEntryFromRecord(records[index], index);
 
         entries.set(entry.id, entry);
     }

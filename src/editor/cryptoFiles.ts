@@ -10,6 +10,7 @@ import {
 
 import type { GroupView } from "../vault";
 import type { VaultDocument } from "../types";
+import { describeError } from "../utils/errors";
 
 export async function openCertificateFile(
     document: VaultDocument
@@ -182,12 +183,3 @@ function addRow(
     rows.push([label, value]);
 }
 
-function describeError(
-    err: unknown
-): string {
-    if (err instanceof Error) {
-        return err.message;
-    }
-
-    return String(err);
-}

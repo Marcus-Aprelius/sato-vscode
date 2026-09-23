@@ -159,7 +159,7 @@ function openCryptoFileMenu(
 
             action: () => {
                 byId("dbinfo-body").innerHTML = '<div class="empty">Loading...</div>';
-                byId("dbinfo-title").textContent = "File Info";
+                byId("dbinfo-title-label").textContent = "File Info";
                 openModal("dbinfo-modal");
 
                 vscode.postMessage({type: "getDbInfo", entryId: entry.id});
