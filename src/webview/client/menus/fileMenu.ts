@@ -1,8 +1,9 @@
 import { byId } from "../dom";
 import { vscode } from "../globals";
 import { openModal } from "../modals";
-import type { MenuItem } from "../types";
 import { openDropdown } from "../contextMenu";
+
+import type { MenuItem } from "../types";
 
 import {
     app,
@@ -51,6 +52,8 @@ export function openFileMenu(button: HTMLElement): void {
             }
         },
 
+        { sep: true },
+
         {
             label: "Show Info",
             title: crypto
@@ -66,9 +69,7 @@ export function openFileMenu(button: HTMLElement): void {
 
                 byId("dbinfo-body").innerHTML = '<div class="empty">Loading...</div>';
                 byId("dbinfo-title").textContent = crypto ? "File Info" : readOnly ? "Vault Info" : "Database Info";
-
                 openModal("dbinfo-modal");
-
                 vscode.postMessage({type: "getDbInfo", entryId: app.selectedEntryId});
             }
         }

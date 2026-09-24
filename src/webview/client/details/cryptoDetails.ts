@@ -58,7 +58,6 @@ export function renderCryptoDetails(
         }
 
         app.showEmptyValues = !app.showEmptyValues;
-
         renderDetails();
         renderStatus();
     });
@@ -93,7 +92,6 @@ export function renderCryptoDetails(
     }
 
     container.appendChild(actions);
-
     renderCryptoValuesTable(container, entry);
 
 }
@@ -126,9 +124,36 @@ function renderCryptoValuesTable(
         const value = document.createElement("div");
 
         value.className = "value";
-
         const span = document.createElement("span");
-        span.textContent = text || "(empty)";
+
+        if (field === "Summary" && entry.hasPrivateKey) {
+            const marker = " detected.";
+            const markerIndex = text.indexOf(marker);
+
+            if (markerIndex >= 0) {
+                const linkText = text.slice(0, markerIndex + marker.length);
+                const remainder = text.slice(markerIndex + marker.length);
+                const link = document.createElement("button");
+
+                link.type = "button";
+                link.className = "details-inline-link";
+                link.textContent = linkText;
+                link.title = "Open the Private Key tab";
+                link.addEventListener("click", () => {openPrivateKeyTab(entry);});
+
+                span.appendChild(link);
+
+                if (remainder) {
+                    span.appendChild(document.createTextNode(remainder));
+                }
+
+            } else {
+                span.textContent = text || "(empty)";
+            }
+
+        } else {
+            span.textContent = text || "(empty)";
+        }
 
         if (text && field === "Valid to") {
             span.title = formatDaysFromNow(text, "left");
@@ -147,7 +172,6 @@ function renderCryptoValuesTable(
         }
 
         value.appendChild(span);
-
         const copy = createCopyIconButton("Copy");
         copy.disabled = !text;
 
@@ -231,24 +255,7 @@ function renderCryptoDetailsTabs(
 
     if (entry.hasPrivateKey) {
         const privateKeyTab = createButton(app.detailsTab === "privateKey" ? "details-tab active" : "details-tab", "Private Key");
-
-        privateKeyTab.addEventListener("click", () => {
-            const privateKey = getPrivateKeyValue(entry.id);
-
-            app.detailsTab = "privateKey";
-
-            if (!privateKey) {
-                vscode.postMessage({type: "revealPrivateKey", entryId: entry.id});
-
-                return;
-            }
-
-            app.privateKeyVisible = true;
-            renderDetails();
-            renderStatus();
-            updateMainActionButton();
-        });
-
+        privateKeyTab.addEventListener("click", () => {openPrivateKeyTab(entry);});
         tabs.appendChild(privateKeyTab);
     }
 
@@ -259,12 +266,10 @@ function renderPrivateKeyTab(
     container: HTMLElement,
     entry: ClientEntry
 ): void {
-    const privateKey =
-        getPrivateKeyValue(entry.id);
+    const privateKey = getPrivateKeyValue(entry.id);
 
     if (!privateKey) {
         const loading = document.createElement("div");
-
         loading.className = "empty";
         loading.textContent = "Loading private key...";
 
@@ -273,8 +278,21 @@ function renderPrivateKeyTab(
     }
 
     app.privateKeyVisible = true;
-
     renderPrivateKeyBlock(container, entry.id);
+}
+
+function isEmptyDetailsValue(
+    value: string
+): boolean {
+    const normalized = value.trim().toUpperCase();
+
+    return (normalized === "" || normalized === "<EMPTY>" || normalized === "<ABSENT>");
+}
+
+function countDetailsEmptyValues(
+    fields: DetailsField[]
+): number {
+    return fields.reduce((count, field) => count + (isEmptyDetailsValue(field.value) ? 1 : 0), 0);
 }
 
 function renderDetailsTab(
@@ -286,31 +304,60 @@ function renderDetailsTab(
 
     if (fields.length === 0) {
         const empty = document.createElement("div");
-
         empty.className = "empty";
         empty.textContent = "No details available.";
-
         container.appendChild(empty);
+
         return;
     }
+
+    const emptyValuesCount = countDetailsEmptyValues(fields);
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const toggleEmpty = createButton(
+        app.showEmptyValues ? "btn primary crypto-toggle-empty-btn" : "btn danger crypto-toggle-empty-btn",
+        emptyValuesButtonText(app.showEmptyValues, emptyValuesCount)
+    );
+
+    toggleEmpty.disabled = emptyValuesCount === 0;
+    toggleEmpty.title = emptyValuesButtonTitle(app.showEmptyValues, emptyValuesCount);
+
+    toggleEmpty.addEventListener("click", () => {
+        if (emptyValuesCount === 0) {
+            return;
+        }
+
+        app.showEmptyValues = !app.showEmptyValues;
+        renderDetails();
+        renderStatus();
+    });
+
+    actions.appendChild(toggleEmpty);
+    container.appendChild(actions);
 
     const table = document.createElement("table");
 
     for (const field of fields) {
+        const empty = isEmptyDetailsValue(field.value);
+
+        if (!app.showEmptyValues && empty) {
+            continue;
+        }
+
         const tr = document.createElement("tr");
         const tdLabel = document.createElement("td");
-
         tdLabel.className = "label";
         tdLabel.textContent = field.label;
 
         const tdValue = document.createElement("td");
         const value = document.createElement("div");
-
         value.className = "value";
-        const span = document.createElement("span");
-        const displayValue = normalizeDetailsValue(field.value);
 
+        const span = document.createElement("span");
+        const displayValue = empty ? "(empty)" : normalizeDetailsValue(field.value);
         span.textContent = displayValue;
+
         const sizeTooltip = formatBitsAsKilobytes(displayValue);
 
         if (sizeTooltip) {
@@ -318,8 +365,15 @@ function renderDetailsTab(
         }
 
         const copy = createCopyIconButton(`Copy ${field.label}`);
+        copy.disabled = empty;
 
-        copy.addEventListener("click", () => {vscode.postMessage({type: "copyText", text: field.value});});
+        copy.addEventListener("click", () => {
+            if (empty) {
+                return;
+            }
+
+            vscode.postMessage({type: "copyText", text: field.value});
+        });
 
         value.appendChild(span);
         value.appendChild(copy);
@@ -368,7 +422,6 @@ function parseDetailsFields(
             }
 
             fields.push({label: section || "Details", value: line});
-
             continue;
         }
 
@@ -378,7 +431,6 @@ function parseDetailsFields(
         const fullLabel = section ? `${section}: ${label}` : label;
 
         current = {label: fullLabel, value};
-
         fields.push(current);
     }
 
@@ -388,10 +440,7 @@ function parseDetailsFields(
 function normalizeDetailsValue(
     value: string
 ): string {
-    return value.replace(
-        /^\[(\d+\s+bits?)\]$/i,
-        "$1"
-    );
+    return value.replace(/^\[(\d+\s+bits?)\]$/i, "$1");
 }
 
 function formatBitsAsKilobytes(
@@ -412,4 +461,22 @@ function formatBitsAsKilobytes(
     const kilobytes = bits / 8 / 1024;
 
     return `${kilobytes.toFixed(2)} KB`;
+}
+
+function openPrivateKeyTab(
+    entry: ClientEntry
+): void {
+    const privateKey = getPrivateKeyValue(entry.id);
+    app.detailsTab = "privateKey";
+
+    if (!privateKey) {
+        vscode.postMessage({type: "revealPrivateKey", entryId: entry.id});
+
+        return;
+    }
+
+    app.privateKeyVisible = true;
+    renderDetails();
+    renderStatus();
+    updateMainActionButton();
 }

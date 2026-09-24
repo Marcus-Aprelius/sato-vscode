@@ -14,8 +14,17 @@ export { lockCryptoContainer, unlockCryptoContainer } from "./containerActions";
 export {
     certificateOutputFormat,
     convertCertificate,
+    convertEcKey,
     convertOpenSshPublicKey,
-    openSshPublicKeyOutputFormats
+    convertRsaKey,
+    convertSpc,
+    ecKeyOutputFormats,
+    isEcKeyOutputFormat,
+    isRsaKeyOutputFormat,
+    isSpcOutputFormat,
+    openSshPublicKeyOutputFormats,
+    rsaKeyOutputFormats,
+    spcOutputFormats
 } from "./converter";
 
 export type {
@@ -27,10 +36,15 @@ export type {
 
 export type {
     AvailableOutputFormat,
-    CryptoConversionResult,
     CertificateOutputFormat,
+    CryptoConversionResult,
     CryptoOutputFormat,
-    OpenSshPublicKeyOutputFormat
+    EcKeyOutputFormat,
+    OpenSshPublicKeyOutputFormat,
+    RsaKeyOutputFormat,
+    SpcConversionFile,
+    SpcConversionResult,
+    SpcOutputFormat
 } from "./converter";
 
 export function buildCertificateVault(

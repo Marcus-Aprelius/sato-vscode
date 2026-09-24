@@ -18,8 +18,16 @@ export const ABOUT_STYLES = `
 .about-supports strong {color: var(--vscode-foreground); font-weight: 600;}
 .about-supports span {min-width: 0; overflow-wrap: anywhere;}
 
-.about-tabs {display: flex; gap: 0; padding: 0 14px; border-bottom: 1px solid var(--vscode-panel-border);}
+.about-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
 
+.about-tab + .about-tab {
+    margin-left: 0;
+}
 .about-tab {
     padding: 7px 12px;
     background: transparent;
@@ -60,9 +68,21 @@ export const ABOUT_STYLES = `
     text-decoration: none;
 }
 
-.about-inline-link:hover {
-    color: var(--vscode-textLink-activeForeground);
-    text-decoration: underline;
+.about-inline-link:hover {color: var(--vscode-textLink-activeForeground); text-decoration: underline;}
+.about-formats-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 5px;
+    min-width: 0;
+    line-height: 1.3;
+    color: var(--vscode-descriptionForeground);
+}
+
+.about-formats-list > div {
+    display: block;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
 }
 
 `;

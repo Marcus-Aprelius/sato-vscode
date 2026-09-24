@@ -1,14 +1,73 @@
 # Change Log
 
+# 0.3.0
+
+## Changed:
+  * Improved PEM and DER key detection with more accurate key type, encoding, and format information
+  * Removed the irrelevant `PEM block` field from DER certificate signing request details
+  * Extended `.der` content detection for X.509 certificates, certificate signing requests, RSA and EC keys, PKCS#7 certificate chains, and CMS messages
+  * The converter no longer offers the source file's current format as an output option
+  * Added separate `Convert` and `Extract` modes to the crypto file converter
+  * Updated the converter to save files directly to the selected destination without opening an additional save dialog
+  * Hidden empty converter source fields such as `Subject`, `Issuer`, and `Valid to`
+  * Improved the Crypto Converter layout, field alignment, and terminology
+  * Added consistent tab styling across the Converter, Settings, About, Info, Details, and Private Key views
+  * Added SATO icons to the Converter, Settings, and About modal headers
+  * Improved private key detection summaries and navigation
+  * Improved long field label layout in the Info view
+  * Refactored crypto file conversion and extraction availability checks
+  * Updated packages:
+    * `vscode/vsce`
+    * `types/node`
+  * Updated `README.md`
+
+## Added:
+  * Articles on [DEV.to](https://dev.to/marcusaprelius) and 
+[Medium.com](https://medium.com/@marcus.aprelius.antoninus)
+  * Added support for `.spc` PKCS#7/CMS and Authenticode certificate containers
+  * Added extraction options for `.spc` files:
+    * Certificates as PEM
+    * Certificates as DER
+    * Certificate chain as P7B
+  * Added support for `.ec` files
+  * Added conversion of EC private keys to:
+    * SEC1 PEM and DER
+    * PKCS#8 PEM and DER
+    * SPKI public key PEM and DER
+  * Added support for `.rsa` files
+  * Added conversion of RSA private keys to:
+    * PKCS#1 PEM and DER
+    * PKCS#8 PEM and DER
+    * SPKI public key PEM and DER
+    * PKCS#1 public key PEM and DER
+  * Added an `Extract...` action to the crypto file context menu when extraction is available
+  * Added a `Show Info` action to the crypto file context menu
+  * Added Copy buttons to Crypto Converter source fields
+  * Added Copy buttons to all File Info values
+  * Added clickable private key detection links that open the Private Key tab
+  * Added tooltips for key size, file size, and certificate validity dates
+  * Added `Show/Hide Empty Values` support to the Details tab
+  * Added detection of empty and absent values in parsed crypto details
+
+## Fixed:
+  * Prevented stale output file names when no conversion formats are available
+  * Removed the separator below the last File Info row
+  * Improved handling of empty output format lists in the crypto file converter
+
+## Known Issues:
+  * `npm audit` reports a vulnerability in the transitive `@xmldom/xmldom` dependency used by `kdbxweb`. A compatible upstream update is required. Using `npm audit fix --force` is not recommended because it installs a breaking version of `kdbxweb`.
+
+---
+
 # 0.2.0
 
-## Changed
+## Changed:
   * Updated `README.md`
   * Simplified the Crypto Files view from three columns to two by removing the redundant entry list
   * `Settings` button update
   * Updated the Tools converter to support selecting a source file directly from the conversion dialog
   * code refactoring and small improvements
-## Added
+## Added:
   * Added support for OpenSSH RSA, ECDSA, and Ed25519 public key files with the `.pub` extension
   * Added an X.509 certificate converter with PEM-to-DER and DER-to-PEM support
   * Added a conversion dialog showing source certificate information and configurable output options
@@ -17,7 +76,7 @@
 
 # 0.1.5
 
-## Changed
+## Changed:
   * Improved internal code structure
   * Updated `README.md`
   * Fixed private key unlocking for `.pem`, `.key`, and related files
@@ -25,7 +84,7 @@
   * Replaced the `Show Private Key` and `Hide Private Key` buttons with a `Private Key` tab
   * Moved extended inspection output to a separate `Details` tab
   * Improved the formatting of values in the `Details` tab
-## Added
+## Added:
   * automatic password field clearing when reopening unlock dialogs
   * private key extraction from unlocked PKCS#12/PFX containers
   * tooltips showing elapsed or remaining days for the `Valid from` and `Valid to` fields

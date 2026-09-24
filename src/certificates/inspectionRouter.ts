@@ -4,10 +4,13 @@ import { inspectCms } from "./inspectors/cmsInspector";
 import { inspectGpg } from "./inspectors/gpgInspector";
 import { inspectJks } from "./inspectors/jksInspector";
 import { inspectPpk } from "./inspectors/ppkInspector";
+import { inspectDer } from "./inspectors/derInspector";
 
 import { inspectPkcs7 } from "./inspectors/pkcs7Inspector";
 import { inspectPkcs8 } from "./inspectors/pkcs8Inspector";
+import { inspectEcKey } from "./inspectors/ecKeyInspector";
 import { inspectPkcs12 } from "./inspectors/pkcs12Inspector";
+import { inspectRsaKey } from "./inspectors/rsaKeyInspector";
 import { inspectPemCryptoFile } from "./inspectors/pemInspector";
 import { inspectSshPrivateKey } from "./inspectors/sshKeyInspector";
 import { inspectOpenSshPublicKey } from "./inspectors/openSshPublicKeyInspector";
@@ -29,8 +32,12 @@ export function inspectCryptoFile(
         return inspectPkcs7(bytes, filePath);
     }
 
-    if (lowerPath.endsWith(".p7s") || lowerPath.endsWith(".p7m")) {
+    if (lowerPath.endsWith(".p7s") || lowerPath.endsWith(".p7m") || lowerPath.endsWith(".spc")) {
         return inspectCms(bytes, filePath);
+    }
+
+    if (lowerPath.endsWith(".der")) {
+        return inspectDer(bytes, filePath);
     }
 
     if (lowerPath.endsWith(".p8") || lowerPath.endsWith(".pk8")) {
@@ -51,6 +58,14 @@ export function inspectCryptoFile(
 
     if (lowerPath.endsWith(".pub")) {
         return inspectOpenSshPublicKey(bytes, filePath);
+    }
+
+    if (lowerPath.endsWith(".rsa")) {
+        return inspectRsaKey(text, bytes, filePath);
+    }
+
+    if (lowerPath.endsWith(".ec")) {
+        return inspectEcKey(text, bytes, filePath);
     }
 
     if (lowerPath.endsWith(".jks") || lowerPath.endsWith(".jceks")) {

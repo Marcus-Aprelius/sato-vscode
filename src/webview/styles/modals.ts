@@ -85,26 +85,59 @@ export const MODAL_STYLES = `
     grid-template-columns:
         minmax(0, 1fr)
         minmax(0, 1fr);
-    gap: 24px;
+    gap: 0;
 }
 
+.converter-section:first-child {padding-right: 15px; border-right: 1px solid var(--vscode-panel-border);}
+.converter-section:last-child {padding-left: 15px;}
+
+.converter-source-actions .btn,
 .converter-section {min-width: 0;}
+.converter-source-actions .btn:hover,
+.converter-section-header h3 {margin: 0;}
+.converter-label {color: var(--vscode-descriptionForeground);}
+.converter-section .converter-field:last-child {border-bottom: none;}
+.converter-browse-btn {border: 1px solid var(--vscode-widget-border);}
 .converter-section h3 {margin: 0 0 12px; font-size: 1em; font-weight: 600;}
+.converter-copy-btn {width: 28px; min-width: 28px; height: 28px; margin: 0;}
+.converter-modal {width: min(720px, 92vw); height: 440px; max-height: 90vh;}
+.converter-modal > .modal-title {border-bottom: none;}
+.converter-value {min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere;}
+.converter-browse-btn {flex: 0 0 72px; width: 72px; min-width: 72px; padding: 5px 6px;}
+.converter-path-row {display: flex; align-items: center; gap: 6px; width: 100%; min-width: 0;}
+.converter-section-header .btn {min-width: 72px; border: 1px solid var(--vscode-widget-border);}
+
+.converter-hash {font-family: var(--vscode-editor-font-family); font-size: 0.9em; word-break: break-all;}
+.converter-browse-btn:hover {border-color: var(--vscode-focusBorder); background: var(--vscode-list-hoverBackground);}
+.converter-section-hint {margin-top: 3px; color: var(--vscode-descriptionForeground); font-size: 0.85em; font-weight: 400;}
+.converter-section-header {display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;}
+.converter-section-header .btn:hover {border-color: var(--vscode-focusBorder); background: var(--vscode-list-hoverBackground);}
+.converter-file-name-row {display: grid; grid-template-columns: minmax(0, 1fr) 28px; align-items: center; gap: 6px; width: 100%; min-width: 0;}
 
 .converter-field {
     display: grid;
-    grid-template-columns: 80px minmax(0, 1fr);
+    grid-template-columns: 60px minmax(0, 1fr);
     gap: 8px;
     padding: 5px 0;
     border-bottom: 1px solid var(--vscode-panel-border);
+    }
+
+.converter-field-copy {
+    grid-template-columns: 60px minmax(0, 1fr) 24px;
 }
 
-.converter-section .converter-field:last-child {border-bottom: none;}
-.converter-label {color: var(--vscode-descriptionForeground);}
-.converter-value {min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere;}
-.converter-hash {font-family: var(--vscode-editor-font-family); font-size: 0.9em; word-break: break-all;}
+.converter-field-copy .icon-btn {
+    width: 24px;
+    min-width: 24px;
+    height: 22px;
+    margin: 0;
+}
 
 .modal-body .converter-input-field,
+.modal-body .converter-input-field > select,
+.modal-body .converter-input-field > input,
+.modal-body label.converter-input-field > select,
+
 .modal-body label.converter-input-field {
     display: grid;
     grid-template-columns: 80px minmax(0, 1fr);
@@ -114,9 +147,6 @@ export const MODAL_STYLES = `
     color: var(--vscode-descriptionForeground);
 }
 
-.modal-body .converter-input-field > select,
-.modal-body .converter-input-field > input,
-.modal-body label.converter-input-field > select,
 .modal-body label.converter-input-field > input {
     width: 100%;
     min-width: 0;
@@ -127,7 +157,6 @@ export const MODAL_STYLES = `
     border: 1px solid var(--vscode-input-border, transparent);
     font: inherit;
 }
-.converter-path-row {display: flex; align-items: center; gap: 6px; width: 100%; min-width: 0;}
 
 .modal-body .converter-path-row input {
     flex: 1 1 auto;
@@ -141,9 +170,7 @@ export const MODAL_STYLES = `
     font: inherit;
 }
 
-.converter-browse-btn {flex: 0 0 72px; width: 72px; min-width: 72px; padding: 5px 6px;}
-.converter-note {margin-top: 16px; color: var(--vscode-descriptionForeground); font-size: 0.9em; line-height: 1.4;}
-.settings-tabs {display: flex; gap: 0; padding: 0 14px; border-bottom: 1px solid var(--vscode-panel-border);}
+.settings-tabs {display: flex; gap: 0; padding: 0 0 0 0px; border-bottom: 1px solid var(--vscode-panel-border);}
 
 .settings-tab {
     padding: 7px 12px;
@@ -156,7 +183,7 @@ export const MODAL_STYLES = `
     font: inherit;
 }
 
-.settings-tab + .settings-tab {margin-left: 4px;}
+.settings-tab + .settings-tab {margin-left: 0px;}
 .settings-tab:hover {color: var(--vscode-foreground); background: var(--vscode-list-hoverBackground); border-color: var(--vscode-focusBorder);}
 
 .settings-tab.active {
@@ -168,13 +195,11 @@ export const MODAL_STYLES = `
 
 .settings-tab-content {flex: 1;}
 .settings-modal {width: min(430px, 92vw); height: 310px; max-height: 90vh;}
+.settings-modal > .modal-title {border-bottom: none;}
 .settings-modal .settings-tab-content {flex: 1; min-height: 0;}
 
 .modal-body label.settings-number-row {display: grid; grid-template-columns: minmax(0, 1fr) 100px; align-items: center; gap: 12px;}
 .settings-number-row input[type="number"] {width: 100px; min-width: 100px; padding: 4px 6px; text-align: center;}
-
-.converter-file-name-row {display: grid; grid-template-columns: minmax(0, 1fr) 28px; align-items: center; gap: 6px; width: 100%; min-width: 0;}
-.converter-copy-btn {width: 28px; min-width: 28px; height: 28px; margin: 0;}
 
 .converter-file-name-row > input {
     box-sizing: border-box;
@@ -186,6 +211,85 @@ export const MODAL_STYLES = `
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
     font: inherit;
+}
+
+.modal-body select {
+    background: var(--vscode-dropdown-background);
+    color: var(--vscode-dropdown-foreground);
+    border: 1px solid var(--vscode-dropdown-border);
+    padding: 5px 8px;
+    font: inherit;
+}
+
+.modal-body select:focus {border-color: var(--vscode-focusBorder); outline: none;}
+.converter-section:first-child .converter-section-hint {margin-top: -10px;}
+.converter-tabs {display: flex; gap: 0; padding: 0 0 0 0px; border-bottom: 1px solid var(--vscode-panel-border);}
+
+.converter-tab {
+    padding: 7px 12px;
+    background: transparent;
+    color: var(--vscode-descriptionForeground);
+    border: 1px solid var(--vscode-widget-border);
+    border-bottom: 2px solid transparent;
+    border-radius: 3px 3px 0 0;
+    cursor: pointer;
+    font: inherit;
+}
+
+.converter-tab + .converter-tab {margin-left: 0px;}
+
+.converter-tab:hover {
+    color: var(--vscode-foreground);
+    background: var(--vscode-list-hoverBackground);
+    border-color: var(--vscode-focusBorder);
+}
+
+.converter-tab.active {
+    color: var(--vscode-foreground);
+    background: var(--vscode-list-hoverBackground);
+    border-color: var(--vscode-focusBorder);
+    border-bottom-color: var(--vscode-focusBorder);
+}
+.converter-title {display: flex; align-items: flex-start; gap: 8px;}
+.converter-title .toolbar-logo {position: relative; top: 2px;}
+.converter-title-icon {width: 16px; height: 16px; object-fit: contain;}
+.converter-title img {margin-top: 3px;}
+
+.about-modal > .modal-title {border-bottom: none;}
+
+.about-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.about-tab {
+    padding: 7px 12px;
+    background: transparent;
+    color: var(--vscode-descriptionForeground);
+    border: 1px solid var(--vscode-widget-border);
+    border-bottom: 2px solid transparent;
+    border-radius: 3px 3px 0 0;
+    cursor: pointer;
+    font: inherit;
+}
+
+.about-tab + .about-tab {
+    margin-left: 0;
+}
+
+.about-tab:hover {
+    color: var(--vscode-foreground);
+    background: var(--vscode-list-hoverBackground);
+    border-color: var(--vscode-focusBorder);
+}
+
+.about-tab.active {
+    color: var(--vscode-foreground);
+    background: var(--vscode-list-hoverBackground);
+    border-color: var(--vscode-focusBorder);
+    border-bottom-color: var(--vscode-focusBorder);
 }
 
 `;

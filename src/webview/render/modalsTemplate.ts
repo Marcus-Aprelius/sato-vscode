@@ -2,6 +2,7 @@ import { escapeHtml } from "./htmlUtils";
 
 export function renderModals(
     logoSrc: string,
+    toolbarLogoSrc: string,
     versionLabel: string
 ): string {
     return `
@@ -90,7 +91,9 @@ export function renderModals(
     </div>
 
     <div class="modal" id="gen-modal">
-        <div class="modal-title">Generate Password</div>
+        <div class="modal-title">
+            <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>Password Generator
+        </div>
         <div class="modal-body">
             <label>Length: <span id="gen-length-val">20</span>
                 <input type="range" id="gen-length" min="4" max="64" value="20" />
@@ -117,7 +120,10 @@ export function renderModals(
     </div>
 
     <div class="modal settings-modal" id="settings-modal">
-        <div class="modal-title">Settings</div>
+        <div class="modal-title">
+            <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>Settings
+        </div>
+
         <div class="settings-tabs">
             <button type="button" class="settings-tab active" id="settings-tab-general">General</button>
             <button type="button" class="settings-tab" id="settings-tab-password-generator">Password Generator</button>
@@ -171,11 +177,14 @@ export function renderModals(
     </div>
 
     <div class="modal about-modal" id="about-modal">
-        <div class="modal-title">[SATO] Secure Access Task Operator</div>
-            <div class="about-tabs">
-                <button type="button" class="about-tab active" id="about-tab-about">About</button>
-                <button type="button" class="about-tab" id="about-tab-supported-formats">Supported Formats</button>
-            </div>
+        <div class="modal-title">
+            <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>[SATO] Secure Access Task Operator
+        </div>
+
+        <div class="about-tabs">
+            <button type="button" class="about-tab active" id="about-tab-about">About</button>
+            <button type="button" class="about-tab" id="about-tab-supported-formats">Supported Formats</button>
+        </div>
 
         <div class="modal-body" id="about-content" style="align-items:center; text-align:center; gap:8px; padding:16px;">
         <img class="about-logo" src="${logoSrc}" alt="SATO logo" />
@@ -219,11 +228,12 @@ export function renderModals(
 
                 <div class="about-supports-row">
                     <strong>Files:</strong>
-                    <span>
-                        .crt .cer .der .pem .csr .p10 .key .ppk .jks .pgp<br>
-                        .p12 .pfx .p7b .p7c .p7s .p7m .gpg .pk8 .asc .jceks<br>
-                        .sig .age .pub .p8   
-                    </span>
+
+                    <div class="about-formats-list">
+                        <span>.crt .cer .der .pem .csr .p10 .key .gpg .pgp</span>
+                        <span>.rsa .ppk .pub .pk8 .p12 .pfx .sig .asc .age</span>
+                        <span>.ec  .p8  .p7b .p7c .p7s .p7m .spc .jks .jceks</span>
+                    </div>
                 </div>
 
             </div>
@@ -234,59 +244,87 @@ export function renderModals(
         </div>
     </div>
 
-    <div class="modal" id="converter-modal" style="width:720px;">
-        <div class="modal-title">Converter</div>
+    <div class="modal converter-modal" id="converter-modal">
+        <div class="modal-title">
+            <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>Converter
+        </div>
+
+        <div class="converter-tabs" id="converter-tabs">
+            <button type="button" class="converter-tab active" id="converter-tab-convert" title="Convert the selected file to another supported format" aria-label="Convert the selected file to another supported format">Convert</button>
+            <button type="button" class="converter-tab" id="converter-tab-extract" title="Extract available content from the selected file" aria-label="Extract available content from the selected file">Extract</button>
+        </div>
+
         <div class="modal-body">
             <div class="converter-columns">
                 <section class="converter-section">
-                    <h3>Source</h3>
-                    <div class="converter-source-actions">
-                        <button type="button" class="btn" id="converter-source-browse">
-                            Browse
-                        </button>
+                    <div class="converter-section-header">
+                        <h3 title="The source file will not be modified">Source</h3>
+                        <button type="button" class="btn" id="converter-source-browse" title="Select source file">Select</button>
                     </div>
-                    
+
                     <div id="converter-source-details">
 
-                        <div class="converter-field">
+                        <div class="converter-field converter-field-copy">
                             <span class="converter-label">File</span>
                             <span class="converter-value" id="converter-source-file"></span>
+                            <button type="button" class="icon-btn converter-copy-source" data-copy-source="converter-source-file" title="Copy File" aria-label="Copy File">
+                                <span class="codicon codicon-copy"></span>
+                            </button>
                         </div>
 
-                        <div class="converter-field">
+                        <div class="converter-field converter-field-copy">
                             <span class="converter-label">Type</span>
                             <span class="converter-value" id="converter-source-type"></span>
+                            <button type="button" class="icon-btn converter-copy-source" data-copy-source="converter-source-type" title="Copy Type" aria-label="Copy Type">
+                                <span class="codicon codicon-copy"></span>
+                            </button>
                         </div>
 
-                        <div class="converter-field">
+                        <div class="converter-field converter-field-copy">
                             <span class="converter-label">Format</span>
                             <span class="converter-value" id="converter-source-format"></span>
+                            <button type="button" class="icon-btn converter-copy-source" data-copy-source="converter-source-format" title="Copy Format" aria-label="Copy Format">
+                                <span class="codicon codicon-copy"></span>
+                            </button>
                         </div>
 
-                        <div class="converter-field">
+                        <div class="converter-field converter-field-copy">
                             <span class="converter-label">Subject</span>
                             <span class="converter-value" id="converter-source-subject"></span>
+                            <button type="button" class="icon-btn converter-copy-source" data-copy-source="converter-source-subject" title="Copy Subject" aria-label="Copy Subject">
+                                <span class="codicon codicon-copy"></span>
+                            </button>
                         </div>
 
-                        <div class="converter-field">
+                        <div class="converter-field converter-field-copy">
                             <span class="converter-label">Issuer</span>
                             <span class="converter-value" id="converter-source-issuer"></span>
+                            <button type="button" class="icon-btn converter-copy-source" data-copy-source="converter-source-issuer" title="Copy Issuer" aria-label="Copy Issuer">
+                                <span class="codicon codicon-copy"></span>
+                            </button>
                         </div>
 
-                        <div class="converter-field">
+                        <div class="converter-field converter-field-copy">
                             <span class="converter-label">Valid to</span>
                             <span class="converter-value" id="converter-source-valid-to"></span>
+                            <button type="button" class="icon-btn converter-copy-source" data-copy-source="converter-source-valid-to" title="Copy Valid to" aria-label="Copy Valid to">
+                                <span class="codicon codicon-copy"></span>
+                            </button>
                         </div>
 
-                        <div class="converter-field">
+                        <div class="converter-field converter-field-copy">
                             <span class="converter-label">SHA-256</span>
-                            <span class="converter-value converter-hash" id="converter-source-sha256"></span>
+                            <span class="converter-value" id="converter-source-sha256"></span>
+                            <button type="button" class="icon-btn converter-copy-source" data-copy-source="converter-source-sha256" title="Copy SHA-256" aria-label="Copy SHA-256">
+                                <span class="codicon codicon-copy"></span>
+                            </button>
                         </div>
+
                     </div>
                 </section>
 
                 <section class="converter-section" id="converter-output-section">
-                    <h3>Output</h3>
+                <h3 id="converter-output-title" title="Click [Convert] to create the output file">Destination</h3>
 
                     <label class="converter-input-field">Format
                         <select id="converter-output-format">
@@ -315,7 +353,6 @@ export function renderModals(
                         </div>
                     </div>
 
-                    <div class="converter-note">The source file will not be modified. Click Convert to save the converted file.</div>
                 </section>
             </div>
         </div>

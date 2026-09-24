@@ -10,10 +10,6 @@ tools/*
 todo/
 todo/*
 
-.vscode/extensions.json
-.vscode/settings.json
-.code*/*
-
 tests/
 tests/*
 
@@ -24,4 +20,4 @@ tests/*
 *.log
 .DS_Store
 
-/src/buildInfo.ts
+src/buildInfo.ts

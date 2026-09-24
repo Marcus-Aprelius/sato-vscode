@@ -1,12 +1,12 @@
-<img src="assets/sato.png" alt="sato">
+<img src="assets/sato.png" alt="SATO">
 
 # SATO - Secure Access Task Operator for VS Code
 
 Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [crypto files](#supported-formats) directly inside VS Code `v1.100.0+` with a single UI.
 
-> **Status:** In development. Use in production environments at your own risk.
+> **⚠️ Status:** In development. Use in production environments at your own risk.
 
-> Bugs? Questions? Suggestions? Welcome to [GitHub](https://github.com/Marcus-Aprelius/sato-vscode/issues).
+> **💬 Feedback:** Bugs? Questions? Suggestions? Welcome to [GitHub](https://github.com/Marcus-Aprelius/sato-vscode/issues).
 
 ---
 
@@ -24,30 +24,34 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 ![CER](https://img.shields.io/badge/.cer-✓-2196F3)
 ![PEM](https://img.shields.io/badge/.pem-✓-2196F3)
 ![CSR](https://img.shields.io/badge/.csr-✓-2196F3)
-![KEY](https://img.shields.io/badge/.key-✓-2196F3)
-![PUB](https://img.shields.io/badge/.pub-✓-2196F3)
+![CSR](https://img.shields.io/badge/.p10-✓-2196F3)
 
-![P7S](https://img.shields.io/badge/.p7s-✓-dd7889)
-![P7M](https://img.shields.io/badge/.p7m-✓-dd7889)
-![P8](https://img.shields.io/badge/.p8-✓-dd7889)
-![PK8](https://img.shields.io/badge/.pk8-✓-dd7889)
-![P10](https://img.shields.io/badge/.p10-✓-dd7889)
+![KEY](https://img.shields.io/badge/.key-✓-DD7889)
+![RSA](https://img.shields.io/badge/.rsa-✓-DD7889)
+![EC](https://img.shields.io/badge/.ec-✓-DD7889)
+![PUB](https://img.shields.io/badge/.pub-✓-DD7889)
+![P8](https://img.shields.io/badge/.p8-✓-DD7889)
+![PK8](https://img.shields.io/badge/.pk8-✓-DD7889)
+![ID_RSA](https://img.shields.io/badge/id__rsa-✓-8A8D42)
+![ID_ECDSA](https://img.shields.io/badge/id__ecdsa-✓-8A8D42)
+![ID_ED25519](https://img.shields.io/badge/id__ed25519-✓-8A8D42)
+
 ![P12](https://img.shields.io/badge/.p12-✓-F05032)
 ![PFX](https://img.shields.io/badge/.pfx-✓-F05032)
 ![P7B](https://img.shields.io/badge/.p7b-✓-F05032)
 ![P7C](https://img.shields.io/badge/.p7c-✓-F05032)
+![P7S](https://img.shields.io/badge/.p7s-✓-F05032)
+![P7M](https://img.shields.io/badge/.p7m-✓-F05032)
+![SPC](https://img.shields.io/badge/.spc-✓-F05032)
 ![JKS](https://img.shields.io/badge/.jks-✓-F05032)
 ![JCEKS](https://img.shields.io/badge/.jceks-✓-F05032)
 
 ![GPG](https://img.shields.io/badge/.gpg-✓-8A2BE2)
 ![GPG](https://img.shields.io/badge/.pgp-✓-8A2BE2)
-![ASC](https://img.shields.io/badge/.asg-✓-8A2BE2)
+![ASC](https://img.shields.io/badge/.asс-✓-8A2BE2)
 ![SIG](https://img.shields.io/badge/.sig-✓-8A2BE2)
 ![PPK](https://img.shields.io/badge/.ppk-✓-8A2BE2)
 ![AGE](https://img.shields.io/badge/.age-✓-8A2BE2)
-![ID_RSA](https://img.shields.io/badge/id_rsa-✓-8A8D42)
-![ID_ECDSA](https://img.shields.io/badge/id_ecdsa-✓-8A8D42)
-![ID_ED25519](https://img.shields.io/badge/id_ed25519-✓-8A8D42)
 
 ---
 
@@ -85,54 +89,60 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 
 ### Supported Formats
 
-| Format       | Description                                                  | `SATO` Base Actions                           | External tool |
-|--------------|--------------------------------------------------------------|-----------------------------------------------|---------------|
-| `.kdbx`      | KeePass `vault` database                                     | Read and write                                | None          |
-| `.psafe3`    | Password Safe `vault` database                               | Read and write                                | None          |
-| `.ibak`      | Password Safe backup `vault`                                 | Read and write with caution                   | None          |
-| `.1pif`      | 1Password Interchange Format `vault` export                  | Read-only (RO)                                | None          |
-| `.bcup`      | Buttercup `vault`                                            | Read-only (RO)                                | None          |
-| `.crt`       | X.509 `certificate`                                          | View and convert PEM/DER files                | None          |
-| `.cer`       | X.509 `certificate` in PEM or DER encoding                   | View and convert PEM/DER files                | None          |
-| `.der`       | DER-encoded X.509 `certificate`                              | View and convert to PEM                       | None          |
-| `.pem`       | `PEM certificate`, CSR, public key, or private key (PK)      | View, unlock PKs, and convert X.509 files     | None          |
-| `.p8`        | PKCS#8 `private key`                                         | View                                          | None          |
-| `.pk8`       | PKCS#8 `private key`                                         | View and unlock                               | None          |
-| `.key`       | PEM-encoded `private key`                                    | View and unlock                               | None          |
-| `.age`       | `Encrypted file` with encoding and protection type detection | RO inspection; file contents aren't decrypted | None          |
-| `.pub`       |  Ed25519 RSA, ECDSA, or `OpenSSH public key`                 | View metadata and SHA-256 fingerprint         | None          |
-| `.csr`       | `Certificate Signing Request` (`CSR`)                        | View                                          | `OpenSSL`     |
-| `.p10`       | PKCS#10 `Certificate Signing Request`                        | View                                          | `OpenSSL`     |
-| `.p12`       | PKCS#12 certificate and PK `container`                       | View, unlock, and show PK                     | `OpenSSL`     |
-| `.pfx`       | PKCS#12 certificate and PK `container`                       | View, unlock, and show PK                     | `OpenSSL`     |
-| `.p7b`       | PKCS#7 `certificate chain`                                   | View                                          | `OpenSSL`     |
-| `.p7c`       | PKCS#7 `certificate chain `                                  | View                                          | `OpenSSL`     |
-| `.p7s`       | PKCS#7/CMS `digital signature`                               | View                                          | `OpenSSL`     |
-| `.p7m`       | S/MIME or PKCS#7/`CMS message`                               | View                                          | `OpenSSL`     |
-| `.ppk`       | PuTTY `private key`                                          | View and unlock                               | `puttygen`    |
-| `id_rsa`     | OpenSSH RSA `private key`                                    | View and unlock                               | `ssh-keygen`  |
-| `id_ecdsa`   | OpenSSH ECDSA `private key`                                  | View and unlock                               | `ssh-keygen`  |
-| `id_ed25519` | OpenSSH Ed25519 `private key`                                | View and unlock                               | `ssh-keygen`  |
-| `.jks`       | Java `KeyStore`                                              | View and unlock                               | `keytool`     |
-| `.jceks`     | Java Cryptography Extension `KeyStore`                       | View and unlock                               | `keytool`     |
-
-Using external tools allows `SATO` to obtain more information regardless of the file type.
+| Format       | Description                                                  | `SATO` Base Actions                           |
+|--------------|--------------------------------------------------------------|-----------------------------------------------|
+| `.kdbx`      | KeePass `vault` database                                     | Read and write                                |
+| `.psafe3`    | Password Safe `vault` database                               | Read and write                                |
+| `.ibak`      | Password Safe backup `vault`                                 | Read and write with caution                   |
+| `.1pif`      | 1Password Interchange Format `vault` export                  | Read-only (RO)                                |
+| `.bcup`      | Buttercup `vault`                                            | Read-only (RO)                                |
+| `.crt`       | X.509 `certificate`                                          | View and convert PEM/DER files                |
+| `.cer`       | X.509 `certificate` in PEM or DER encoding                   | View and convert PEM/DER files                |
+| `.der`       | DER-encoded X.509 `certificate`                              | View and convert to PEM                       |
+| `.pem`       | `PEM certificate`, CSR, public key, or private key (PK)      | View, unlock PKs, and convert X.509 files     |
+| `.p8`        | PKCS#8 `private key`                                         | View                                          |
+| `.pk8`       | PKCS#8 `private key`                                         | View and unlock                               |
+| `.key`       | PEM-encoded `private key`                                    | View and unlock                               |
+| `.age`       | `Encrypted file` with encoding and protection type detection | RO inspection; file contents aren't decrypted |
+| `.pub`       |  Ed25519 RSA, ECDSA, or `OpenSSH public key`                 | View metadata and SHA-256 fingerprint         |
+| `.rsa`       | Private or public `RSA  key` in PEM or DER encoding          | View metadata and supported PK content        |
+| `.ec`        | Private or public `EC key` in PEM or DER encoding            | View, convert, and extract public keys        |
+| `.csr`       | `Certificate Signing Request` (`CSR`)                        | View                                          |
+| `.p10`       | PKCS#10 `Certificate Signing Request`                        | View                                          |
+| `.p12`       | PKCS#12 certificate and PK `container`                       | View, unlock, and show PK                     |
+| `.pfx`       | PKCS#12 certificate and PK `container`                       | View, unlock, and show PK                     |
+| `.p7b`       | PKCS#7 `certificate chain`                                   | View                                          |
+| `.p7c`       | PKCS#7 `certificate chain `                                  | View                                          |
+| `.p7s`       | PKCS#7/CMS `digital signature`                               | View                                          |
+| `.p7m`       | S/MIME or PKCS#7/`CMS message`                               | View                                          |
+| `.spc`       | PKCS#7/CMS `Authenticode container`                          | View certificates, signatures and CMS details |
+| `.ppk`       | PuTTY `private key`                                          | View and unlock                               |
+| `id_rsa`     | OpenSSH RSA `private key`                                    | View and unlock                               |
+| `id_ecdsa`   | OpenSSH ECDSA `private key`                                  | View and unlock                               |
+| `id_ed25519` | OpenSSH Ed25519 `private key`                                | View and unlock                               |
+| `.jks`       | Java `KeyStore`                                              | View and unlock                               |
+| `.jceks`     | Java Cryptography Extension `KeyStore`                       | View and unlock                               |
+| `.gpg`       | Binary `OpenPGP key`, message, or encrypted file             | View packet information and decrypt messages  |
+| `.pgp`       | Binary `OpenPGP key`, message, or encrypted file             | View packet information and decrypt messages  |
+| `.asc`       | ASCII-armored `OpenPGP key`, message, or signature           | View packet information and decrypt messages  |
+| `.sig`       | Detached `OpenPGP signature`                                 | View signature and packet information         |
 
 ### Additional Features of External Tools
 
-| External tool | Formats                            | `SATO` Extended Actions                                                 |
-|---------------|------------------------------------|-------------------------------------------------------------------------|
-| `OpenSSL`     | `.csr`, `.p10`                     | Parse and display CSR details                                           |
-| `OpenSSL`     | `.p12`, `.pfx`                     | Unlock containers, inspect certificates, and extract PK                 |
-| `OpenSSL`     | `.p7b`, `.p7c`                     | Extract and inspect certificate chains                                  |
-| `OpenSSL`     | `.p7s`                             | Inspect CMS signatures and signer information                           |
-| `OpenSSL`     | `.p7m`                             | Inspect CMS/S/MIME structure and embedded certificates                  |
-| `puttygen`    | `.ppk`                             | Unlock and inspect PuTTY PK                                             |
-| `ssh-keygen`  | `id_rsa`, `id_ecdsa`, `id_ed25519` | Unlock and inspect OpenSSH PK                                           |
-| `keytool`     | `.jks`, `.jceks`                   | Unlock KeyStores and inspect aliases, owners, issuers, and certificates |
-| `GPG`         | `.gpg`, `.pgp`                     | Inspect OpenPGP packets and decrypt supported messages                  |
-| `GPG`         | `.asc`                             | Inspect armored keys, signatures, and decrypt supported messages        |
-| `GPG`         | `.sig`                             | Inspect OpenPGP signature details                                       |
+| External tool | Formats                            | `SATO` Extended Actions                                                               |
+|---------------|------------------------------------|---------------------------------------------------------------------------------------|
+| `OpenSSL`     | `.csr`, `.p10`                     | Parse and display CSR details                                                         |
+| `OpenSSL`     | `.p12`, `.pfx`                     | Unlock containers, inspect certificates, and extract PK                               |
+| `OpenSSL`     | `.p7b`, `.p7c`                     | Extract and inspect certificate chains                                                |
+| `OpenSSL`     | `.p7s`                             | Inspect CMS signatures and signer information                                         |
+| `OpenSSL`     | `.p7m`                             | Inspect CMS/S/MIME structure and embedded certificates                                |
+| `OpenSSL`     | `.spc`                             | Inspect CMS/PKCS#7 structure, view embedded certificates, and convert or extract them |
+| `puttygen`    | `.ppk`                             | Unlock and inspect PuTTY PK                                                           |
+| `ssh-keygen`  | `id_rsa`, `id_ecdsa`, `id_ed25519` | Unlock and inspect OpenSSH PK                                                         |
+| `keytool`     | `.jks`, `.jceks`                   | Unlock KeyStores and inspect aliases, owners, issuers, and certificates               |
+| `GPG`         | `.gpg`, `.pgp`                     | Inspect OpenPGP packets and decrypt supported messages                                |
+| `GPG`         | `.asc`                             | Inspect armored keys, signatures, and decrypt supported messages                      |
+| `GPG`         | `.sig`                             | Inspect OpenPGP signature details                                                     |
 
 ### External Tools Installation
 
@@ -143,7 +153,7 @@ Using external tools allows `SATO` to obtain more information regardless of the 
 | Arch Linux    | sudo pacman -S openssl gnupg jre-openjdk-headless putty openssh                       |
 | Alpine Linux  | sudo apk add openssl gnupg openjdk17-jre-headless putty openssh-client                |
 | macOS         | brew install openssl gnupg openjdk putty`                                             |
-|  Windows      | **Install:**<br>- [`Gpg4win`](https://www.gpg4win.org/), `OpenSSL for Windows`, [`PuTTY`](https://putty.org/index.html) (includes `puttygen`)<br>- `OpenJDK or another Java Runtime`<br>- `OpenSSH Client` Windows optional feature<br>**Ensure:**<br>- `openssl`, `gpg` and `keytool` are available in PATH<br>**Verify:**<br>- `openssl version`<br>- `gpg --version`<br>- `keytool -help`<br>- `puttygen --version`                            |
+| Windows       | **Install:**<br>- Gpg4win, OpenSSL for Windows, PuTTY (includes puttygen)<br>- OpenJDK or another Java Runtime<br>- OpenSSH Client Windows optional feature<br>**Ensure:**<br>- openssl, gpg and keytool are available in PATH                              |
 
 ---
 
@@ -196,6 +206,9 @@ Open folder `.devcontainer` in VSCode and use commands:
 [[LICENSE (MIT)](LICENSE)]
 [[Teams (Skype)](marcus.aprelius.antoninus@gmail.com)]
 
+[[DEV.to](https://dev.to/marcusaprelius)]
+[[Medium.com](https://medium.com/@marcus.aprelius.antoninus)]
+
 ---
 
-© 2026 [Marcus-Aprelius](https://github.com/Marcus-Aprelius/sato-vscode)
+© 2026 [Marcus-Aprelius](https://github.com/Marcus-Aprelius)

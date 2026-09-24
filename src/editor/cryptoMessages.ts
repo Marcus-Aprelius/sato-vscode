@@ -12,9 +12,19 @@ import {
     certificateOutputFormat,
     convertCertificate,
     convertOpenSshPublicKey,
+    convertRsaKey,
+    isRsaKeyOutputFormat,
     lockCryptoContainer,
     openSshPublicKeyOutputFormats,
+    rsaKeyOutputFormats,
     unlockCryptoContainer,
+    convertEcKey,
+    isEcKeyOutputFormat,
+    ecKeyOutputFormats,
+    convertSpc,
+    spcOutputFormats,
+    isSpcOutputFormat,
+    type SpcOutputFormat,
     type AvailableOutputFormat,
     type CertificateVault,
     type CryptoFileInput,
@@ -23,12 +33,7 @@ import {
 
 export interface CryptoMessageRuntime {
     readSettings: () => Settings;
-
-    copyToClipboard: (
-        value: string,
-        message: string,
-        settings: Settings
-    ) => Promise<void>;
+    copyToClipboard: (value: string, message: string, settings: Settings) => Promise<void>;
 }
 
 const conversionSources = new WeakMap<vscode.WebviewPanel, CertificateVault>();
@@ -79,7 +84,7 @@ export async function handleCryptoMessage(
                     canSelectFiles: true,
                     canSelectFolders: false,
                     canSelectMany: false,
-                    filters: {"Supported conversion sources": ["crt", "cer", "der", "pem", "pub"]}
+                    filters: {"Supported conversion sources": ["crt", "cer", "der", "pem", "pub", "rsa", "ec","spc"]}
                 });
 
             const sourceUri = selected?.[0];
@@ -109,6 +114,7 @@ export async function handleCryptoMessage(
 
             conversionSources.set(panel, sourceVault);
             prepareCryptoConversion(sourceVault, panel, sourceEntryId);
+
             return true;
         }
 
@@ -120,29 +126,28 @@ export async function handleCryptoMessage(
 
     if (msg.type === "prepareCryptoConversion") {
         conversionSources.delete(panel);
+        prepareCryptoConversion( certificate, panel, msg.entryId, msg.initialTab || "convert");
 
-        prepareCryptoConversion(certificate, panel, msg.entryId);
         return true;
     }
 
     if (msg.type === "convertCryptoFile") {
         const conversionCertificate = conversionSources.get(panel) || certificate;
-
         await convertCryptoFile(conversionCertificate, msg.entryId, msg.outputFormat, msg.outputFilePath, msg.outputFileName);
         conversionSources.delete(panel);
+
         return true;
     }
 
     if (msg.type === "getDbInfo") {
         const info = collectCryptoFileInfo(certificate, msg.entryId || certificate.selectedEntryId);
-
         panel.webview.postMessage({type: "dbInfo", info});
+
         return true;
     }
 
     if (msg.type === "unlockCryptoContainer") {
         const encryptedFile = certificate.filesByEntryId?.[msg.entryId];
-
         let privateKeyFile: CryptoFileInput | undefined;
 
         if (encryptedFile && isOpenPgpEncryptedFile(encryptedFile.uri)) {
@@ -161,10 +166,7 @@ export async function handleCryptoMessage(
             const privateKeyUri = vscode.Uri.file(privateKeyPath);
 
             try {
-                privateKeyFile = {
-                    uri: privateKeyUri,
-                    bytes: await vscode.workspace.fs.readFile(privateKeyUri)
-                };
+                privateKeyFile = {uri: privateKeyUri, bytes: await vscode.workspace.fs.readFile(privateKeyUri)};
 
             } catch (err) {
                 panel.webview.postMessage({
@@ -214,7 +216,6 @@ export async function handleCryptoMessage(
         }
 
         postCertificateState(certificate, panel, runtime.readSettings(), msg.entryId);
-
         vscode.window.setStatusBarMessage("SATO: crypto container locked", 2500);
 
         return true;
@@ -257,15 +258,14 @@ async function selectOpenPgpPrivateKey(
         return;
     }
 
-    const selected =
-        await vscode.window.showOpenDialog({
-            title: "SATO - Select OpenPGP Private Key",
-            defaultUri: vscode.Uri.file(path.dirname(encryptedFile.uri.fsPath)),
-            canSelectFiles: true,
-            canSelectFolders: false,
-            canSelectMany: false,
-            filters: {"OpenPGP private keys": ["asc", "gpg", "pgp"], "All files": ["*"]}
-        });
+    const selected = await vscode.window.showOpenDialog({
+        title: "SATO - Select OpenPGP Private Key",
+        defaultUri: vscode.Uri.file(path.dirname(encryptedFile.uri.fsPath)),
+        canSelectFiles: true,
+        canSelectFolders: false,
+        canSelectMany: false,
+        filters: {"OpenPGP private keys": ["asc", "gpg", "pgp"], "All files": ["*"]}
+    });
 
     const privateKeyUri = selected?.[0];
 
@@ -317,13 +317,15 @@ function describeError(
 function prepareCryptoConversion(
     certificate: NonNullable<VaultDocument["certificate"]>,
     panel: vscode.WebviewPanel,
-    entryId: string
+    entryId: string,
+    initialTab: "convert" | "extract" = "convert"
 ): void {
     const entry = findCryptoEntry(certificate, entryId);
     const file = certificate.filesByEntryId?.[entryId];
 
     if (!entry || !file) {
         vscode.window.showWarningMessage("SATO: crypto file is not available.");
+
         return;
     }
 
@@ -338,15 +340,14 @@ function prepareCryptoConversion(
 
         if (sourceFormat !== "PEM" && sourceFormat !== "DER") {
             vscode.window.showInformationMessage("SATO: this certificate encoding is not supported for conversion.");
+
             return;
         }
 
         outputFormat = certificateOutputFormat(sourceFormat);
         availableOutputFormats = [{value: outputFormat, label: outputFormat, extension: outputFormat === "PEM" ? ".pem" : ".der"}];
 
-    } else if (
-        values.Type === "OpenSSH Public Key"
-    ) {
+    } else if (values.Type === "OpenSSH Public Key") {
         sourceFormat = "OpenSSH";
         availableOutputFormats = openSshPublicKeyOutputFormats(values["Key type"] || "");
 
@@ -354,6 +355,63 @@ function prepareCryptoConversion(
 
         if (!firstFormat) {
             vscode.window.showInformationMessage("SATO: no output formats are available for this public key.");
+
+            return;
+        }
+
+        outputFormat = firstFormat.value;
+    } else if (values.Type === "RSA Private Key" || values.Type === "RSA Public Key" || (values.Type === "Private Key" && values.Algorithm === "RSA")) {
+
+        sourceFormat = [values.Encoding, values.Format].filter(Boolean).join(" ");
+        const keyKind = values.Type === "RSA Public Key" ? "public" : "private";
+
+        availableOutputFormats = rsaKeyOutputFormats(keyKind);
+        const currentFormat = currentRsaOutputFormat(values.Encoding || "", values.Format || "", keyKind);
+
+        if (currentFormat) {
+            availableOutputFormats = availableOutputFormats.filter((format) => format.value !== currentFormat);
+        }
+
+        const firstFormat = availableOutputFormats[0];
+
+        if (!firstFormat) {
+            vscode.window.showInformationMessage("SATO: no output formats are available for this RSA key.");
+
+            return;
+        }
+
+        outputFormat = firstFormat.value;
+
+    } else if (values.Type === "EC Private Key" || values.Type === "EC Public Key") {
+
+        sourceFormat = [values.Encoding, values.Format].filter(Boolean).join(" ");
+        const keyKind = values.Type === "EC Public Key" ? "public" : "private";
+
+        availableOutputFormats = ecKeyOutputFormats(keyKind);
+        const currentFormat = currentEcOutputFormat(values.Encoding || "", values.Format || "", keyKind);
+
+        if (currentFormat) {
+            availableOutputFormats = availableOutputFormats.filter((format) => format.value !== currentFormat);
+        }
+
+        const firstFormat = availableOutputFormats[0];
+
+        if (!firstFormat) {
+            vscode.window.showInformationMessage("SATO: no output formats are available for this EC key.");
+
+            return;
+        }
+
+        outputFormat = firstFormat.value;
+
+    } else if (values.Type === "Authenticode Certificate Container") {
+        sourceFormat = values.Encoding || "DER";
+        availableOutputFormats = spcOutputFormats();
+        const firstFormat = availableOutputFormats[0];
+
+        if (!firstFormat) {
+            vscode.window.showInformationMessage("SATO: no output formats are available for this SPC container.");
+
             return;
         }
 
@@ -361,18 +419,23 @@ function prepareCryptoConversion(
 
     } else {
         vscode.window.showInformationMessage("SATO: conversion is not supported for this file type.");
+
         return;
     }
 
-    panel.webview.postMessage({type: "cryptoConversionReady",
+    const outputFormats = availableOutputFormats.map((format) => ({...format, outputFileName: convertedFileName(file.uri.fsPath, format.value)}));
+
+    panel.webview.postMessage({
+        type: "cryptoConversionReady",
         conversion: {
             entryId,
+            initialTab,
             fileName: path.basename(file.uri.fsPath),
             filePath: file.uri.fsPath,
             type: values.Type || "Crypto file",
             sourceFormat,
             outputFormat,
-            availableOutputFormats,
+            availableOutputFormats: outputFormats,
             outputFileName: convertedFileName(file.uri.fsPath, outputFormat),
             subject: values.Subject || "",
             issuer: values.Issuer || "",
@@ -407,33 +470,40 @@ async function convertCryptoFile(
 
             converted = convertCertificate(file.bytes, outputFormat);
 
-        } else if (
-            entry.values?.Type === "OpenSSH Public Key") {
+        } else if (entry.values?.Type === "OpenSSH Public Key") {
             if (outputFormat !== "RFC4716" && outputFormat !== "PKCS8" && outputFormat !== "PEM") {
                 throw new Error("Unsupported OpenSSH public key output format.");
             }
 
             converted = convertOpenSshPublicKey(file.bytes, outputFormat);
 
+        } else if (entry.values?.Type === "RSA Private Key" || entry.values?.Type === "RSA Public Key" || (entry.values?.Type === "Private Key" && entry.values.Algorithm === "RSA")) {
+
+            if (!isRsaKeyOutputFormat(outputFormat)) {
+                throw new Error("Unsupported RSA output format.");
+            }
+
+            converted = convertRsaKey(file.bytes, outputFormat);
+
+        } else if (entry.values?.Type === "EC Private Key" || entry.values?.Type === "EC Public Key") {
+
+            if (!isEcKeyOutputFormat(outputFormat)) {
+                throw new Error("Unsupported EC output format.");
+            }
+
+            converted = convertEcKey(file.bytes, outputFormat);
+
         } else {
             throw new Error("Conversion is not supported for this file type.");
         }
         
         const safeFileName = normalizeOutputFileName(requestedFileName, file.uri.fsPath, converted.extension);
+        const outputDirectory = outputFilePath.trim() || path.dirname(file.uri.fsPath);
+        const outputUri = vscode.Uri.file(path.join(outputDirectory, safeFileName));
 
-        const outputUri = await vscode.window.showSaveDialog({
-            title: `SATO - Convert to ${outputFormat}`,
-            defaultUri: vscode.Uri.file( path.join(outputFilePath.trim() || path.dirname(file.uri.fsPath), safeFileName)),
-            filters: conversionSaveFilters(outputFormat)
-        });
+        await vscode.workspace.fs.writeFile(outputUri, converted.bytes);    
+        vscode.window.showInformationMessage(`SATO: converted file saved to ${outputUri.fsPath}`);
 
-        if (!outputUri) {
-            return;
-        }
-
-        await vscode.workspace.fs.writeFile(outputUri, converted.bytes);
-
-        vscode.window.showInformationMessage(`SATO: file converted to ${outputFormat}.`);
     } catch (err) {
         vscode.window.showErrorMessage(`SATO: file conversion failed - ${describeError(err)}`);
     }
@@ -446,18 +516,81 @@ function convertedFileName(
     const parsed = path.parse(filePath);
 
     switch (outputFormat) {
-        case "DER": return `${parsed.name}.der`;
-        case "RFC4716": return `${parsed.name}-rfc4716.pub`;
-        case "PKCS8": return `${parsed.name}-pkcs8.pem`;
-        case "PEM": return `${parsed.name}.pem`;
-        default: return parsed.base;
+        case "DER":
+            return `${parsed.name}.der`;
+
+        case "RFC4716":
+            return `${parsed.name}-rfc4716.pub`;
+
+        case "PKCS8":
+            return `${parsed.name}-pkcs8.pem`;
+
+        case "PEM":
+            return `${parsed.name}.pem`;
+
+        case "RSA_PKCS1_PEM":
+            return `${parsed.name}-pkcs1-pem.rsa`;
+
+        case "RSA_PKCS1_DER":
+            return `${parsed.name}-pkcs1-der.rsa`;
+
+        case "RSA_PKCS8_PEM":
+            return `${parsed.name}-pkcs8-pem.rsa`;
+
+        case "RSA_PKCS8_DER":
+            return `${parsed.name}-pkcs8-der.rsa`;
+
+        case "RSA_SPKI_PEM":
+            return `${parsed.name}-spki-pem.rsa`;
+
+        case "RSA_SPKI_DER":
+            return `${parsed.name}-spki-der.rsa`;
+
+        case "RSA_PUBLIC_PKCS1_PEM":
+            return `${parsed.name}-public-pkcs1-pem.rsa`;
+
+        case "RSA_PUBLIC_PKCS1_DER":
+            return `${parsed.name}-public-pkcs1-der.rsa`;
+
+        case "EC_SEC1_PEM":
+            return `${parsed.name}-sec1-pem.ec`;
+
+        case "EC_SEC1_DER":
+            return `${parsed.name}-sec1-der.ec`;
+
+        case "EC_PKCS8_PEM":
+            return `${parsed.name}-pkcs8-pem.ec`;
+
+        case "EC_PKCS8_DER":
+            return `${parsed.name}-pkcs8-der.ec`;
+
+        case "EC_SPKI_PEM":
+            return `${parsed.name}-spki-pem.ec`;
+
+        case "EC_SPKI_DER":
+            return `${parsed.name}-spki-der.ec`;
+
+        case "SPC_CMS_PEM":
+            return `${parsed.name}-cms.pem`;
+
+        case "SPC_CERTIFICATES_PEM":
+            return `${parsed.name}-certificates.pem`;
+
+        case "SPC_CERTIFICATES_DER":
+            return `${parsed.name}-certificates.der`;
+
+        case "SPC_CERTIFICATE_CHAIN_P7B":
+            return `${parsed.name}-certificate-chain.p7b`;
+
+        default:
+            return parsed.base;
     }
 }
 
 function normalizeOutputFileName(
     requestedFileName: string,
     sourceFilePath: string,
-    extension: ".pem" | ".der" | ".pub"
+    extension: | ".pem" | ".der" | ".pub" | ".rsa" | ".ec" | ".p7b"
 ): string {
     const requested = path.basename(requestedFileName.trim());
 
@@ -472,13 +605,72 @@ function normalizeOutputFileName(
     return `${path.parse(requested).name}${extension}`;
 }
 
-function conversionSaveFilters(
-    outputFormat: CryptoOutputFormat
-): Record<string, string[]> {
-    switch (outputFormat) {
-        case "DER": return {"DER file": ["der"]};
-        case "RFC4716": return {"RFC 4716 public key": ["pub"]};
-        case "PKCS8": return {"PKCS#8 PEM public key": ["pem"]};
-        case "PEM":return {"PEM file": ["pem"]};
+function currentEcOutputFormat(
+    encoding: string,
+    format: string,
+    keyKind: "private" | "public"
+): CryptoOutputFormat | undefined {
+    const normalizedEncoding = encoding.trim().toUpperCase();
+    const normalizedFormat = format.trim().toUpperCase();
+
+    if (keyKind === "public") {
+        if (normalizedFormat === "SPKI" && normalizedEncoding === "PEM") {
+            return "EC_SPKI_PEM";
+        }
+
+        if (normalizedFormat === "SPKI" && normalizedEncoding === "DER") {
+            return "EC_SPKI_DER";
+        }
+
+        return undefined;
     }
+
+    if (normalizedFormat === "SEC1" && normalizedEncoding === "PEM") {
+        return "EC_SEC1_PEM";
+    }
+
+    if (normalizedFormat === "SEC1" && normalizedEncoding === "DER") {
+        return "EC_SEC1_DER";
+    }
+
+    if (normalizedFormat === "PKCS#8" && normalizedEncoding === "PEM") {
+        return "EC_PKCS8_PEM";
+    }
+
+    if (normalizedFormat === "PKCS#8" && normalizedEncoding === "DER") {
+        return "EC_PKCS8_DER";
+    }
+
+    return undefined;
+}
+
+function currentRsaOutputFormat(
+    encoding: string,
+    format: string,
+    keyKind: "private" | "public"
+): CryptoOutputFormat | undefined {
+    const normalizedEncoding = encoding.trim().toUpperCase();
+    const normalizedFormat = format.trim().toUpperCase();
+
+    if (keyKind === "public") {
+        if (normalizedFormat === "SPKI") {
+            return normalizedEncoding === "PEM" ? "RSA_SPKI_PEM" : normalizedEncoding === "DER" ? "RSA_SPKI_DER" : undefined;
+        }
+
+        if (normalizedFormat === "PKCS#1") {
+            return normalizedEncoding === "PEM" ? "RSA_PUBLIC_PKCS1_PEM" : normalizedEncoding === "DER" ? "RSA_PUBLIC_PKCS1_DER" : undefined;
+        }
+
+        return undefined;
+    }
+
+    if (normalizedFormat === "PKCS#1") {
+        return normalizedEncoding === "PEM" ? "RSA_PKCS1_PEM" : normalizedEncoding === "DER" ? "RSA_PKCS1_DER" : undefined;
+    }
+
+    if (normalizedFormat === "PKCS#8") {
+        return normalizedEncoding === "PEM" ? "RSA_PKCS8_PEM" : normalizedEncoding === "DER" ? "RSA_PKCS8_DER" : undefined;
+    }
+
+    return undefined;
 }

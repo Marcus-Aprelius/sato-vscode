@@ -103,7 +103,7 @@ function unlockedInspection(
             Curve: curve,
             "Public key SHA-256": sha256Hex(publicDer),
             ...fileMetadata(bytes, filePath),
-            Summary: `${summaryParts.join(" ")}. Raw private key content is hidden.`
+            Summary: `${summaryParts.join(" ")} detected. Raw private key content is hidden.`
         },
         privateKeyPem
     };

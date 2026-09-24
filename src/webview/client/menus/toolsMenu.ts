@@ -21,7 +21,6 @@ export function openToolsMenu(button: HTMLElement): void {
     const crypto = isCryptoFileView();
     const readOnly = isReadOnlyVault();
     const entry = getSelectedEntry();
-    const certificateConvertible = entry?.values?.Type === "X.509 Certificate" && (entry.values.Encoding === "PEM" || entry.values.Encoding === "DER");
     const cryptoContainer = isCryptoContainer(entry);
     const cryptoContainerUnlocked = isCryptoContainerUnlocked(entry);
     const openPgpMessage = isOpenPgpMessage(entry);

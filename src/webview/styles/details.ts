@@ -2,7 +2,7 @@ export const DETAILS_STYLES = `
 .details h2 {font-size: 1rem; margin: 4px 0 12px 0;}
 .details table {width: 100%; border-collapse: collapse;}
 .details td {padding: 5px 8px; vertical-align: top; border-bottom: 1px solid var(--vscode-panel-border);}
-.details td.label {color: var(--vscode-descriptionForeground); width: 110px;}
+.details td.label {color: var(--vscode-descriptionForeground); width: clamp(138px, 18%, 210px); min-width: clamp(138px, 18%, 210px);}
 
 .details .value input,
 .details .value span {max-height: 280px; overflow: auto;}
@@ -21,23 +21,31 @@ export const DETAILS_STYLES = `
 .details .actions {display: flex; gap: 6px; margin-top: 12px;}
 .details .value .field-action-btn {flex: 0 0 52px; width: 52px; min-width: 52px; text-align: center; justify-content: center;}
 .dbinfo-table td {padding: 4px 8px; vertical-align: top; border-bottom: 1px solid var(--vscode-panel-border); word-break: break-all;}
+.dbinfo-table tr:last-child td {border-bottom: none;}
 .dbinfo-table td.label {color: var(--vscode-descriptionForeground); width: 170px; min-width: 170px; white-space: nowrap;}
+.details-tabs {display: flex; gap: 0; margin: 0 0 12px; padding: 0; border-bottom: 1px solid var(--vscode-panel-border);}
 
 .details-tab {
     min-width: auto;
-    padding: 6px 12px;
+    padding: 7px 12px;
     background: transparent;
     color: var(--vscode-descriptionForeground);
-    border: none;
+    border: 1px solid var(--vscode-widget-border);
     border-bottom: 2px solid transparent;
-    border-radius: 0;
+    border-radius: 3px 3px 0 0;
     cursor: pointer;
     font: inherit;
-    }
-    
-.details-tabs {display: flex; gap: 0; margin: 0 0 12px; border-bottom: 1px solid var(--vscode-panel-border);}
-.details-tab:hover {color: var(--vscode-foreground); background: var(--vscode-list-hoverBackground);}
-.details-tab.active {color: var(--vscode-foreground); border-bottom-color: var(--vscode-focusBorder);}
+}
+
+.details-tab + .details-tab {margin-left: 0;}
+.details-tab:hover {color: var(--vscode-foreground); background: var(--vscode-list-hoverBackground); border-color: var(--vscode-focusBorder);}
+
+.details-tab.active {
+    color: var(--vscode-foreground);
+    background: var(--vscode-list-hoverBackground);
+    border-color: var(--vscode-focusBorder);
+    border-bottom-color: var(--vscode-focusBorder);
+}
 
 .details-raw {position: relative; min-width: 0;}
 
@@ -61,5 +69,20 @@ export const DETAILS_STYLES = `
     overflow-wrap: anywhere;
     word-break: break-word;
 }
+
+.details-inline-link {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--vscode-textLink-foreground);
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.details-inline-link:hover {color: var(--vscode-textLink-activeForeground); text-decoration: underline;}
+.details-inline-link:focus-visible {outline: 1px solid var(--vscode-focusBorder); outline-offset: 2px;}
 
 `;

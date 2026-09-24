@@ -277,7 +277,17 @@ function countMatches(
 function cmsDisplayType(
     filePath: string
 ): string {
-    return filePath.toLowerCase().endsWith(".p7s") ? "PKCS#7 Digital Signature" : "CMS/S/MIME Message";
+    const lowerPath = filePath.toLowerCase();
+
+    if (lowerPath.endsWith(".p7s")) {
+        return "PKCS#7 Digital Signature";
+    }
+
+    if (lowerPath.endsWith(".spc")) {
+        return "Authenticode Certificate Container";
+    }
+
+    return "CMS/S/MIME Message";
 }
 
 function buildSummary(
