@@ -1,5 +1,17 @@
 # Change Log
 
+# 0.3.1
+
+## Changed:
+  * Extended the Converter with a dedicated `Base64` tab
+  * Added resizable Converter window with responsive input and output fields
+  * Code refactoring 
+## Added:
+  * `Base64` tab to Converter
+  * Added Live Mode for automatic encoding and decoding
+
+---
+
 # 0.3.0
 
 ## Changed:

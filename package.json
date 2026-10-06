@@ -3,7 +3,7 @@
   "displayName": "SATO Secrets",
   "description": "Browse password vaults and crypto files directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {

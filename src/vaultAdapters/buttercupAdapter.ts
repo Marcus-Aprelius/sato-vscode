@@ -4,6 +4,11 @@ import type { GroupView } from "../vault";
 import {
     buildImportedVaultStats,
     createImportedEntryView,
+    fileNameWithoutExtension as fileNameWithoutExt,
+    scalarString as safeString,
+    sortGroupViewContents as sortGroups,
+    takeKnownField as takeProperty,
+    uniqueFieldName,
     type ImportedVault,
     type ImportedVaultEntry
 } from "../importedVault";
@@ -113,7 +118,7 @@ function mapButtercupVault(
     const root: GroupView = {
         id: "bcup-root",
         parentId: null,
-        name: fileNameWithoutExtension(uri),
+        name: fileNameWithoutExt(uri, "bcup", "Buttercup Vault"),
         groups: [],
         entries: []
     };
@@ -136,7 +141,7 @@ function mapButtercupVault(
 
     return {
         format: "bcup",
-        name: fileNameWithoutExtension(uri),
+        name: fileNameWithoutExt(uri, "bcup", "Buttercup Vault"),
         readOnly: true,
         tree: root,
         stats: buildImportedVaultStats(root, entries),
@@ -220,23 +225,6 @@ function mapButtercupEntry(
     };
 }
 
-function takeProperty(
-    properties: Record<string, string>,
-    names: string[]
-): string {
-    for (const [name, value] of Object.entries(properties)) {
-        if (!names.includes(name.toLowerCase())) {
-            continue;
-        }
-
-        delete properties[name];
-
-        return value;
-    }
-
-    return "";
-}
-
 function readStringRecord(
     value: unknown
 ): Record<string, string> {
@@ -255,52 +243,4 @@ function readStringRecord(
     }
 
     return output;
-}
-
-function uniqueFieldName(
-    fields: Record<string, string>,
-    requestedName: string
-): string {
-    if (!(requestedName in fields)) {
-        return requestedName;
-    }
-
-    let index = 2;
-
-    while (`${requestedName} ${index}` in fields) {
-        index++;
-    }
-
-    return `${requestedName} ${index}`;
-}
-
-function sortGroups(group: GroupView): void {
-    group.groups.sort((left, right) => left.name.localeCompare(right.name, undefined, {sensitivity: "base"}));
-    group.entries.sort((left, right) => left.title.localeCompare(right.title, undefined, {sensitivity: "base"}));
-}
-
-function fileNameWithoutExtension(
-    uri: vscode.Uri
-): string {
-    const fileName = uri.path.split("/").pop() || "Buttercup Vault";
-
-    return fileName.replace(/\.bcup$/i, "");
-}
-
-function safeString(
-    value: unknown
-): string {
-    if (value === undefined || value === null) {
-        return "";
-    }
-
-    if (typeof value === "string") {
-        return value.trim();
-    }
-
-    if (typeof value === "number" || typeof value === "boolean") {
-        return String(value);
-    }
-
-    return "";
 }

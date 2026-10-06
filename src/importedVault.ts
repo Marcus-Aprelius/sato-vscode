@@ -1,4 +1,5 @@
 import type { GroupView, VaultStats } from "./vault";
+import type * as vscode from "vscode";
 import { isWeakPassword } from "./security/passwordStrength";
 
 export type ImportedVaultFormat = 
@@ -129,4 +130,76 @@ export function createImportedEntryView(
         expired: false,
         values: {...entry.fields}
     };
+}
+
+export function uniqueFieldName(
+    fields: Record<string, string>,
+    requestedName: string
+): string {
+    if (!(requestedName in fields)) {
+        return requestedName;
+    }
+
+    let index = 2;
+
+    while (`${requestedName} ${index}` in fields) {
+        index++;
+    }
+
+    return `${requestedName} ${index}`;
+}
+
+export function takeKnownField(
+    fields: Record<string, string>,
+    names: string[]
+): string {
+    for (const [key, value] of Object.entries(fields)) {
+        const normalizedKey = key.trim().toLowerCase();
+
+        if (!names.includes(normalizedKey)) {
+            continue;
+        }
+
+        delete fields[key];
+
+        return value;
+    }
+
+    return "";
+}
+
+export function scalarString(
+    value: unknown
+): string {
+    if (value === undefined || value === null) {
+        return "";
+    }
+
+    if (typeof value === "string") {
+        return value.trim();
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+        return String(value);
+    }
+
+    return "";
+}
+
+export function sortGroupViewContents(
+    group: GroupView
+): void {
+    group.groups.sort((left, right) => left.name.localeCompare(right.name, undefined, {sensitivity: "base"}));
+    group.entries.sort((left, right) => left.title.localeCompare(right.title, undefined, {sensitivity: "base"}));
+}
+
+export function fileNameWithoutExtension(
+    uri: vscode.Uri,
+    extension: string,
+    fallback: string
+): string {
+    const fileName = uri.path.split("/").pop() || fallback;
+    const pattern = new RegExp(`\\.${extension.replace(/^\./, "")}$`, "i");
+
+    return fileName.replace(pattern, "");
 }

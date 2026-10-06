@@ -1,6 +1,6 @@
 import { byId } from "./dom";
-
-import type { EntryView } from "../../vault";
+import { countCryptoEmptyValues } from "./details/emptyValues";
+import { DAY_MILLISECONDS, parseDateTimestamp } from "./dateFormat";
 
 import {
     app,
@@ -131,26 +131,8 @@ function renderCryptoStatus(
     }
 
     if (entry) {
-        item("Empty values", countEmptyValues(entry));
+        item("Empty values", countCryptoEmptyValues(entry));
     }
-}
-
-function countEmptyValues(
-    entry: EntryView
-): number {
-    
-    const fields = entry.fields || [];
-    let count = 0;
-
-    for (const field of fields) {
-        const value = entry.values?.[field] || "";
-
-        if (!value) {
-            count++;
-        }
-    }
-
-    return count;
 }
 
 function statusClass(
@@ -190,9 +172,9 @@ function formatCertificateValidity(
     expired: boolean;
     days: number;
 } {
-    const expirationTime = Date.parse(value);
+    const expirationTime = parseDateTimestamp(value);
 
-    if (Number.isNaN(expirationTime)) {
+    if (expirationTime === undefined) {
         return {
             date: value,
             message: "",
@@ -202,10 +184,9 @@ function formatCertificateValidity(
     }
 
     const difference = expirationTime - Date.now();
-    const dayMilliseconds = 24 * 60 * 60 * 1000;
 
     if (difference < 0) {
-        const daysAgo = Math.max(1, Math.floor(Math.abs(difference) / dayMilliseconds));
+        const daysAgo = Math.max(1, Math.floor(Math.abs(difference) / DAY_MILLISECONDS));
 
         return {
             date: value,
@@ -215,7 +196,7 @@ function formatCertificateValidity(
         };
     }
 
-    const daysLeft = Math.ceil(difference / dayMilliseconds);
+    const daysLeft = Math.ceil(difference / DAY_MILLISECONDS);
 
     return {
         date: value,

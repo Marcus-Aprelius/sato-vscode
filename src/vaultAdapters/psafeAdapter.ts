@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { readFileSize } from "../utils/fileInfo";
 
 import type { VaultAdapterRuntime } from "./index";
 import type { FromWebview, VaultDocument } from "../types";
@@ -145,15 +146,7 @@ export async function handlePsafeMessage(
         }
 
         case "getDbInfo": {
-            let fileSize = 0;
-
-            try {
-                const stat = await vscode.workspace.fs.stat(document.uri);
-                fileSize = stat.size;
-
-            } catch {
-                // ignore
-            }
+            const fileSize = await readFileSize(document.uri);
 
             panel.webview.postMessage({
                 type: "dbInfo",

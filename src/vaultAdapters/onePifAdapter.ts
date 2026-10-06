@@ -4,6 +4,11 @@ import type { GroupView } from "../vault";
 import {
     buildImportedVaultStats,
     createImportedEntryView,
+    fileNameWithoutExtension as fileNameWithoutExt,
+    scalarString as stringValue,
+    sortGroupViewContents,
+    takeKnownField,
+    uniqueFieldName,
     type ImportedVault,
     type ImportedVaultEntry
 } from "../importedVault";
@@ -60,7 +65,7 @@ export async function openOnePifVault(
     const root: GroupView = {
         id: "onepif-root",
         parentId: null,
-        name: fileNameWithoutExtension(uri),
+        name: fileNameWithoutExt(uri, "1pif", "1Password Export"),
         groups: [],
         entries: []
     };
@@ -88,7 +93,7 @@ export async function openOnePifVault(
 
     return {
         format: "1pif",
-        name: fileNameWithoutExtension(uri),
+        name: fileNameWithoutExt(uri, "1pif", "1Password Export"),
         readOnly: true,
         tree: root,
         stats: buildImportedVaultStats(root, entries),
@@ -256,47 +261,11 @@ function ensureGroup(
 }
 
 function sortImportedTree(root: GroupView): void {
-    root.groups.sort((left, right) => left.name.localeCompare(right.name, undefined, {sensitivity: "base"}));
+    sortGroupViewContents(root);
 
     for (const group of root.groups) {
-        group.entries.sort((left, right) => left.title.localeCompare(right.title, undefined, {sensitivity: "base"}));
+        sortGroupViewContents(group);
     }
-}
-
-function takeKnownField(
-    fields: Record<string, string>,
-    names: string[]
-): string {
-    for (const [key, value] of Object.entries(fields)) {
-        const normalizedKey = key.trim().toLowerCase();
-
-        if (!names.includes(normalizedKey)) {
-            continue;
-        }
-
-        delete fields[key];
-
-        return value;
-    }
-
-    return "";
-}
-
-function uniqueFieldName(
-    fields: Record<string, string>,
-    requestedName: string
-): string {
-    if (!(requestedName in fields)) {
-        return requestedName;
-    }
-
-    let index = 2;
-
-    while (`${requestedName} ${index}` in fields) {
-        index++;
-    }
-
-    return `${requestedName} ${index}`;
 }
 
 function normalizeGroupName(value: string): string {
@@ -306,14 +275,6 @@ function normalizeGroupName(value: string): string {
         .replace(/[._-]+/g, " ")
         .replace(/\b\w/g, (character) => character.toUpperCase())
         .trim() || "Items";
-}
-
-function fileNameWithoutExtension(
-    uri: vscode.Uri
-): string {
-    const fileName = uri.path.split("/").pop() || "1Password Export";
-
-    return fileName.replace(/\.1pif$/i, "");
 }
 
 function slug(value: string): string {
@@ -359,22 +320,6 @@ function objectValue(
     }
 
     return {};
-}
-
-function stringValue(value: unknown): string {
-    if (value === undefined || value === null) {
-        return "";
-    }
-
-    if (typeof value === "string") {
-        return value.trim();
-    }
-
-    if (typeof value === "number" || typeof value === "boolean") {
-        return String(value);
-    }
-
-    return "";
 }
 
 function stringArray(value: unknown): string[] {

@@ -1,14 +1,9 @@
 import { vscode } from "../globals";
-import { openEmptyCryptoConverter, openModal } from "../modals";
 import { openDropdown } from "../contextMenu";
+import { openBase64Converter, openEmptyCryptoConverter, openModal } from "../modals";
+import {isCryptoContainer, isCryptoContainerUnlocked, isOpenPgpMessage} from "../crypto/containerTypes";
 
 import type { MenuItem } from "../types";
-
-import {
-    isCryptoContainer,
-    isCryptoContainerUnlocked,
-    isOpenPgpMessage
-} from "../crypto/containerTypes";
 
 import {
     app,
@@ -98,6 +93,13 @@ export function openToolsMenu(button: HTMLElement): void {
 
                 openEmptyCryptoConverter();
             }
+        },
+
+        {
+            label: "Base64 Encode / Decode",
+            title: "Encode or decode Base64, Base32, Base32hex, and Hex text",
+
+            action: () => {openBase64Converter();}
         },
 
         { sep: true },

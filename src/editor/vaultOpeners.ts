@@ -5,6 +5,7 @@ import { unlockKdbxVault } from "../vaultAdapters/kdbxAdapter";
 import { unlockPsafeVault } from "../vaultAdapters/psafeAdapter";
 import { openOnePifVault } from "../vaultAdapters/onePifAdapter";
 import { openButtercupVault } from "../vaultAdapters/buttercupAdapter";
+import { describeError } from "../utils/errors";
 
 import type { VaultDocument } from "../types";
 
@@ -152,12 +153,3 @@ async function unlockKeePassVault(
     }
 }
 
-function describeError(
-    err: unknown
-): string {
-    if (err instanceof Error) {
-        return err.message;
-    }
-
-    return String(err);
-}

@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { readImportedVaultField } from "../importedVault";
+import { readFileSize } from "../utils/fileInfo";
 
 import type { VaultAdapterRuntime } from "./index";
 import type { ImportedVault } from "../importedVault";
@@ -83,7 +84,7 @@ export async function handleImportedVaultMessage(
 
         case "getDbInfo": {
             const fileSize = await readFileSize(
-                document
+                document.uri
             );
 
             panel.webview.postMessage({type: "dbInfo", info: buildImportedVaultInfo(document, vault, fileSize)});
@@ -126,19 +127,6 @@ function buildImportedVaultInfo(
             ["Duplicate passwords", String(vault.stats.duplicates)]
         ]
     };
-}
-
-async function readFileSize(
-    document: VaultDocument
-): Promise<number> {
-    try {
-        const stat = await vscode.workspace.fs.stat(document.uri);
-
-        return stat.size;
-
-    } catch {
-        return 0;
-    }
 }
 
 function formatName(

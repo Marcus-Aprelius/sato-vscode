@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 
 import type { VaultDocument } from "../types";
+import { describeError } from "../utils/errors";
 
 export async function persistKdbx(
     document: VaultDocument,
@@ -28,12 +29,3 @@ export async function persistKdbx(
     }
 }
 
-function describeError(
-    err: unknown
-): string {
-    if (err instanceof Error) {
-        return err.message;
-    }
-
-    return String(err);
-}

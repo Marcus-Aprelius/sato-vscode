@@ -7,6 +7,8 @@ import { renderStatus } from "../status";
 import { updateMainActionButton } from "../buttons";
 import { createButton, createCopyIconButton } from "../dom";
 import { getPrivateKeyValue, renderPrivateKeyBlock} from "./privateKey";
+import { bitsToBytesTooltip, bytesToKilobytesTooltip } from "../sizeFormat";
+import { DAY_MILLISECONDS, daysUnitLabel, parseDateTimestamp } from "../dateFormat";
 
 import {
     isCryptoContainer,
@@ -164,11 +166,11 @@ function renderCryptoValuesTable(
         }
 
         if (text && (field === "File size" || field === "Container size")) {
-            span.title = formatSizeTooltip(text, "bytes");
+            span.title = bytesToKilobytesTooltip(text);
         }
 
         if (text && (field === "Key size" || field === "Key Size")) {
-            span.title = formatSizeTooltip(text, "bits");
+            span.title = bitsToBytesTooltip(text);
         }
 
         value.appendChild(span);
@@ -197,41 +199,17 @@ function formatDaysFromNow(
     value: string,
     mode: "left" | "ago"
 ): string {
-    const timestamp = Date.parse(value);
+    const timestamp = parseDateTimestamp(value);
 
-    if (Number.isNaN(timestamp)) {
+    if (timestamp === undefined) {
         return "";
     }
 
-    const dayMilliseconds = 24 * 60 * 60 * 1000;
     const difference = mode === "left" ? timestamp - Date.now() : Date.now() - timestamp;
-    const days = Math.max(0, mode === "left" ? Math.ceil(difference / dayMilliseconds): Math.floor(difference / dayMilliseconds));
-    const unit = days === 1 ? "day" : "days";
+    const days = Math.max(0, mode === "left" ? Math.ceil(difference / DAY_MILLISECONDS): Math.floor(difference / DAY_MILLISECONDS));
+    const unit = daysUnitLabel(days);
 
     return mode === "left" ? `${days} ${unit} left` : `${days} ${unit} ago`;
-}
-
-function formatSizeTooltip(
-    value: string,
-    unit: "bytes" | "bits"
-): string {
-    const match = value.match(/^(\d+)\s+(?:bytes|bits?)$/i);
-
-    if (!match) {
-        return "";
-    }
-
-    const size = Number.parseInt(match[1], 10);
-
-    if (!Number.isFinite(size)) {
-        return "";
-    }
-
-    if (unit === "bits") {
-        return `${Math.ceil(size / 8)} bytes`;
-    }
-
-    return `${(size / 1024).toFixed(2)} KB`;
 }
 
 function renderCryptoDetailsTabs(
