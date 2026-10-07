@@ -2,7 +2,7 @@
 
 # SATO - Secure Access Task Operator for VS Code
 
-Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [crypto files](#supported-formats) directly inside VS Code `v1.100.0+` with a single UI.
+Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), archieves with passwords (.zip) and common [crypto files](#supported-formats) directly inside VS Code `v1.100.0+` with a single UI.
 
 > **⚠️ Status:** In development. Use in production environments at your own risk.
 
@@ -53,6 +53,8 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 ![PPK](https://img.shields.io/badge/.ppk-✓-8A2BE2)
 ![AGE](https://img.shields.io/badge/.age-✓-8A2BE2)
 
+![ZIP](https://img.shields.io/badge/.zip-✓-FFB300)
+
 ---
 
 ## Security
@@ -62,6 +64,10 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 - OpenPGP keys use a temporary GPG directory
 - Clipboard auto-clear and auto-lock are configurable
 - No cloud services or telemetry
+- Archive passwords and decrypted archive data are held in memory only
+- ZIP archive paths are validated before extraction to prevent directory traversal
+- Existing files are not overwritten during archive extraction
+- Optional `.zip.bak` backups can be created before archive modifications
 
 ---
 
@@ -69,19 +75,21 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 
 1. Open vault or cryptofile of any [supported format](#supported-formats).
 
-2. For vault files, enter the master password.
+2. For  vault files and password-protected ZIP archives, enter the master password that will be prompted upon opening.
 
 3. For crypto containers, use `Tools` → `Unlock Container` or the details pane button.
 
-4. Use the toolbar or right-click context menus to manage groups, entries and crypto file actions.
+4. Use the toolbar or right-click context menus to manage entries, groups, files, folders.
 
-5. Use `Tools` → `Lock Database` to lock a password vault.
+5. Select the SATO interface theme from `View` → `Theme`.
+ 
+6. Use `Tools` → `Lock Database` to lock a password vault.
+ 
+7. Commands available from the Command Palette `Ctrl/Cmd + Shift + P`:
 
-6. Also, commands from Command Palette `Ctrl/Cmd + Shift + P`:
-
-  - `SATO: Open Password Vault`
-  - `SATO: Lock Vault`
-  - `SATO: Reload Vault`
+  * `SATO: Open Password Vault`
+  * `SATO: Lock Vault`
+  * `SATO: Reload Vault`
 
 ---
 
@@ -126,6 +134,8 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 | `.pgp`       | Binary `OpenPGP key`, message, or encrypted file             | View packet information and decrypt messages  |
 | `.asc`       | ASCII-armored `OpenPGP key`, message, or signature           | View packet information and decrypt messages  |
 | `.sig`       | Detached `OpenPGP signature`                                 | View signature and packet information         |
+| `.zip`       | (Password-protected) ZIP `archive`                           | View, edit, arhieve, delete, edit password    |
+| `.zip.bak`   | `Backup` copy of a (Password-protected) `ZIP archive`        | View, edit, arhieve, delete, edit password    |
 
 ### Additional Features of External Tools
 
@@ -143,6 +153,7 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 | `GPG`         | `.gpg`, `.pgp`                     | Inspect OpenPGP packets and decrypt supported messages                                |
 | `GPG`         | `.asc`                             | Inspect armored keys, signatures, and decrypt supported messages                      |
 | `GPG`         | `.sig`                             | Inspect OpenPGP signature details                                                     |
+
 
 ### External Tools Installation
 
@@ -168,7 +179,8 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 | **Search**             | Search vault entries and crypto metadata<br>Search titles, usernames, URLs<br>Search notes, subjects, issuers, paths, and fingerprints |
 | **Password generator** | Configurable length and character sets<br>Password strength indicator<br>Entry editor integration and one-click copy |
 | **Security controls**  | Lock and reload vaults<br>Lock containers and hide decrypted content<br>Configurable auto-lock and clipboard auto-clear<br>Checks for required external tools |
-| **Interface**          | File, Entry, Folder, Tools, View, Settings, and Help menus<br>File and database information<br>Status bar with vault statistics or crypto metadata<br>Update check from the Help menu |
+| **Interface**          | File, Entry, Folder, Tools, View, Settings, and Help menus<br>File and database information<br>Status bar with vault statistics or crypto metadata<br>Selectable VS Code, Dark, Gray, and Light themes<br>Theme selection from View and Settings<br>Update check from the Help menu |
+| **Archive management** | Browse ZIP archives as a hierarchical tree<br>Extract individual files, folders, or the complete archive<br>Add and delete files/folders<br>Open password-protected ZIP archives<br>Change or remove archive passwords<br>Optional archive backups before modification |
 
 ---
 
@@ -183,7 +195,8 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), and common [
 | `sato.showPasswordsByDefault`   | Reveal passwords automatically in the entry details pane                               |
 | `sato.showEmptyValuesByDefault` | Show empty values by default in vault and crypto file details                          |
 | `sato.showStatusBar`            | Show or hide the vault statistics bar                                                  |
-
+| `sato.theme`                    | SATO interface theme: `vscode`, `dark`, `gray`, or `light`.<br>Default: `vscode`       |
+| `sato.createArchiveBackups`     | Create a `.zip.bak` backup before modifying a ZIP archive.<br>Default: `false`         |
 ---
 
 ## Development

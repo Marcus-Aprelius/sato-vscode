@@ -11,12 +11,13 @@ export const app = {
     searchQuery: "",
     settings: initialState.settings,
     vaultLocked: false,
+    archiveUnlocked: false,
 
     groupsWidth: 240,
     entriesWidth: 300,
 
     privateKeyVisible: false,
-    detailsTab: "info" as | "info" | "details" | "privateKey",
+    detailsTab: "info" as | "info" | "details" | "preview" | "privateKey",
 
     showEmptyValues: initialState.settings.showEmptyValuesByDefault,
     showVaultEmptyValues: initialState.settings.showEmptyValuesByDefault,
@@ -27,6 +28,17 @@ export const app = {
 
 export const groupIndex = new Map<string, ClientInitialState["tree"]>();
 export const entryIndex = new Map<string, ClientEntry>();
+
+export interface ArchivePreview {
+    entryId: string;
+    kind: "text" | "image" | "unsupported" | "error";
+    content?: string;
+    mimeType?: string;
+    message?: string;
+}
+
+export const archivePreviewCache = new Map<string, ArchivePreview>();
+export const archivePreviewLoading =new Set<string>();
 export const parentGroupOf = new Map<string, string>();
 
 export function isCryptoFileView(): boolean {
@@ -87,8 +99,11 @@ export function reindex(): void {
     syncSelectedGroupWithSelectedEntry();
 }
 
-export function setClientState(nextState: ClientInitialState): void {
+export function setClientState(
+    nextState: ClientInitialState
+): void {
     app.vaultLocked = false;
+    app.archiveUnlocked = false;
     app.state = nextState;
 
     if (nextState.settings) {
@@ -98,6 +113,9 @@ export function setClientState(nextState: ClientInitialState): void {
     if (nextState.selectedEntryId !== undefined) {
         app.selectedEntryId = nextState.selectedEntryId;
     }
+
+    archivePreviewCache.clear();
+    archivePreviewLoading.clear();
 
     reindex();
 

@@ -1,6 +1,21 @@
 import { byId, maybeById } from "../dom";
 import { closeModal, openModal } from "./modalLifecycle";
 import { bindAboutModalActions, openAboutTab } from "./aboutModal";
+import { bindEntryModalActions, fillEntryModal, openEntryModal } from "./entryModal";
+
+import {
+    bindArchivePasswordModalActions,
+    closeArchivePasswordModal,
+    openArchivePasswordModal,
+    showArchivePasswordError
+} from "./archivePasswordModal";
+
+import {
+    bindArchiveUnlockModalActions,
+    closeArchiveUnlockModal,
+    openArchiveUnlockModal,
+    showArchiveUnlockError
+} from "./archiveUnlockModal";
 
 import {
     bindUnlockModalActions,
@@ -26,12 +41,6 @@ import {
     openEmptyCryptoConverter
 } from "./converterModal";
 
-import {
-    bindEntryModalActions,
-    fillEntryModal,
-    openEntryModal
-} from "./entryModal";
-
 export {
     closeModal,
     openModal,
@@ -44,11 +53,17 @@ export {
     setOpenPgpPrivateKeyPath,
     showCryptoContainerUnlockError,
     submitCryptoContainerPassword,
+    closeArchiveUnlockModal,
+    openArchiveUnlockModal,
+    showArchiveUnlockError,
     fillEntryModal,
     openEntryModal,
     openAboutTab,
     openBase64Converter,
     openCryptoConverter,
+    closeArchivePasswordModal,
+    openArchivePasswordModal,
+    showArchivePasswordError,
     openEmptyCryptoConverter
 };
 
@@ -64,6 +79,8 @@ export function bindModalActions(): void {
     bindCryptoUnlockModalActions();
     bindAboutModalActions();
     bindConverterModalActions();
+    bindArchiveUnlockModalActions();
+    bindArchivePasswordModalActions();
 
     maybeById("dbinfo-close")?.addEventListener("click", closeModal);
     maybeById("dbinfo-header-close")?.addEventListener("click", closeModal);

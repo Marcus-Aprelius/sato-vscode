@@ -4,15 +4,17 @@ import type * as kdbxweb from "kdbxweb";
 import type { Settings } from "./webview";
 import type { PsafeVault } from "./psafe";
 import type { EntryFields } from "./vault";
+import type { ArchiveVault } from "./archives";
 import type { ImportedVault } from "./importedVault";
 import type { CertificateVault } from "./certificates";
 
 export interface VaultDocument extends vscode.CustomDocument {
     db?: kdbxweb.Kdbx;
-    credentials?: kdbxweb.Credentials;
     psafe?: PsafeVault;
-    certificate?: CertificateVault;
+    archive?: ArchiveVault;
     importedVault?: ImportedVault;
+    certificate?: CertificateVault;
+    credentials?: kdbxweb.Credentials;
 }
 
 export type FromWebview =
@@ -37,7 +39,7 @@ export type FromWebview =
         | "RSA_PUBLIC_PKCS1_PEM" | "RSA_PUBLIC_PKCS1_DER"| "EC_SEC1_PEM" | "EC_SEC1_DER"
         | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER"
         | "SPC_CMS_PEM" | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
-               outputFilePath: string; outputFileName: string;}
+               outputFilePath: string; outputFileName: string; }
     | { type: "revealSecret"; entryId: string; field: string; }
     | { type: "revealPrivateKey"; entryId?: string; }
     | { type: "copySecret"; entryId: string; field: string; }
@@ -52,6 +54,24 @@ export type FromWebview =
     | { type: "renameGroup"; groupId: string; }
     | { type: "deleteGroup"; groupId: string; }
     | { type: "updateSettings"; settings: Settings; }
+    | { type: "selectArchive"; filePath: string; }
+    | { type: "prepareArchiveUnlock"; }
+    | { type: "unlockArchive"; password: string; }
+    | { type: "lockArchive"; }
+    | { type: "prepareArchivePasswordSet"; }
+    | { type: "prepareArchivePasswordChange"; }
+    | { type: "changeArchivePassword"; password: string; }
+    | { type: "deleteArchivePassword"; }
+    | { type: "extractArchiveEntry"; entryId: string; }
+    | { type: "previewArchiveEntry"; entryId: string; }
+    | { type: "extractArchiveFolder"; groupId: string; }
+    | { type: "extractArchiveAll"; }
+    | { type: "extractArchiveToFolder"; }
+    | { type: "createArchiveFolder"; groupId: string; }
+    | { type: "deleteArchiveFolder"; groupId: string; }
+    | { type: "addArchiveFile"; groupId: string; }
+    | { type: "deleteArchiveEntry"; entryId: string; }
+    | { type: "copyArchiveInternalPath"; groupId: string; }
     | { type: "getDbInfo"; entryId?: string | null; };
 
 export interface ActiveEditor {

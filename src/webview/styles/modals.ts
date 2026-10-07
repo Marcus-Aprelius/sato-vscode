@@ -188,12 +188,12 @@ export const MODAL_STYLES = `
 }
 
 .settings-tab-content {flex: 1;}
-.settings-modal {width: min(430px, 92vw); height: 310px; max-height: 90vh;}
-.settings-modal > .modal-title {border-bottom: none;}
-.settings-modal .settings-tab-content {flex: 1; min-height: 0;}
-
-.modal-body label.settings-number-row {display: grid; grid-template-columns: minmax(0, 1fr) 100px; align-items: center; gap: 12px;}
-.settings-number-row input[type="number"] {width: 100px; min-width: 100px; padding: 4px 6px; text-align: center;}
+.settings-modal {width: min(460px, 92vw); height: 390px; max-height: 90vh;}
+.settings-modal .settings-tab-content {flex: 1; min-height: 0; overflow-y: auto;}
+.settings-number-row select {width: 140px; min-width: 140px; padding: 4px 6px; }
+.settings-section-separator {width: 100%; height: 1px; margin: 3px 0; background: var(--vscode-panel-border);}
+.modal-body label.settings-number-row {display: grid; grid-template-columns: minmax(0, 1fr) 140px; align-items: center; gap: 12px;}
+.settings-number-row input[type="number"] {width: 100px; min-width: 100px; justify-self: end;}
 
 .converter-file-name-row > input {
     box-sizing: border-box;

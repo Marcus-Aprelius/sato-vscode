@@ -41,7 +41,7 @@ export function renderLockedShell(
     };
 
     const resources = createResourceUris(context.extensionUri);
-
+    
     panel.webview.html = renderVault(
         panel.webview,
         document.uri,
@@ -73,6 +73,59 @@ export function renderEditorState(
     const settings = context.readSettings();
 
     const resources = createResourceUris(context.extensionUri);
+
+    if (document.archive) {
+        const archive = document.archive;
+
+        const selectedEntryId = archive.selectedEntryId || null;
+
+        const archiveList = archive.archives.map(
+            item => ({
+                fileName: item.fileName,
+                filePath: item.filePath,
+                entryCount: item.inspection.entryCount,
+                encrypted: item.inspection.encrypted,
+                selected: item.filePath === archive.selectedArchivePath
+            })
+        );
+
+        if (initialLoad) {
+            panel.webview.html = renderVault(
+                panel.webview,
+                document.uri,
+                archive.tree,
+                archive.stats,
+                settings,
+                resources.logoUri,
+                resources.toolbarLogoUri,
+                resources.codiconsCssUri,
+                resources.webviewClientUri,
+                APP_VERSION,
+                GIT_COMMIT,
+                selectedEntryId,
+                true,
+                "archive",
+                archiveList,
+                archive.selectedArchivePath
+            );
+        } else {
+            panel.webview.postMessage({
+                type: "vaultState",
+                state: {
+                    tree: archive.tree,
+                    stats: archive.stats,
+                    settings,
+                    selectedEntryId,
+                    readOnlyVault: true,
+                    vaultFormat: "archive",
+                    archives: archiveList,
+                    selectedArchivePath: archive.selectedArchivePath
+                }
+            });
+        }
+
+        return;
+    }
 
     if (document.certificate) {
         const certificate = document.certificate;

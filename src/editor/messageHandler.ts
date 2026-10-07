@@ -1,10 +1,12 @@
 import * as vscode from "vscode";
 import { SUPPORTED_VAULT_FILTERS } from "../constants";
 import { handleCryptoMessage } from "./cryptoMessages";
+import { handleArchiveMessage } from "./archiveMessages";
 import { readCryptoFilesFromDirectory } from "./cryptoFiles";
 import { handleKdbxMessage } from "../vaultAdapters/kdbxAdapter";
 import { handlePsafeMessage } from "../vaultAdapters/psafeAdapter";
 import { handleImportedVaultMessage } from "../vaultAdapters/importedVaultAdapter";
+
 
 import type { Settings } from "../webview";
 import type { FromWebview, VaultDocument } from "../types";
@@ -16,22 +18,11 @@ export interface EditorMessageRuntime {
     reload: () => Promise<void>;
     lock: () => void;
     scheduleAutoLock: () => void;
-
     readSettings: () => Settings;
-
-    updateSettings: (
-        settings: Settings
-    ) => Promise<void>;
-
+    updateSettings: (settings: Settings) => Promise<void>;
     checkForUpdates: () => Promise<void>;
-
-    openExternalUrl: (
-        url: string
-    ) => Promise<void>;
-
-    unlockWithPassword: (
-        password: string
-    ) => Promise<void>;
+    openExternalUrl: (url: string) => Promise<void>;
+    unlockWithPassword: (password: string) => Promise<void>;
 
     adapterRuntime: VaultAdapterRuntime;
 }
@@ -94,11 +85,13 @@ export async function handleEditorMessage(
         return;
     }
 
-    const cryptoHandled =
-        await handleCryptoMessage(
-            document, panel, msg,
-            {readSettings: runtime.readSettings, copyToClipboard: runtime.adapterRuntime.copyToClipboard}
-        );
+    const archiveHandled = await handleArchiveMessage(document, panel, msg, runtime.reload, runtime.readSettings);
+
+    if (archiveHandled) {
+        return;
+    }
+
+    const cryptoHandled = await handleCryptoMessage(document, panel, msg, {readSettings: runtime.readSettings, copyToClipboard: runtime.adapterRuntime.copyToClipboard});
 
     if (cryptoHandled) {
         return;
@@ -145,14 +138,7 @@ async function openVault(
 async function openCryptoDirectory(
     viewType: string
 ): Promise<void> {
-    const selected =
-        await vscode.window.showOpenDialog({
-            title: "SATO - Open Crypto Directory",
-            canSelectFiles: false,
-            canSelectFolders: true,
-            canSelectMany: false
-        });
-
+    const selected = await vscode.window.showOpenDialog({title: "SATO - Open Crypto Directory", canSelectFiles: false, canSelectFolders: true, canSelectMany: false});
     const directoryUri = selected?.[0];
 
     if (!directoryUri) {

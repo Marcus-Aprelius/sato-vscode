@@ -1,26 +1,18 @@
 import type { ClientEntry } from "../types";
 
-import { app } from "../state";
 import { vscode } from "../globals";
 import { renderDetails } from "./index";
 import { renderStatus } from "../status";
+import { relativeDateTooltip } from "../dateFormat";
 import { updateMainActionButton } from "../buttons";
 import { createButton, createCopyIconButton } from "../dom";
 import { getPrivateKeyValue, renderPrivateKeyBlock} from "./privateKey";
+import { app, archivePreviewCache, archivePreviewLoading } from "../state";
 import { bitsToBytesTooltip, bytesToKilobytesTooltip } from "../sizeFormat";
 import { DAY_MILLISECONDS, daysUnitLabel, parseDateTimestamp } from "../dateFormat";
+import { countCryptoEmptyValues, emptyValuesButtonText, emptyValuesButtonTitle } from "./emptyValues";
+import { isCryptoContainer, isCryptoContainerUnlocked, isOpenPgpMessage } from "../crypto/containerTypes";
 
-import {
-    isCryptoContainer,
-    isCryptoContainerUnlocked,
-    isOpenPgpMessage
-} from "../crypto/containerTypes";
-
-import {
-    countCryptoEmptyValues,
-    emptyValuesButtonText,
-    emptyValuesButtonTitle
-} from "./emptyValues";
 
 export function renderCryptoDetails(
     container: HTMLElement,
@@ -29,6 +21,12 @@ export function renderCryptoDetails(
     const emptyValuesCount = countCryptoEmptyValues(entry);
 
     renderCryptoDetailsTabs(container, entry);
+
+    if (app.detailsTab === "preview") {
+        renderArchivePreviewTab(container, entry);
+
+        return;
+    }
 
     if (app.detailsTab === "privateKey") {
         renderPrivateKeyTab(container, entry);
@@ -73,11 +71,9 @@ export function renderCryptoDetails(
 
         const containerButton = createButton(
             containerUnlocked ? "btn danger crypto-container-lock-btn" : "btn primary crypto-container-lock-btn",
-            openPgp
-                ? (containerUnlocked ? "Hide Decrypted Content" : "Decrypt Message")
-                : ageFile
-                    ? (containerUnlocked ? "Hide Decrypted Content" : "Decrypt File")
-                    : (containerUnlocked ? "Lock Container" : "Unlock Container")
+            openPgp ? (containerUnlocked ? "Hide Decrypted Content" : "Decrypt Message") : ageFile
+                ? (containerUnlocked ? "Hide Decrypted Content" : "Decrypt File")
+                : (containerUnlocked ? "Lock Container" : "Unlock Container")
         );
 
         containerButton.addEventListener("click", () => {
@@ -142,7 +138,6 @@ function renderCryptoValuesTable(
                 link.textContent = linkText;
                 link.title = "Open the Private Key tab";
                 link.addEventListener("click", () => {openPrivateKeyTab(entry);});
-
                 span.appendChild(link);
 
                 if (remainder) {
@@ -165,8 +160,15 @@ function renderCryptoValuesTable(
             span.title = formatDaysFromNow(text, "ago");
         }
 
-        if (text && (field === "File size" || field === "Container size")) {
+        if (text && (field === "File size" || field === "Container size" || field === "Compressed size" || field === "Uncompressed size")) {
             span.title = bytesToKilobytesTooltip(text);
+        }
+
+        if (text && isDateField(field)) {const tooltip = relativeDateTooltip(text);
+
+            if (tooltip) {
+                span.title = tooltip;
+            }
         }
 
         if (text && (field === "Key size" || field === "Key Size")) {
@@ -223,6 +225,12 @@ function renderCryptoDetailsTabs(
     infoTab.addEventListener("click", () => {app.detailsTab = "info"; renderDetails();});
 
     tabs.appendChild(infoTab);
+
+    if (app.state.vaultFormat === "archive") {
+        const previewTab = createButton(app.detailsTab === "preview" ? "details-tab active" : "details-tab", "Preview");
+        previewTab.addEventListener("click", () => {app.detailsTab = "preview"; renderDetails();});
+        tabs.appendChild(previewTab);
+    }
 
     if (entry.values?.Details) {
         const detailsTab = createButton(app.detailsTab === "details" ? "details-tab active" : "details-tab", "Details");
@@ -437,7 +445,6 @@ function formatBitsAsKilobytes(
     }
 
     const kilobytes = bits / 8 / 1024;
-
     return `${kilobytes.toFixed(2)} KB`;
 }
 
@@ -457,4 +464,87 @@ function openPrivateKeyTab(
     renderDetails();
     renderStatus();
     updateMainActionButton();
+}
+
+function renderArchivePreviewTab(
+    container: HTMLElement,
+    entry: ClientEntry
+): void {
+    const preview = document.createElement("div");
+    preview.className = "archive-preview";
+    const cached = archivePreviewCache.get(entry.id);
+
+    if (cached) {
+        renderArchivePreviewContent(preview, cached);
+        container.appendChild(preview);
+
+        return;
+    }
+
+    const loading = document.createElement("div");
+    loading.className = "empty";
+    loading.textContent = "Loading preview...";
+    preview.appendChild(loading);
+    container.appendChild(preview);
+
+    if (archivePreviewLoading.has(entry.id)) {
+        return;
+    }
+
+    archivePreviewLoading.add(entry.id);
+    vscode.postMessage({type: "previewArchiveEntry", entryId: entry.id});
+}
+
+function renderArchivePreviewContent(
+    container: HTMLElement,
+    preview: {
+        entryId: string;
+        kind: | "text" | "image" | "unsupported" | "error";
+        content?: string;
+        mimeType?: string;
+        message?: string;
+    }
+): void {
+    if (preview.kind === "text" && preview.content !== undefined) {
+        const text = document.createElement("pre");
+        text.className = "archive-preview-text";
+        text.textContent = preview.content;
+        container.appendChild(text);
+
+        return;
+    }
+
+    if (preview.kind === "image" && preview.content && preview.mimeType) {
+        const image = document.createElement("img");
+        image.className = "archive-preview-image";
+        image.alt = "Archive file preview";
+        image.src = `data:${preview.mimeType};base64,` + preview.content;
+        container.appendChild(image);
+
+        return;
+    }
+
+    const message = document.createElement("div");
+    message.className = "empty";
+    message.textContent = preview.message || (preview.kind === "unsupported" ? "Preview is not available for this file type." : "Failed to load the file preview.");
+    container.appendChild(message);
+}
+
+function isDateField(
+    field: string
+): boolean {
+    const normalized = field.trim().toLowerCase();
+
+    return (
+        normalized === "modified" ||
+        normalized === "created" ||
+        normalized === "updated" ||
+        normalized === "expires" ||
+        normalized === "expiration" ||
+        normalized === "valid from" ||
+        normalized === "valid to" ||
+        normalized.endsWith(" date") ||
+        normalized.endsWith(" time") ||
+        normalized.endsWith(" timestamp")
+    );
 }

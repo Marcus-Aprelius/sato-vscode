@@ -1,4 +1,33 @@
-# Change Log
+# 0.3.2
+
+## Changed:
+  * `README.md` file updated
+  * Code refactoring
+  * Refactored shared utilities and removed duplicated code
+  * Improved archive tree navigation and archive status information
+
+## Added:
+  * Added selectable SATO interface themes:
+    * VS Code Theme
+    * Dark
+    * Gray
+    * Light
+  * Added the `View → Theme` submenu
+  * Added persistent theme selection through the `sato.theme` setting
+  * Added theme selection and live preview to `Settings → General`
+  * Added ZIP archive support:
+    * Browse archive folders and files
+    * View file metadata, compression method, sizes, ratio, CRC-32, and encryption status
+    * Extract individual files, folders, or the complete archive
+    * Add and delete files
+    * Create and delete folders
+    * Open password-protected ZIP archives
+    * Change or remove archive passwords
+    * Lock an unlocked archive and clear its password from memory
+    * Create optional `.zip.bak` backups before modifying archives
+  * Added the `sato.createArchiveBackups` setting
+
+---
 
 # 0.3.1
 

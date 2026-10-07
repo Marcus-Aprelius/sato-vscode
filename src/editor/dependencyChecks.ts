@@ -108,3 +108,26 @@ function checkSshKeygen(): boolean {
 
     return false;
 }
+
+export function resolveSevenZipCommand(): string | undefined {
+    const commands = ["7z", "7zz", "7za"];
+
+    return commands.find(command => isCommandAvailable(command));
+}
+
+export function checkSevenZip(): boolean {
+    if (resolveSevenZipCommand()) {
+        return true;
+    }
+
+    const installHint =
+        process.platform === "win32"
+            ? "Install 7-Zip, add 7z.exe to PATH, and restart VS Code."
+            : process.platform === "darwin"
+                ? "Install 7-Zip with: brew install sevenzip"
+                : "Install 7-Zip, for example: sudo apt install p7zip-full";
+
+    vscode.window.showWarningMessage(`SATO: 7-Zip CLI is required to open and extract ` + `password-protected archives. ${installHint}`);
+
+    return false;
+}
