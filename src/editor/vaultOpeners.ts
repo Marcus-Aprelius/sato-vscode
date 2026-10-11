@@ -17,7 +17,7 @@ export async function openOnePifFile(
     try {
         bytes = await vscode.workspace.fs.readFile(document.uri);
 
-        } catch (err) {
+    } catch (err) {
         vscode.window.showErrorMessage(`SATO: failed to read 1PIF file - ${describeError(err)}`);
 
         return false;
@@ -73,6 +73,7 @@ export function clearDocumentState(
     document.db = undefined;
     document.credentials = undefined;
     document.psafe = undefined;
+    document.archive = undefined;
     document.certificate = undefined;
     document.importedVault = undefined;
 }

@@ -30,5 +30,6 @@ export const CRYPTO_FILE_EXTENSIONS = [
     "sig"
 ] as const;
 
+export const ARCHIVE_FILE_EXTENSIONS = ["zip"] as const;
 export const SSH_PRIVATE_KEY_FILE_NAMES = ["id_rsa", "id_ecdsa", "id_ed25519"] as const;
-export const SUPPORTED_VAULT_EXTENSIONS = [...PASSWORD_VAULT_EXTENSIONS, ...CRYPTO_FILE_EXTENSIONS] as const;
+export const SUPPORTED_VAULT_EXTENSIONS = [...PASSWORD_VAULT_EXTENSIONS, ...CRYPTO_FILE_EXTENSIONS, ...ARCHIVE_FILE_EXTENSIONS] as const;

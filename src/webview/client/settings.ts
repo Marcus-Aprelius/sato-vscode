@@ -1,7 +1,10 @@
 import { byId } from "./dom";
 import { app } from "./state";
 import { vscode } from "./globals";
+import { applyTheme } from "./theme";
 import { openModal, closeModal } from "./modals";
+
+let themeBeforeSettings = app.settings.theme || "vscode";
 
 export function openSettingsModal(): void {
     byId<HTMLInputElement>("s-autolock").value = String(app.settings.autoLockTimeout || 0);
@@ -10,13 +13,17 @@ export function openSettingsModal(): void {
     byId<HTMLInputElement>("s-confirmdel").checked = !!app.settings.confirmBeforeDelete;
     byId<HTMLInputElement>("s-showpw").checked = !!app.settings.showPasswordsByDefault;
     byId<HTMLInputElement>("s-showempty").checked = !!app.settings.showEmptyValuesByDefault;
+    byId<HTMLInputElement>("s-archive-backups").checked = app.settings.createArchiveBackups === true;
+
+    themeBeforeSettings = app.settings.theme || "vscode";
+    byId<HTMLSelectElement>("s-theme").value = app.settings.theme || "vscode";
 
     setSettingsTab("general");
     openModal("settings-modal");
 }
 
 export function bindSettingsActions(): void {
-    byId("s-cancel").addEventListener("click", closeModal);
+    byId("s-cancel").addEventListener("click", () => {applyTheme(themeBeforeSettings); closeModal();});
     byId("settings-header-close").addEventListener("click", closeModal);
 
     byId("s-save").addEventListener("click", () => {
@@ -27,7 +34,9 @@ export function bindSettingsActions(): void {
             confirmBeforeDelete: byId<HTMLInputElement>("s-confirmdel").checked,
             showPasswordsByDefault: byId<HTMLInputElement>("s-showpw").checked,
             showEmptyValuesByDefault: byId<HTMLInputElement>("s-showempty").checked,
-            showStatusBar: app.settings.showStatusBar !== false
+            showStatusBar: app.settings.showStatusBar !== false,
+            createArchiveBackups: byId<HTMLInputElement>("s-archive-backups").checked,
+            theme: byId<HTMLSelectElement>("s-theme").value as | "vscode" | "dark" | "gray" | "light"
         };
 
         vscode.postMessage({type: "updateSettings", settings: next });
@@ -37,6 +46,14 @@ export function bindSettingsActions(): void {
 
     byId("settings-tab-general").addEventListener("click", () => {setSettingsTab("general");});
     byId("settings-tab-password-generator").addEventListener("click",() => {setSettingsTab("passwordGenerator");});
+
+    byId<HTMLSelectElement>("s-theme").addEventListener(
+        "change",
+        (event) => {
+            const select = event.target as HTMLSelectElement;
+            applyTheme(select.value as | "vscode" | "dark" | "gray" | "light");
+        }
+    );
 }
 
 type SettingsTab = | "general" | "passwordGenerator";

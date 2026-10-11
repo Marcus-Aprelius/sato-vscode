@@ -48,6 +48,18 @@ body.resizing * {cursor: col-resize !important; user-select: none !important;}
 .entry-row:hover {background: var(--vscode-list-hoverBackground);}
 .entry-row.active {background: var(--vscode-list-activeSelectionBackground);color: var(--vscode-list-activeSelectionForeground);}
 
+.archive-tree-children {position: relative;}
+
+.archive-tree-children::before {
+    content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 1px;
+    background: var(--vscode-tree-inactiveIndentGuidesStroke, var(--vscode-panel-border));
+    opacity: 0.45; pointer-events: none;
+}
+
+.archive-tree-children:hover::before {opacity: 0.75;}
+.archive-tree-children > .entry-row,
+.archive-tree-children > .archive-tree-group {position: relative;}
+
 .entry-title {flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
 .entry-sub {color: var(--vscode-descriptionForeground); font-size: 0.85em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
 

@@ -1,10 +1,5 @@
-import type { Settings } from "../render";
-
-import type {
-    EntryView,
-    GroupView,
-    VaultStats
-} from "../../vault";
+import type { ArchiveListItem, Settings } from "../render";
+import type { EntryView, GroupView, VaultStats } from "../../vault";
 
 export interface ClientInitialState {
     tree: GroupView;
@@ -13,6 +8,17 @@ export interface ClientInitialState {
     selectedEntryId?: string | null;
     readOnlyVault?: boolean;
     vaultFormat?: string;
+
+    archives?: ArchiveListItem[];
+    selectedArchivePath?: string;
+}
+
+export interface ArchivePreviewMessage {
+    entryId: string;
+    kind: | "text" | "image" | "unsupported" | "error";
+    content?: string;
+    mimeType?: string;
+    message?: string;
 }
 
 export interface VsCodeApi {
@@ -30,8 +36,21 @@ export type MenuItem =
           iconTone?: "locked" | "unlocked";
           disabled?: boolean;
           action: () => void;
+          children?: never;
       }
-    | { sep: true;};
+    | {
+          label: string;
+          title?: string;
+          icon?: string;
+          iconPosition?: "left" | "right";
+          iconTone?: "locked" | "unlocked";
+          disabled?: boolean;
+          children: MenuItem[];
+          action?: never;
+      }
+    | {
+          sep: true;
+      };
 
 export interface EntryFormFields {
     title: string;

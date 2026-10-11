@@ -40,8 +40,28 @@ export const CONTEXT_MENU_STYLES = `
     color: var(--vscode-disabledForeground, var(--vscode-descriptionForeground));
 }
 
-.ctx-item.disabled:hover {
-    background: transparent;
-    color: var(--vscode-disabledForeground, var(--vscode-descriptionForeground));
+.ctx-item.disabled:hover {background: transparent; color: var(--vscode-disabledForeground, var(--vscode-descriptionForeground));}
+
+.ctx-item-parent {position: relative;}
+
+.ctx-submenu {
+    position: absolute;
+    display: none;
+    left: 100%;
+    top: -5px;
+    min-width: 180px;
+    padding: 4px 0;
+    background: var(--vscode-menu-background, var(--vscode-editor-background));
+    color: var(--vscode-menu-foreground, var(--vscode-foreground));
+    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    border-radius: 3px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1001;
 }
+
+.ctx-item-parent:hover > .ctx-submenu {display: block;}
+.ctx-submenu.open {display: block;}
+.ctx-submenu.open-left {right: 100%; left: auto;}
+.ctx-submenu .ctx-item {color: var(--vscode-menu-foreground, var(--vscode-foreground));}
+
 `;

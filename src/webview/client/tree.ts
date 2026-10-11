@@ -6,13 +6,7 @@ import { renderDetails } from "./details";
 import { renderEntries } from "./entries";
 import { updateMainActionButton } from "./buttons";
 import { openGroupMenu, showMenu} from "./contextMenu";
-
-import { 
-    app,
-    groupIndex,
-    resetCryptoUiState,
-    isCryptoFileView
-} from "./state";
+import { app, groupIndex, resetCryptoUiState, isCryptoFileView } from "./state";
 
 import type { EntryView, GroupView} from "../../vault";
 
@@ -20,12 +14,10 @@ export function renderTree(): void {
 
     const treeElement = byId<HTMLElement>("tree");
     const titleElement = byId<HTMLElement>("groups-title");
-
     treeElement.innerHTML = "";
 
     if (isCryptoFileView()) {
         const fileCount = app.state.tree.groups.length;
-
         titleElement.textContent = `Crypto Files (${fileCount})`;
 
         for (const group of app.state.tree.groups) {
@@ -35,8 +27,89 @@ export function renderTree(): void {
         return;
     }
 
+    if (app.state.vaultFormat === "archive") {
+        renderArchiveList(treeElement, titleElement);
+
+        return;
+    }
+
     titleElement.textContent = "Groups";
     treeElement.appendChild(renderGroupNode(app.state.tree, 0));
+}
+
+function renderArchiveList(
+    treeElement: HTMLElement,
+    titleElement: HTMLElement
+): void {
+    const archives = app.state.archives || [];
+    titleElement.textContent = `Archives (${archives.length})`;
+
+    if (archives.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "No supported archives found.";
+
+        treeElement.appendChild(empty);
+
+        return;
+    }
+
+    for (const archive of archives) {
+        treeElement.appendChild(renderArchiveListItem(archive));
+    }
+}
+
+function renderArchiveListItem(
+    archive: NonNullable<typeof app.state.archives>[number]
+): HTMLElement {
+    const row = document.createElement("div");
+    const selected = archive.filePath === app.state.selectedArchivePath;
+
+    row.className = "group-node archive-list-item" + (selected ? " active" : "");
+    row.dataset.archivePath = archive.filePath;
+    row.style.paddingLeft = "6px";
+
+    const icon = document.createElement("span");
+    icon.className = "codicon " + ( archive.encrypted ? "codicon-lock" : "codicon-file-zip" );
+    icon.style.marginRight = "6px";
+    icon.style.flex = "0 0 auto";
+
+    const label = document.createElement("span");
+    label.className = "group-label";
+    label.textContent = archive.fileName;
+    label.title = archive.filePath;
+
+    const count = document.createElement("span");
+    count.className = "group-count";
+    count.textContent = String(archive.entryCount);
+
+    row.appendChild(icon);
+    row.appendChild(label);
+    row.appendChild(count);
+
+    row.addEventListener("click", event => { event.stopPropagation();
+
+        if (selected) {
+            return;
+        }
+
+        vscode.postMessage({type: "selectArchive", filePath: archive.filePath});
+    });
+
+    row.addEventListener("contextmenu", event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!selected) {
+            vscode.postMessage({type: "selectArchive", filePath: archive.filePath});
+
+            return;
+        }
+
+        openGroupMenu(event.clientX, event.clientY, "archive-root");
+    });
+
+    return row;
 }
 
 function renderGroupNode(group: GroupView, depth: number): HTMLElement {

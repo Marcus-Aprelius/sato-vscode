@@ -1,11 +1,19 @@
-import { byId, createCopyIconButton } from "./dom";
 import { vscode } from "./globals";
+import { applyTheme } from "./theme";
 import { renderAll } from "./render";
 import { renderStatus } from "./status";
-import { app, setClientState } from "./state";
+import { byId, createCopyIconButton } from "./dom";
 import { bitsToBytesTooltip, bytesToKilobytesTooltip } from "./sizeFormat";
 import { DAY_MILLISECONDS, daysUnitLabel, parseDateTimestamp } from "./dateFormat";
 import { clearAllPrivateKeyValues, renderDetails, setPrivateKeyValue } from "./details";
+
+import {
+    app,
+    archivePreviewCache,
+    archivePreviewLoading,
+    resetCryptoUiState,
+    setClientState
+} from "./state";
 
 import type { ClientInitialState } from "./types";
 
@@ -15,22 +23,21 @@ import {
     openUnlockModal,
     closeUnlockModal,
     openCryptoConverter,
+    showArchiveUnlockError,
+    openArchiveUnlockModal,
+    closeArchiveUnlockModal,
     setOpenPgpPrivateKeyPath,
     openCryptoContainerUnlockModal,
     showCryptoContainerUnlockError,
-    closeCryptoContainerUnlockModal
+    closeCryptoContainerUnlockModal,
+    closeArchivePasswordModal,
+    openArchivePasswordModal,
+    showArchivePasswordError
 } from "./modals";
 
-import {
-    setLockButtonState,
-    updateToolbarForMode,
-    updateMainActionButton
-} from "./buttons";
+import { setLockButtonState, updateToolbarForMode, updateMainActionButton } from "./buttons";
 
-interface InboundMessage {
-    type: string;
-    [key: string]: unknown;
-}
+interface InboundMessage { type: string; [key: string]: unknown;}
 
 export function bindInboundMessages(): void {
     window.addEventListener("message", (event) => {
@@ -155,6 +162,8 @@ export function bindInboundMessages(): void {
             app.showEmptyValues = app.settings.showEmptyValuesByDefault;
             app.showVaultEmptyValues = app.settings.showEmptyValuesByDefault;
 
+            applyTheme(app.settings.theme || "vscode");
+
             if (app.selectedEntryId) {
                 renderDetails();
             }
@@ -214,7 +223,73 @@ export function bindInboundMessages(): void {
             return;
         }
 
+        if (msg.type === "openArchiveUnlock") {
+            openArchiveUnlockModal();
+
+            return;
+        }
+
+        if (msg.type === "archiveUnlockFailed") {
+            showArchiveUnlockError(typeof msg.message === "string" ? msg.message : "Wrong password or unsupported encrypted archive.");
+
+            return;
+        }
+
+        if (msg.type === "archiveUnlocked") {
+            app.archiveUnlocked = true;
+            closeArchiveUnlockModal();
+
+            return;
+        }
+
+        if (msg.type === "archiveLocked") {
+            app.archiveUnlocked = false;
+            return;
+        }
+
+        if (msg.type === "openArchivePasswordChange") {
+            openArchivePasswordModal();
+
+            return;
+        }
+
+        if (msg.type === "archivePasswordChangeFailed") {
+            showArchivePasswordError(typeof msg.message === "string" ? msg.message : "Failed to change the archive password.");
+
+            return;
+        }
+
+        if (msg.type === "archivePasswordChanged") {
+            app.archiveUnlocked = true;
+            closeArchivePasswordModal();
+
+            return;
+        }
+
+        if (msg.type === "archivePreview") {
+            if (typeof msg.entryId !== "string" || typeof msg.kind !== "string") {
+                return;
+            }
+
+            archivePreviewLoading.delete(msg.entryId);
+
+            archivePreviewCache.set(msg.entryId, {
+                entryId: msg.entryId,
+                kind: msg.kind as | "text" | "image" | "unsupported" | "error",
+                content: typeof msg.content === "string" ? msg.content : undefined,
+                mimeType: typeof msg.mimeType === "string" ? msg.mimeType : undefined,
+                message: typeof msg.message === "string" ? msg.message : undefined
+            });
+
+            if (app.selectedEntryId === msg.entryId && app.detailsTab === "preview") {
+                renderDetails();
+            }
+
+            return;
+        }
+
         if (msg.type === "dbInfo") {
+            console.log("SATO dbInfo received:", msg.info);
             renderDbInfo(msg.info as Record<string, unknown>);
         }
     });
@@ -399,10 +474,7 @@ function appendInfoRow(
             return;
         }
 
-        vscode.postMessage({
-            type: "copyText",
-            text: value
-        });
+        vscode.postMessage({type: "copyText", text: value});
     });
 
     wrap.appendChild(span);

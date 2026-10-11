@@ -1,4 +1,5 @@
 import { vscode } from "../globals";
+import { applyTheme } from "../theme";
 import { renderStatus } from "../status";
 import { renderDetails } from "../details";
 import { openDropdown } from "../contextMenu";
@@ -7,6 +8,7 @@ import { updateMainActionButton } from "../buttons";
 import { countCryptoEmptyValues, countVaultEmptyValues } from "../details/emptyValues";
 
 import type { MenuItem } from "../types";
+import type { AppTheme } from "../../render/types";
 
 export function openViewMenu(button: HTMLElement): void {
     
@@ -39,6 +41,29 @@ export function openViewMenu(button: HTMLElement): void {
             }
         },
 
+        {
+            label: "Theme",
+            title: "Select the SATO color theme",
+            children: [
+                {
+                    label: app.settings.theme === "vscode" ? "✓ VS Code Theme" : "VS Code Theme",
+                    action: () => {selectTheme("vscode");}
+                },
+                {
+                    label: app.settings.theme === "dark" ? "✓ Dark" : "Dark",
+                    action: () => {selectTheme("dark");}
+                },
+                {
+                    label: app.settings.theme === "gray" ? "✓ Gray" : "Gray",
+                    action: () => {selectTheme("gray");}
+                },
+                {
+                    label: app.settings.theme === "light" ? "✓ Light" : "Light",
+                    action: () => {selectTheme("light");}
+                }
+            ]
+        },
+
         { sep: true },
 
         {
@@ -57,4 +82,15 @@ export function openViewMenu(button: HTMLElement): void {
     ];
 
     openDropdown(button, items);
+}
+
+function selectTheme(
+    theme: AppTheme
+): void {
+    const next = {...app.settings, theme};
+
+    app.settings = next;
+    applyTheme(theme);
+
+    vscode.postMessage({type: "updateSettings", settings: next});
 }

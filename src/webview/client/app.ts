@@ -1,6 +1,7 @@
-import { reindex } from "./state";
 import { renderAll } from "./render";
+import { applyTheme } from "./theme";
 import { bindSearch } from "./search";
+import { app, reindex } from "./state";
 import { bindModalActions } from "./modals";
 import { setupColumnResize } from "./resize";
 import { bindToolbarActions } from "./toolbar";
@@ -11,9 +12,11 @@ import { bindDocumentEvents } from "./documentEvents";
 import { setupGroupsPaneContextMenu } from "./contextMenu";
 import { updateMainActionButton, updateToolbarForMode } from "./buttons";
 
-export function initializeClient(): void {
-    reindex();
 
+export function initializeClient(): void {
+    applyTheme(app.settings.theme || "vscode");
+
+    reindex();
     setupColumnResize();
     setupGroupsPaneContextMenu();
 

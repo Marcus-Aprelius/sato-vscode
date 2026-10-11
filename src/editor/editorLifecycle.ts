@@ -1,30 +1,16 @@
 import * as vscode from "vscode";
-import { isOnePifUri } from "./uriTypes";
 import { clearDocumentState } from "./vaultOpeners";
+import { isArchiveUri, isOnePifUri } from "./uriTypes";
 import { isCertificateLikeUri } from "../certificates";
 
 import type { ActiveEditor, VaultDocument } from "../types";
 
 export interface EditorLifecycleRuntime {
-    clearAutoLock: (
-        editor: ActiveEditor
-    ) => void;
-
-    openCertificateFile: (
-        document: VaultDocument,
-        panel: vscode.WebviewPanel
-    ) => Promise<void>;
-
-    openOnePifFile: (
-        document: VaultDocument,
-        panel: vscode.WebviewPanel
-    ) => Promise<void>;
-
-    renderLockedShell: (
-        document: VaultDocument,
-        panel: vscode.WebviewPanel,
-        openUnlockModal: boolean
-    ) => void;
+    clearAutoLock: (editor: ActiveEditor) => void;
+    openArchiveFile: (document: VaultDocument, panel: vscode.WebviewPanel) => Promise<void>;
+    openCertificateFile: (document: VaultDocument, panel: vscode.WebviewPanel) => Promise<void>;
+    openOnePifFile: (document: VaultDocument, panel: vscode.WebviewPanel) => Promise<void>;
+    renderLockedShell: (document: VaultDocument, panel: vscode.WebviewPanel, openUnlockModal: boolean) => void;
 }
 
 export function configureEditorLifecycle(
@@ -33,21 +19,9 @@ export function configureEditorLifecycle(
 ): void {
     const {document, panel} = editor;
 
-    editor.unlock = async () => {
-        await openDocument(document, panel, runtime);
-    };
-
-    editor.lock = () => {
-        runtime.clearAutoLock(editor);
-        clearDocumentState(document);
-        panel.webview.postMessage({type: "vaultLocked"});
-    };
-
-    editor.reload = async () => {
-        runtime.clearAutoLock(editor);
-        clearDocumentState(document);
-        await openDocument(document, panel, runtime);
-    };
+    editor.unlock = async () => {await openDocument(document, panel, runtime);};
+    editor.lock = () => {runtime.clearAutoLock(editor); clearDocumentState(document); panel.webview.postMessage({type: "vaultLocked"});};
+    editor.reload = async () => {runtime.clearAutoLock(editor); clearDocumentState(document); await openDocument(document, panel, runtime);};
 }
 
 async function openDocument(
@@ -55,6 +29,12 @@ async function openDocument(
     panel: vscode.WebviewPanel,
     runtime: EditorLifecycleRuntime
 ): Promise<void> {
+    if (isArchiveUri(document.uri)) {
+        await runtime.openArchiveFile(document, panel);
+
+        return;
+    }
+
     if (isCertificateLikeUri(document.uri)) {
         await runtime.openCertificateFile(document, panel);
 

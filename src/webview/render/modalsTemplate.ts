@@ -68,6 +68,67 @@ export function renderModals(
         </div>
     </div>
 
+    <div class="modal" id="archive-unlock-modal" style="width:420px;">
+        <div class="modal-title">Unlock Archive</div>
+
+        <div class="modal-body">
+
+            <label>Archive password
+                <div class="unlock-password-field">
+                    <input type="password" id="archive-unlock-password" autocomplete="new-password"/>
+                    <span id="archive-unlock-layout" class="keyboard-layout-indicator">ENG</span>
+                </div>
+            </label>
+
+            <div class="empty" id="archive-unlock-error" style="display:none;"></div>
+        </div>
+
+        <div class="modal-footer unlock-modal-footer">
+            <div id="archive-unlock-capslock-warning" class="capslock-warning" style="display:none;">Caps Lock is ON</div>
+
+            <div class="unlock-modal-actions">
+                <button type="button" class="btn" id="archive-unlock-cancel">Cancel</button>
+                <button type="button" class="btn primary" id="archive-unlock-ok">Unlock</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal" id="archive-password-modal" style="width:420px;">
+        <div class="modal-title">Change Archive Password</div>
+
+        <div class="modal-body">
+            <label>New password
+
+                <div class="unlock-password-field">
+                    <input type="password" id="archive-new-password" autocomplete="new-password"/>
+                    <span id="archive-new-password-layout" class="keyboard-layout-indicator">ENG</span>
+                </div>
+
+            </label>
+
+            <label>Confirm new password
+
+                <div class="unlock-password-field">
+                    <input type="password" id="archive-confirm-password" autocomplete="new-password"/>
+                    <span id="archive-confirm-password-layout" class="keyboard-layout-indicator">ENG</span>
+                </div>
+
+            </label>
+
+            <div class="empty" id="archive-password-error" style="display:none;"></div>
+        </div>
+
+        <div class="modal-footer unlock-modal-footer">
+            <div id="archive-password-capslock-warning" class="capslock-warning" style="display:none;">Caps Lock is ON</div>
+            <div class="unlock-modal-actions">
+                <button type="button" class="btn" id="archive-password-cancel">Cancel</button>
+                <button type="button" class="btn primary" id="archive-password-save">Change Password</button>
+            </div>
+        </div>
+
+    </div>
+
     <div class="modal" id="entry-modal">
         <div class="modal-title" id="entry-modal-title">New Entry</div>
         <div class="modal-body">
@@ -151,9 +212,21 @@ export function renderModals(
                 <input type="number" id="s-clipclear" min="0" max="600" step="5"/>
             </label>
 
+            <label class="settings-number-row"><span>Theme</span>
+                <select id="s-theme">
+                    <option value="vscode">VS Code Theme</option>
+                    <option value="dark">Dark</option>
+                    <option value="gray">Gray</option>
+                    <option value="light">Light</option>
+                </select>
+            </label>
+
+            <div class="settings-section-separator" aria-hidden="true"></div>
+
             <label class="checkbox"><input type="checkbox" id="s-confirmdel">Confirm before delete</label>
             <label class="checkbox"><input type="checkbox" id="s-showpw">Show passwords by default</label>
             <label class="checkbox"><input type="checkbox" id="s-showempty">Show empty values by default</label>
+            <label class="checkbox"><input type="checkbox" id="s-archive-backups">Create archive backups</label>
 
         </div>
 
@@ -233,6 +306,11 @@ export function renderModals(
                 <div class="about-supports-row">
                     <strong>Vaults:</strong>
                     <span>.kdbx .psafe3 .ibak .1pif .bcup</span>
+                </div>
+
+                <div class="about-supports-row">
+                    <strong>Archives:</strong>
+                    <span>.zip</span>
                 </div>
 
                 <div class="about-supports-row">

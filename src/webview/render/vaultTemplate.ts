@@ -1,15 +1,10 @@
 import { STYLES } from "../styles";
 import { renderModals } from "./modalsTemplate";
+import { escapeHtml, nonce, safeScriptJson } from "./htmlUtils";
 
 import type * as vscode from "vscode";
-import type { Settings } from "./types";
+import type { ArchiveListItem, Settings } from "./types";
 import type { GroupView, VaultStats } from "../../vault";
-
-import {
-    escapeHtml,
-    nonce,
-    safeScriptJson
-} from "./htmlUtils";
 
 export function renderVault(
     webview: vscode.Webview,
@@ -25,7 +20,9 @@ export function renderVault(
     gitCommit = "",
     selectedEntryId: string | null = null,
     readOnlyVault = false,
-    vaultFormat = ""
+    vaultFormat = "",
+    archives: ArchiveListItem[] = [],
+    selectedArchivePath = ""
 ): string {
     const value = nonce();
     const name = uri.path.split("/").pop() ?? "vault.kdbx";
@@ -33,7 +30,7 @@ export function renderVault(
     const toolbarLogoSrc = webview.asWebviewUri(toolbarLogoUri).toString();
     const codiconsCssSrc = webview.asWebviewUri(codiconsCssUri).toString();
     const webviewClientSrc = webview.asWebviewUri(webviewClientUri).toString();
-    const initialState = safeScriptJson(JSON.stringify({tree: root, stats, settings, selectedEntryId, readOnlyVault, vaultFormat}));
+    const initialState = safeScriptJson(JSON.stringify({tree: root, stats, settings, selectedEntryId, readOnlyVault, vaultFormat, archives, selectedArchivePath}));
     const versionLabel = gitCommit ? `${appVersion} [${gitCommit}]` : appVersion;
 
     return `<!DOCTYPE html>
@@ -77,6 +74,7 @@ export function renderVault(
                 <span class="codicon codicon-search search-icon" aria-hidden="true"></span>
                 <input id="search" type="search" placeholder="Search title, username, URL, notes..."/>
             </div>
+
         </header>
 
         <main class="layout" id="layout">

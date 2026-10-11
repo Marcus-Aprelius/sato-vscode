@@ -1,12 +1,7 @@
 import { showMenu } from "./menu";
 import { vscode } from "../globals";
 import { openEntryModal } from "../modals";
-
-import {
-    app,
-    entryIndex,
-    isReadOnlyVault
-} from "../state";
+import { app, entryIndex, isReadOnlyVault, parentGroupOf } from "../state";
 
 import type { MenuItem } from "../types";
 
@@ -22,21 +17,29 @@ export function openEntryMenu(
     const entry = entryIndex.get(entryId);
 
     if (entry && entry.readOnly) {
+        if (app.state.vaultFormat === "archive") {
+            const parentGroupId = parentGroupOf.get(entryId) || "archive-root";
+
+            showMenu(x, y, [
+                { label: "Extract File to...", action: () => {vscode.postMessage({type: "extractArchiveEntry", entryId});}},
+                { label: "Extract all to...", action: () => {vscode.postMessage({type: "extractArchiveAll"});} },
+                { sep: true },
+                { label: "Add File...", action: () => {vscode.postMessage({type: "addArchiveFile", groupId: parentGroupId});}},
+                { label: "Delete File...", action: () => {vscode.postMessage({type: "deleteArchiveEntry", entryId});} }
+            ]
+            );
+
+            return;
+        }
+
         const items: MenuItem[] = [];
 
         if (entry.values?.Summary) {
-            items.push({
-                label: "Copy Summary",
-                action: () => {vscode.postMessage({type: "copyText", text: entry.values?.Summary || ""});}
-            });
+            items.push({label: "Copy Summary", action: () => {vscode.postMessage({type: "copyText", text: entry.values?.Summary || ""});}});
         }
 
         if (entry.values?.["File path"]) {
-            items.push({
-                label: "Copy File Path",
-                action: () => {vscode.postMessage({type: "copyText", text: entry.values?.["File path"] || ""});
-                }
-            });
+            items.push({label: "Copy File Path", action: () => {vscode.postMessage({type: "copyText", text: entry.values?.["File path"] || ""});}});
         }
 
         if (items.length > 0) {
@@ -47,61 +50,39 @@ export function openEntryMenu(
     }
 
     if (entry && isReadOnlyVault()) {
-        showMenu(x, y,
-            [
-                {
-                    label: "Copy Username",
-                    disabled: !entry.username,
-                    action: () => {vscode.postMessage({type: "copySecret", entryId, field: "UserName"});}
-                },
-                {
-                    label: "Copy Password",
-                    disabled: !entry.hasPassword,
-                    action: () => { vscode.postMessage({type: "copySecret", entryId, field: "Password"});}
-                },
-                {
-                    label: "Copy URL",
-                    disabled: !entry.url,
-                    action: () => {vscode.postMessage({type: "copySecret", entryId, field: "URL"});}
-                },
-                {
-                    label: "Copy Notes",
-                    disabled: !entry.notes,
-                    action: () => {vscode.postMessage({type: "copySecret", entryId, field: "Notes"});}
-                }
-            ]
-        );
-
-        return;
-    }
-
-    showMenu(x, y,
-        [
+        showMenu(x, y, [
             {
                 label: "Copy Username",
+                disabled: !entry.username,
                 action: () => {vscode.postMessage({type: "copySecret", entryId, field: "UserName"});}
             },
             {
                 label: "Copy Password",
-                action: () => {vscode.postMessage({type: "copySecret", entryId, field: "Password"});}
+                disabled: !entry.hasPassword,
+                action: () => { vscode.postMessage({type: "copySecret", entryId, field: "Password"});}
             },
             {
                 label: "Copy URL",
+                disabled: !entry.url,
                 action: () => {vscode.postMessage({type: "copySecret", entryId, field: "URL"});}
             },
-            { sep: true },
             {
-                label: "Edit Entry",
-                action: () => {openEntryModal(entryId);}
-            },
-            {
-                label: "Duplicate Entry",
-                action: () => {vscode.postMessage({type: "duplicateEntry", entryId});}
-            },
-            {
-                label: "Delete Entry",
-                action: () => {vscode.postMessage({type: "deleteEntry", entryId});}
+                label: "Copy Notes",
+                disabled: !entry.notes,
+                action: () => {vscode.postMessage({type: "copySecret", entryId, field: "Notes"});}
             }
-        ]
-    );
+        ]);
+
+        return;
+    }
+
+    showMenu(x, y, [
+        { label: "Copy Username", action: () => {vscode.postMessage({type: "copySecret", entryId, field: "UserName"});} },
+        { label: "Copy Password", action: () => {vscode.postMessage({type: "copySecret", entryId, field: "Password"});} },
+        { label: "Copy URL", action: () => {vscode.postMessage({type: "copySecret", entryId, field: "URL"});} },
+        { sep: true },
+        { label: "Edit Entry", action: () => {openEntryModal(entryId);} },
+        { label: "Duplicate Entry", action: () => {vscode.postMessage({type: "duplicateEntry", entryId});} },
+        { label: "Delete Entry", action: () => {vscode.postMessage({type: "deleteEntry", entryId});} }
+    ]);
 }

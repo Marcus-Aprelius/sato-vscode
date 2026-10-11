@@ -42,6 +42,7 @@ export async function openCertificateFile(
     document.db = undefined;
     document.credentials = undefined;
     document.psafe = undefined;
+    document.archive = undefined;
     document.importedVault = undefined;
     document.certificate = buildCertificateDirectoryVault(selectedFiles, document.uri);
 

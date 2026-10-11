@@ -52,7 +52,7 @@ export const ABOUT_STYLES = `
     border-bottom-color: var(--vscode-focusBorder);
 }
 
-.about-modal {width: 480px; height: 400px; max-height: 90vh;}
+.about-modal {width: 480px; height: 425px; max-height: 90vh;}
 .about-modal > .modal-body {flex: 1;}
 
 .about-version {display: flex; align-items: center; justify-content: center; gap: 8px;}

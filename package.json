@@ -3,7 +3,7 @@
   "displayName": "SATO Secrets",
   "description": "Browse password vaults and crypto files directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
@@ -31,6 +31,11 @@
     "secrets",
     "password-manager",
     "vault",
+    "archive",
+    "zip",
+    "zip-archive",
+    "password-protected-zip",
+    "archive-manager",
     "certificate",
     "crt",
     "crypto",
@@ -57,14 +62,11 @@
     "ppk",
     "age",
     "pki",
-    "ssh-key",
     "jks",
     "jceks",
     "gpg",
     "pgp",
-    "ssh",
-    "id-rsa",
-    "certificates"
+    "ssh"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -177,6 +179,12 @@
           },
           {
             "filenamePattern": "**/id_ed25519"
+          },
+          {
+            "filenamePattern": "*.zip"
+          },
+          {
+            "filenamePattern": "*.zip.bak"
           }
         ],
         "priority": "default"
@@ -228,6 +236,11 @@
           "default": true,
           "description": "Ask for confirmation before deleting entries or folders."
         },
+        "sato.createArchiveBackups": {
+            "type": "boolean",
+            "default": false,
+            "description": "Create a .zip.bak backup before modifying a ZIP archive."
+        },
         "sato.showPasswordsByDefault": {
           "type": "boolean",
           "default": false,
@@ -242,6 +255,23 @@
           "type": "boolean",
           "default": true,
           "description": "Show the vault statistics bar at the bottom of the editor."
+        },
+        "sato.theme": {
+          "type": "string",
+          "default": "vscode",
+          "enum": [
+            "vscode",
+            "dark",
+            "gray",
+            "light"
+          ],
+          "enumDescriptions": [
+            "Use colors from the current VS Code theme",
+            "Use the SATO dark theme",
+            "Use the SATO gray theme",
+            "Use the SATO light theme"
+          ],
+          "description": "Controls the color theme used by SATO."
         }
       }
     }
@@ -257,6 +287,7 @@
   "devDependencies": {
     "@types/node": "^22.20.3",
     "@types/vscode": "^1.100.0",
+    "@types/yauzl": "^3.4.0",
     "@vscode/vsce": "^4.0.0",
     "concurrently": "^10.0.5",
     "esbuild": "^0.28.2",
@@ -264,11 +295,13 @@
   },
   "dependencies": {
     "@vscode/codicons": "^0.0.46-24",
+    "@zip.js/zip.js": "^2.23.0",
     "buttercup": "^7.7.1",
     "hash-wasm": "^4.12.0",
     "kdbxweb": "^2.1.1",
     "node-fetch": "^3.3.2",
-    "password-safe": "^0.0.3"
+    "password-safe": "^0.0.3",
+    "yauzl": "^3.4.0"
   },
   "overrides": {
     "@xmldom/xmldom": "0.8.14",
