@@ -1,9 +1,11 @@
 import type * as vscode from "vscode";
 import type { GroupView, VaultStats } from "../vault";
+import type { SupportedDirectoryFile } from "../archives";
 
 export interface CertificateVault {
     tree: GroupView;
     stats: VaultStats;
+    supportedFiles: SupportedDirectoryFile[];
     privateKeyPem?: string;
     privateKeysByEntryId?: Record<string, string>;
     filesByEntryId?: Record<string, CryptoFileInput>;

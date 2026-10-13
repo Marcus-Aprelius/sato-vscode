@@ -21,3 +21,4 @@ tests/*
 .DS_Store
 
 src/buildInfo.ts
+/dist-bundle/

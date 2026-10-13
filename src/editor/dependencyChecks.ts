@@ -1,17 +1,64 @@
 import * as vscode from "vscode";
+
 import { isCommandAvailable } from "../certificates/cli";
-import { SSH_PRIVATE_KEY_FILE_NAMES } from "../fileFormats";
+import { isSshPrivateKeyFilePath } from "../certificates/fileTypes";
+
+export function resolveUneggCommand(): string | undefined {
+    return isCommandAvailable("unegg") ? "unegg" : undefined;
+}
+
+export function checkUnegg(): boolean {
+    if (resolveUneggCommand()) {
+        return true;
+    }
+
+    void vscode.window.showWarningMessage("SATO: unegg CLI is required to open ALZ and EGG archives. Install unegg, add it to PATH, and restart VS Code.");
+    return false;
+}
+
+export function resolveAgeCommand(): string | undefined {
+    return isCommandAvailable("age") ? "age" : undefined;
+}
+
+export function checkAge(): boolean {
+    if (resolveAgeCommand()) {
+        return true;
+    }
+
+    const installHint = process.platform === "win32" ? "Install age, add age.exe to PATH, and restart VS Code." : process.platform === "darwin"
+        ? "Install age with: brew install age" : "Install age using your system package manager, for example: sudo apt install age";
+
+    vscode.window.showWarningMessage(`SATO: age CLI is required to decrypt age files. ${installHint}`);
+    return false;
+}
+
+export function resolveCryptsetupCommand():
+    string | undefined {
+    return isCommandAvailable("cryptsetup") ? "cryptsetup" : undefined;
+}
+
+export function checkCryptsetup(): boolean {
+    if (resolveCryptsetupCommand()) {
+        return true;
+    }
+
+    vscode.window.showWarningMessage( "SATO: cryptsetup is required to inspect " + "and verify LUKS container passwords. " + "Install cryptsetup and restart VS Code.");
+    return false;
+}
 
 export function prepareCryptoUnlock(
     filePath: string
 ): boolean {
-    const normalizedPath = filePath.toLowerCase();
+    const normalizedPath = normalizeBackupFilePath(filePath);
 
+    if (normalizedPath.endsWith(".hc") || normalizedPath.endsWith(".tc")) {return false;}
     if (normalizedPath.endsWith(".p12") || normalizedPath.endsWith(".pfx")) {return checkOpenSsl();}
     if (normalizedPath.endsWith(".ppk")) {return checkPuttygen();}
     if (normalizedPath.endsWith(".jks") || normalizedPath.endsWith(".jceks") ) {return checkKeytool();}
     if (normalizedPath.endsWith(".gpg") || normalizedPath.endsWith(".pgp") || normalizedPath.endsWith(".asc")) {return checkGpg();}
-    if (isSshPrivateKeyPath(normalizedPath)) {return checkSshKeygen();}
+    if (normalizedPath.endsWith(".age")) {return checkAge();}
+    if (normalizedPath.endsWith(".luks")) {return checkCryptsetup();}
+    if (isSshPrivateKeyFilePath(normalizedPath)) {return checkSshKeygen();}
 
     return true;
 }
@@ -29,7 +76,6 @@ function checkOpenSsl(): boolean {
                 : "Install OpenSSL using your system package manager.";
 
     vscode.window.showWarningMessage(`SATO: OpenSSL is required to unlock PKCS#12/PFX containers. ${installHint}`);
-
     return false;
 }
 
@@ -38,15 +84,13 @@ function checkKeytool(): boolean {
         return true;
     }
 
-    const installHint =
-        process.platform === "win32"
+    const installHint = process.platform === "win32"
             ? "Install a Java Runtime, add keytool.exe to PATH, and restart VS Code."
             : process.platform === "darwin"
                 ? "Install Java with: brew install openjdk"
                 : "Install a Java Runtime, for example default-jre-headless.";
 
     vscode.window.showWarningMessage(`SATO: keytool is required to unlock Java KeyStore files. ${installHint}`);
-
     return false;
 }
 
@@ -55,15 +99,13 @@ function checkGpg(): boolean {
         return true;
     }
 
-    const installHint =
-        process.platform === "win32"
+    const installHint = process.platform === "win32"
             ? "Install Gpg4win, add gpg.exe to PATH, and restart VS Code."
             : process.platform === "darwin"
                 ? "Install GnuPG with: brew install gnupg"
                 : "Install GnuPG using your system package manager.";
 
     vscode.window.showWarningMessage(`SATO: GPG is required to inspect and decrypt OpenPGP files. ${installHint}`);
-
     return false;
 }
 
@@ -72,24 +114,14 @@ function checkPuttygen(): boolean {
         return true;
     }
 
-    const installHint =
-        process.platform === "win32"
+    const installHint = process.platform === "win32"
             ? "Install PuTTY, add puttygen.exe to PATH, and restart VS Code."
             : process.platform === "darwin"
                 ? "Install PuTTY with: brew install putty"
                 : "Install PuTTY tools, for example: sudo apt install putty-tools";
 
     vscode.window.showWarningMessage(`SATO: puttygen is required to unlock PuTTY private keys. ${installHint}`);
-
     return false;
-}
-
-function isSshPrivateKeyPath(
-    filePath: string
-): boolean {
-    const fileName = filePath.replace(/\\/g, "/").split("/").pop() || "";
-
-    return SSH_PRIVATE_KEY_FILE_NAMES.some((supportedName) => fileName === supportedName);
 }
 
 function checkSshKeygen(): boolean {
@@ -97,21 +129,18 @@ function checkSshKeygen(): boolean {
         return true;
     }
 
-    const installHint =
-        process.platform === "win32"
+    const installHint = process.platform === "win32"
             ? "Install the Windows OpenSSH Client, ensure ssh-keygen.exe is available in PATH, and restart VS Code."
             : process.platform === "darwin"
                 ? "Install or enable the macOS OpenSSH tools."
                 : "Install OpenSSH tools, for example: sudo apt install openssh-client";
 
     vscode.window.showWarningMessage(`SATO: ssh-keygen is required to unlock SSH private keys. ${installHint}`);
-
     return false;
 }
 
 export function resolveSevenZipCommand(): string | undefined {
     const commands = ["7z", "7zz", "7za"];
-
     return commands.find(command => isCommandAvailable(command));
 }
 
@@ -120,14 +149,13 @@ export function checkSevenZip(): boolean {
         return true;
     }
 
-    const installHint =
-        process.platform === "win32"
-            ? "Install 7-Zip, add 7z.exe to PATH, and restart VS Code."
-            : process.platform === "darwin"
-                ? "Install 7-Zip with: brew install sevenzip"
-                : "Install 7-Zip, for example: sudo apt install p7zip-full";
-
-    vscode.window.showWarningMessage(`SATO: 7-Zip CLI is required to open and extract ` + `password-protected archives. ${installHint}`);
-
+    vscode.window.setStatusBarMessage("SATO: 7-Zip CLI is not installed. Install it to work with this archive format.", 5000);
     return false;
+}
+
+function normalizeBackupFilePath(
+    filePath: string
+): string {
+    const normalizedPath = filePath.replace(/\\/g, "/").toLowerCase();
+    return normalizedPath.endsWith(".bak") ? normalizedPath.slice(0, -4) : normalizedPath;
 }

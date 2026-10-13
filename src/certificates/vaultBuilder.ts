@@ -1,14 +1,11 @@
 import { fileNameOf } from "./fileTypes";
 import { isExpiredCertificate } from "./format";
+import { supportedFileCategory, normalizeBackupFileName } from "../fileFormats";
 
 import type * as vscode from "vscode";
 import type { GroupView, VaultStats } from "../vault";
-
-import type {
-    CertificateVault,
-    CryptoFileInput,
-    CryptoInspection
-} from "./types";
+import type { SupportedDirectoryFile } from "../archives";
+import type { CertificateVault, CryptoFileInput, CryptoInspection } from "./types";
 
 export type CryptoFileInspector = (
     text: string,
@@ -27,12 +24,11 @@ export function buildCertificateVault(
 export function buildCertificateDirectoryVault(
     files: CryptoFileInput[],
     selectedUri: vscode.Uri,
-    inspectFile: CryptoFileInspector
+    inspectFile: CryptoFileInspector,
+    supportedFiles?: SupportedDirectoryFile[]
 ): CertificateVault {
     const sortedFiles = files.slice().sort((left, right) => fileNameOf(left.uri).localeCompare(fileNameOf(right.uri)));
-
     const privateKeysByEntryId:Record<string, string> = {};
-
     const filesByEntryId:Record<string, CryptoFileInput> = {};
 
     let selectedEntryId = "";
@@ -98,9 +94,16 @@ export function buildCertificateDirectoryVault(
         weak: 0
     };
 
+    const directoryFiles = supportedFiles ?? sortedFiles.map(file => ({
+        fileName: fileNameOf(file.uri),
+        filePath: file.uri.fsPath,
+        category: supportedFileCategory(fileNameOf(file.uri)) ?? "crypto"
+    }));
+
     return {
         tree: root,
         stats,
+        supportedFiles: directoryFiles,
         selectedEntryId,
         privateKeyPem: selectedEntryId ? privateKeysByEntryId[selectedEntryId] : undefined,
         privateKeysByEntryId,
@@ -111,21 +114,31 @@ export function buildCertificateDirectoryVault(
 function shouldReadAsText(
     lowerPath: string
 ): boolean {
+    const normalizedPath = lowerPath.replace(/\\/g, "/");
+    const separatorIndex = normalizedPath.lastIndexOf("/");
+    const directory = separatorIndex >= 0 ? normalizedPath.slice(0, separatorIndex + 1) : "";
+    const fileName = separatorIndex >= 0 ? normalizedPath.slice(separatorIndex + 1) : normalizedPath;
+    const originalPath = directory + normalizeBackupFileName(fileName);
+
     return !(
-        lowerPath.endsWith(".p12") ||
-        lowerPath.endsWith(".pfx") ||
-        lowerPath.endsWith(".p7b") ||
-        lowerPath.endsWith(".p7c") ||
-        lowerPath.endsWith(".p7s") ||
-        lowerPath.endsWith(".p7m") ||
-        lowerPath.endsWith(".p8") ||
-        lowerPath.endsWith(".pk8") ||
-        lowerPath.endsWith(".age") ||
-        lowerPath.endsWith(".jks") ||
-        lowerPath.endsWith(".jceks") ||
-        lowerPath.endsWith(".gpg") ||
-        lowerPath.endsWith(".pgp") ||
-        lowerPath.endsWith(".sig")
+        originalPath.endsWith(".p12") ||
+        originalPath.endsWith(".pfx") ||
+        originalPath.endsWith(".p7b") ||
+        originalPath.endsWith(".p7c") ||
+        originalPath.endsWith(".p7s") ||
+        originalPath.endsWith(".p7m") ||
+        originalPath.endsWith(".p8") ||
+        originalPath.endsWith(".pk8") ||
+        originalPath.endsWith(".age") ||
+        originalPath.endsWith(".luks") ||
+        originalPath.endsWith(".hc") ||
+        originalPath.endsWith(".tc") ||
+        originalPath.endsWith(".jks") ||
+        originalPath.endsWith(".jceks") ||
+        originalPath.endsWith(".bks") ||
+        originalPath.endsWith(".gpg") ||
+        originalPath.endsWith(".pgp") ||
+        originalPath.endsWith(".sig")
     );
 }
 

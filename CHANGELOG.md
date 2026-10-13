@@ -1,3 +1,74 @@
+# 0.4.0
+
+## Added
+
+* Added fast filtering by category: All, Vaults, Archives, SSH, and Crypto Files
+* Added a QR code generator with:
+  * Live generation from text, URLs, passwords, and other data
+  * Clipboard input, image copying, and PNG export
+  * **Show QR** integration with the Password Generator and Base64 converter
+* Added archive browsing, Preview, extraction, and supported editing through `7z`:
+  * `.zipx`, `.7z`, `.rar`,  `.tar`, `.tar.gz`, `.tgz`, `.tar.bz2`
+  * `.tbz2`, `.tar.xz`, `.txz`, `.gz`, `.bz2`, `.xz`
+* Added read-only browsing, Preview, and extraction for:
+  * `.cab`, `.cpio`, `.ar`, `.a`, `.lib`,  `.zst`, `.lzma`, `.z`, `.dmg`
+  * `.tar.zst`, `.tzst`, `.tar.z`, `.taz`, `.lzh`, `.lha`, `.arj`, `.xar`
+* Added specialized Linux package support:
+  * `.deb` with separate `Control` and `Payload` trees
+  * `.rpm` with a `Payload` tree and optional package Details through `rpm`
+* Added read-only support for additional ZIP-based containers:
+  * `.aia`, `.appxbundle`, `.asice`, `.ear`, `.epub`, `.ipa`, `.jar`
+  * `.mcaddon`, `.mcpack`, `.mcproject`, `.mctemplate`, `.mcworld`, `.mrpack`
+  * `.nupkg`, `.pbix`, `.pbit`, `.sb2`, `.sb3`, `.vsix`, `.war`, `.whl`, `.xlsx`, `.xpi`
+* Added read-only `.alz` and `.egg` support through `unegg`:
+  * Browse, Preview, unlock, and extraction
+  * Password-protected, solid, split, and Unicode archives
+* Added password management for supported containers and keys:
+  * `.7z`, `.zipx`,  `.p12`, `.pfx`, `.jks`, `.jceks`
+  * `.age` files - decryption and read-only decrypted-content Preview
+  * `.luks` containers - inspection, password verification, and password changes through `cryptsetup`
+* Added automatic backup support using `<file-name>.bak` (always read-only)
+* Added conditional **Preview** and **Show Info** actions to archive context menus
+* Added dependency notifications for missing 7-Zip, `unegg`, `age`, `cryptsetup`, OpenSSL, GPG, `keytool`, PuTTYgen, and OpenSSH tools
+* Added ZIP signature validation, Zip Slip protection, extraction limits, and ZIP-bomb detection
+* Added safe temporary extraction and validation for archives processed through external CLI tools
+* Added result verification and rollback for supported password-change operations
+* Isolated OpenPGP operations in temporary GPG home directories
+* Sanitized sensitive LUKS header details displayed in the interface
+
+## Changed
+
+* Refactored archive handling, extraction, navigation, context menus, password dialogs, and security utilities
+* Added specialized inspection, Preview, and extraction pipelines for DEB, RPM, compound TAR, and single-file compressed formats
+* Improved Archive Explorer with:
+  * Horizontal scrolling
+  * Compact and consistent tree indentation
+  * Better handling of long file paths
+* Improved extraction from nested TAR, DEB, RPM, and CPIO payloads
+* Improved Preview for extensionless text files and unsupported binary files
+* Improved read-only menus to show only supported actions
+* Improved archive, package, and static-library format labels
+* Improved RPM Details formatting and conditional availability
+* Improved startup, filtering, and file-switching performance
+* Improved password-state detection for PKCS#12, OpenPGP, Java KeyStore, age, and LUKS containers
+* Password Generator now clears previous results whenever it opens
+* Updated the development container and external tooling
+* Updated `README.md`
+* Improved relative date tooltips, such as `3 days ago`
+* Updated dependencies and resolved all reported npm security vulnerabilities
+* Updated the minimum supported VS Code version to `1.120.0`
+* Removed the unused direct `node-fetch` dependency
+* Bundled the Extension Host with `esbuild`
+* Reduced the VSIX package from approximately 6 MB and 1,400 files to less than 1 MB and approximately 15 files
+* `Delete Folder` now removes the selected directory and its contents without deleting identically named directories elsewhere in archives edited through 7-Zip, including compound TAR archives
+* ZIP edits preserve the archive and backup permissions, ownership and timestamps
+* Removed diagnostic logging of file information from the Webview console
+* Standard OpenSSH public-key filenames are inspected as public keys instead of private keys
+* PuTTY Ed25519 keys can be unlocked when PuTTYgen exports them in OpenSSH format
+* PKCS#12 password changes retain the rollback copy and report its path if restoration fails; cleanup failures no longer hide the original error
+
+---
+
 # 0.3.2
 
 ## Changed:

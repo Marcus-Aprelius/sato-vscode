@@ -2,6 +2,7 @@ import { vscode } from "./globals";
 import { applyTheme } from "./theme";
 import { renderAll } from "./render";
 import { renderStatus } from "./status";
+import { openPendingSupportedFileMenu } from "./tree";
 import { byId, createCopyIconButton } from "./dom";
 import { bitsToBytesTooltip, bytesToKilobytesTooltip } from "./sizeFormat";
 import { DAY_MILLISECONDS, daysUnitLabel, parseDateTimestamp } from "./dateFormat";
@@ -18,6 +19,9 @@ import {
 import type { ClientInitialState } from "./types";
 
 import {
+    closePrivateKeyPasswordModal,
+    openPrivateKeyPasswordModal,
+    showPrivateKeyPasswordError,
     closeModal,
     fillEntryModal,
     openUnlockModal,
@@ -35,7 +39,7 @@ import {
     showArchivePasswordError
 } from "./modals";
 
-import { setLockButtonState, updateToolbarForMode, updateMainActionButton } from "./buttons";
+import { updateToolbarForMode } from "./buttons";
 
 interface InboundMessage { type: string; [key: string]: unknown;}
 
@@ -125,11 +129,11 @@ export function bindInboundMessages(): void {
                         | "EC_SEC1_DER" | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER"
                         | "SPC_CMS_PEM" | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
                     availableOutputFormats: Array<{
-                        value: | "PEM" | "DER" | "RFC4716" | "PKCS8" | "RSA_PKCS1_PEM"
-                            | "RSA_PKCS1_DER" | "RSA_PKCS8_PEM" | "RSA_PKCS8_DER" | "RSA_SPKI_PEM"
-                            | "RSA_SPKI_DER" | "RSA_PUBLIC_PKCS1_PEM" | "RSA_PUBLIC_PKCS1_DER" | "EC_SEC1_PEM"
-                            | "EC_SEC1_DER" | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER"
-                            | "SPC_CMS_PEM" | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
+                        value: | "PEM" | "DER" | "RFC4716" | "PKCS8" | "RSA_PKCS1_PEM" | "RSA_PKCS1_DER" 
+                            | "RSA_PKCS8_PEM" | "RSA_PKCS8_DER" | "RSA_SPKI_PEM" | "RSA_SPKI_DER" 
+                            | "RSA_PUBLIC_PKCS1_PEM" | "RSA_PUBLIC_PKCS1_DER" | "EC_SEC1_PEM" | "EC_SEC1_DER" 
+                            | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER" | "SPC_CMS_PEM" 
+                            | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
                         label: string;
                         extension: string;
                         outputFileName: string;
@@ -153,7 +157,8 @@ export function bindInboundMessages(): void {
             closeCryptoContainerUnlockModal();
             renderAll();
             updateToolbarForMode();
-            updateMainActionButton();
+            openPendingSupportedFileMenu();
+
             return;
         }
 
@@ -170,14 +175,11 @@ export function bindInboundMessages(): void {
 
             renderStatus();
             updateToolbarForMode();
-            updateMainActionButton();
             return;
         }
 
         if (msg.type === "secretRevealed") {
-            const input = document.querySelector(
-                'input[data-entry-id="' + msg.entryId + '"][data-field="' + msg.field + '"]'
-            ) as HTMLInputElement | null;
+            const input = document.querySelector('input[data-entry-id="' + msg.entryId + '"][data-field="' + msg.field + '"]') as HTMLInputElement | null;
 
             if (input) {
                 input.type = "text";
@@ -206,7 +208,6 @@ export function bindInboundMessages(): void {
             setPrivateKeyValue(entryId, value);
             renderDetails();
             renderStatus();
-            updateMainActionButton();
 
             return;
         }
@@ -225,20 +226,17 @@ export function bindInboundMessages(): void {
 
         if (msg.type === "openArchiveUnlock") {
             openArchiveUnlockModal();
-
             return;
         }
 
         if (msg.type === "archiveUnlockFailed") {
             showArchiveUnlockError(typeof msg.message === "string" ? msg.message : "Wrong password or unsupported encrypted archive.");
-
             return;
         }
 
         if (msg.type === "archiveUnlocked") {
             app.archiveUnlocked = true;
             closeArchiveUnlockModal();
-
             return;
         }
 
@@ -248,21 +246,39 @@ export function bindInboundMessages(): void {
         }
 
         if (msg.type === "openArchivePasswordChange") {
-            openArchivePasswordModal();
-
+            openArchivePasswordModal(msg.mode === "set" ? "set" : "change");
             return;
         }
 
         if (msg.type === "archivePasswordChangeFailed") {
             showArchivePasswordError(typeof msg.message === "string" ? msg.message : "Failed to change the archive password.");
-
             return;
         }
 
         if (msg.type === "archivePasswordChanged") {
             app.archiveUnlocked = true;
             closeArchivePasswordModal();
+            return;
+        }
 
+        if (msg.type === "openPrivateKeyPasswordChange") {
+            const entryId = String(msg.entryId || "");
+            const mode = msg.mode === "set" || msg.mode === "remove" ? msg.mode : "change";
+
+            if (entryId) {
+                openPrivateKeyPasswordModal(entryId, mode);
+            }
+
+            return;
+        }
+
+        if (msg.type === "privateKeyPasswordChangeFailed") {
+            showPrivateKeyPasswordError(typeof msg.message === "string" ? msg.message : "Failed to change the private key password.");
+            return;
+        }
+
+        if (msg.type === "privateKeyPasswordChanged") {
+            closePrivateKeyPasswordModal();
             return;
         }
 
@@ -289,7 +305,6 @@ export function bindInboundMessages(): void {
         }
 
         if (msg.type === "dbInfo") {
-            console.log("SATO dbInfo received:", msg.info);
             renderDbInfo(msg.info as Record<string, unknown>);
         }
     });
@@ -315,7 +330,6 @@ function renderVaultLockedState(): void {
     const bar = byId("statusbar");
     bar.innerHTML = '<span class="item"><strong>Locked</strong></span>';
 
-    setLockButtonState(true);
 }
 
 function renderDbInfo(info: Record<string, unknown>): void {
@@ -329,7 +343,6 @@ function renderDbInfo(info: Record<string, unknown>): void {
 
     if (Array.isArray(info.rows)) {
         renderInfoRows(info.rows as unknown[], body, typeof info.entryId === "string" ? info.entryId : "", info.hasPrivateKey === true);
-
         return;
     }
 
@@ -430,10 +443,8 @@ function appendInfoRow(
 
             link.addEventListener("click", () => {
                 closeModal();
-
                 app.detailsTab = "privateKey";
                 app.privateKeyVisible = true;
-
                 vscode.postMessage({type: "revealPrivateKey", entryId});
             });
 
@@ -466,7 +477,6 @@ function appendInfoRow(
     }
 
     const copy = createCopyIconButton(`Copy ${key}`);
-
     copy.disabled = !value;
 
     copy.addEventListener("click", () => {

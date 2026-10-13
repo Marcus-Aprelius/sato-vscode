@@ -34,10 +34,7 @@ interface ButtercupCredentials {
 }
 
 interface ButtercupLoadedData {
-    Format: new (
-        history: unknown
-    ) => unknown;
-
+    Format: new (history: unknown) => unknown;
     history: unknown;
 }
 
@@ -45,35 +42,17 @@ interface ButtercupModule {
     init?: () => Promise<void> | void;
 
     Credentials: {
-        fromDatasource(
-            datasourceConfig: {
-                content: string;
-            },
-            masterPassword?: string
-        ): ButtercupCredentials;
-
-        fromPassword(
-            password: string
-        ): ButtercupCredentials;
+        fromDatasource(datasourceConfig: {content: string;}, masterPassword?: string): ButtercupCredentials;
+        fromPassword(password: string): ButtercupCredentials;
     };
 
-    TextDatasource: new (
-        credentials: ButtercupCredentials
-    ) => {
-        setContent(
-            content: string
-        ): void;
-
-        load(
-            credentials: ButtercupCredentials
-        ): Promise<ButtercupLoadedData>;
+    TextDatasource: new (credentials: ButtercupCredentials) => {
+        setContent(content: string): void;
+        load(credentials: ButtercupCredentials): Promise<ButtercupLoadedData>;
     };
 
     Vault: {
-        createFromHistory(
-            history: unknown,
-            format?: ButtercupLoadedData["Format"]
-        ): ButtercupVault;
+        createFromHistory(history: unknown, format?: ButtercupLoadedData["Format"]): ButtercupVault;
     };
 }
 
@@ -81,22 +60,17 @@ export async function openButtercupVault(
     uri: vscode.Uri,
     password: string
 ): Promise<ImportedVault> {
-    const Buttercup = await import(
-        "buttercup"
-    ) as unknown as ButtercupModule;
+    const Buttercup = await import("buttercup") as unknown as ButtercupModule;
 
     if (typeof Buttercup.init === "function") {
         await Buttercup.init();
     }
 
     const bytes = await vscode.workspace.fs.readFile(uri);
-
     const content = Buffer.from(bytes).toString("utf8");
 
     if (!content.trim()) {
-        throw new Error(
-            "Buttercup vault is empty."
-        );
+        throw new Error("Buttercup vault is empty.");
     }
 
     const datasourceCredentials = Buttercup.Credentials.fromDatasource({content}, password);
@@ -167,11 +141,7 @@ function mapButtercupGroup(
 
     const sourceEntries = source.getEntries();
 
-    for (
-        let index = 0;
-        index < sourceEntries.length;
-        index++
-    ) {
+    for (let index = 0; index < sourceEntries.length; index++) {
         const importedEntry = mapButtercupEntry(sourceEntries[index], groupId, index);
         entries.set(importedEntry.id, importedEntry);
         group.entries.push(createImportedEntryView(importedEntry));
@@ -179,11 +149,7 @@ function mapButtercupGroup(
 
     const childGroups = source.getGroups();
 
-    for (
-        let index = 0;
-        index < childGroups.length;
-        index++
-    ) {
+    for (let index = 0; index < childGroups.length; index++) {
         group.groups.push(mapButtercupGroup(childGroups[index], groupId, entries, `${groupId}-group-${index}`));
     }
 
@@ -204,12 +170,9 @@ function mapButtercupEntry(
     const password = takeProperty(properties, ["password", "pass", "passwd"]);
     const url = takeProperty(properties, ["url", "website", "location"]);
     const notes = takeProperty(properties, ["notes", "note", "description"]);
-
     const fields: Record<string, string> = {...properties};
 
-    for (
-        const [name, value] of Object.entries(attributes)
-    ) {
+    for (const [name, value] of Object.entries(attributes)) {
         fields[uniqueFieldName(fields, `Attribute: ${name}`)] = value;
     }
 

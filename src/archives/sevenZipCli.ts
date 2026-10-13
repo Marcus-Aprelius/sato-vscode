@@ -7,20 +7,33 @@ export interface SevenZipResult {
     stderr: string;
 }
 
+export interface SevenZipRunOptions {
+    cwd?: string;
+}
+
+export class SevenZipUnavailableError extends Error {
+    constructor() {
+        super("7-Zip CLI is not installed.");
+        this.name = "SevenZipUnavailableError";
+    }
+}
+
 export async function runSevenZip(
     args: readonly string[],
-    password?: string
+    password?: string,
+    options: SevenZipRunOptions = {}
 ): Promise<SevenZipResult> {
     const command = resolveSevenZipCommand();
 
     if (!command) {
-        throw new Error("7-Zip CLI was not found.");
+        throw new SevenZipUnavailableError();
     }
 
     return new Promise((resolve, reject) => {
-        const child = spawn(command,
+        const child = spawn(
+            command,
             [...args],
-            {shell: false, windowsHide: true, stdio: ["pipe", "pipe", "pipe"]}
+            { cwd: options.cwd, shell: false, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] }
         );
 
         let stdout = "";
@@ -43,6 +56,18 @@ export async function runSevenZip(
     });
 }
 
+export async function runSevenZipChecked(
+    args: readonly string[]
+): Promise<string> {
+    const result = await runSevenZip(args);
+
+    if (result.exitCode !== 0) {
+        throw new Error(normalizeSevenZipError(result.stderr || result.stdout || `7-Zip exited with code ${result.exitCode}.`));
+    }
+
+    return result.stdout;
+}
+
 export async function testArchivePassword(
     archivePath: string,
     password: string
@@ -62,7 +87,7 @@ export async function testArchivePassword(
     throw new Error(normalizeSevenZipError(result.stderr || result.stdout || `7-Zip exited with code ${result.exitCode}.`));
 }
 
-function normalizeSevenZipError(
+export function normalizeSevenZipError(
     value: string
 ): string {
     return value.replace(/\r/g, "").split("\n").map(line => line.trim()).filter(Boolean).slice(-5).join(" ");

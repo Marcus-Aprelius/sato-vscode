@@ -1,13 +1,8 @@
 import { vscode } from "../globals";
-import type { MenuItem } from "../types";
 import { openDropdown } from "../contextMenu";
-import {
-    app,
-    groupIndex,
-    isCryptoFileView,
-    isReadOnlyVault,
-    parentGroupOf
-} from "../state";
+import { app, groupIndex, isCryptoFileView, isReadOnlyVault, parentGroupOf } from "../state";
+
+import type { MenuItem } from "../types";
 
 export function openFolderMenu(button: HTMLElement): void {
     const crypto = isCryptoFileView();

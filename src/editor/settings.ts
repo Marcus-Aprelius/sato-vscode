@@ -1,7 +1,9 @@
 import * as vscode from "vscode";
 
 import type { Settings } from "../webview";
-import type { AppTheme } from "../webview/render/types";
+import type { AppTheme, FileCategoryFilter } from "../webview/render/types";
+
+const FILE_CATEGORY_FILTERS: ReadonlyArray<FileCategoryFilter> = ["vaults", "archives", "ssh", "crypto" ];
 
 export function readSettings(): Settings {
     const cfg = vscode.workspace.getConfiguration("sato");
@@ -14,7 +16,8 @@ export function readSettings(): Settings {
         showPasswordsByDefault: cfg.get<boolean>("showPasswordsByDefault", false),
         showEmptyValuesByDefault: cfg.get<boolean>("showEmptyValuesByDefault", true),
         showStatusBar: cfg.get<boolean>("showStatusBar", true),
-        createArchiveBackups: cfg.get<boolean>("createArchiveBackups", false),
+        createArchiveBackups: cfg.get<boolean>("createArchiveBackups", true),
+        fileCategoryFilters: readFileCategoryFilters(cfg),
         theme: readTheme(cfg)
     };
 }
@@ -32,7 +35,45 @@ export async function updateSettings(
     await cfg.update("showEmptyValuesByDefault", settings.showEmptyValuesByDefault, vscode.ConfigurationTarget.Global);
     await cfg.update("showStatusBar", settings.showStatusBar, vscode.ConfigurationTarget.Global);
     await cfg.update("createArchiveBackups", settings.createArchiveBackups, vscode.ConfigurationTarget.Global);
+    await cfg.update("fileCategoryFilters", normalizeFileCategoryFilters(settings.fileCategoryFilters), vscode.ConfigurationTarget.Global);
     await cfg.update("theme", settings.theme, vscode.ConfigurationTarget.Global);
+}
+
+function readFileCategoryFilters(
+    cfg: vscode.WorkspaceConfiguration
+): FileCategoryFilter[] {
+    const configured = cfg.get<unknown>("fileCategoryFilters", ["all"]);
+
+    if (!Array.isArray(configured)) {
+        return ["all"];
+    }
+
+    return normalizeFileCategoryFilters(configured);
+}
+
+function normalizeFileCategoryFilters(
+    values: ReadonlyArray<unknown>
+): FileCategoryFilter[] {
+    if (values.includes("all")) {
+        return ["all"];
+    }
+
+    const selected = new Set<FileCategoryFilter>();
+
+    for (const value of values) {
+        if (value === "vaults" || value === "archives" || value === "ssh" || value === "crypto") {
+            selected.add(value);
+        }
+    }
+
+    const normalized = FILE_CATEGORY_FILTERS.filter(category => selected.has(category));
+
+    if (normalized.length === FILE_CATEGORY_FILTERS.length) {
+        return ["all"];
+    }
+
+    return normalized.length > 0 ? normalized : ["all"];
+
 }
 
 function readTheme(

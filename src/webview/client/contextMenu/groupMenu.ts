@@ -3,6 +3,7 @@ import { vscode } from "../globals";
 import { byId, closestElement } from "../dom";
 import { openEntryModal, openModal } from "../modals";
 import { app, isCryptoFileView, isReadOnlyVault } from "../state";
+import { archiveExtractionFolderName } from "../../../shared/archiveFileName";
 
 import type { MenuItem } from "../types";
 import type { GroupView } from "../../../vault";
@@ -48,6 +49,9 @@ export function openGroupMenu(
     if (app.state.vaultFormat === "archive") {
         const isArchiveRoot = groupId === "archive-root";
         const archiveEncrypted = hasEncryptedArchiveEntries();
+        const selectedArchive = app.state.archives?.find(archive => archive.filePath === app.state.selectedArchivePath);
+        const archiveEditable = selectedArchive?.editable === true && selectedArchive.backup !== true;
+        const passwordEditable = selectedArchive?.passwordEditable === true && selectedArchive.backup !== true;
 
         if (isArchiveRoot) {
             const folderName = archiveExtractionFolderName(app.state.tree.name);
@@ -55,42 +59,45 @@ export function openGroupMenu(
             const items: MenuItem[] = [
                 { label: "Extract all to...", action: () => {vscode.postMessage({type: "extractArchiveAll"}); }},
                 { label: `Extract all to "${folderName}"`, action: () => {vscode.postMessage({type: "extractArchiveToFolder"}); }},
-                { sep: true }
             ];
 
-            if (archiveEncrypted) {
-                items.push({ label: "Change Password...",
-                    title: app.archiveUnlocked ? "Change the archive password" : "Unlock the archive before changing its password",
-                    disabled: !app.archiveUnlocked,
+            if (passwordEditable) {
+                if (archiveEncrypted) {
+                    items.push({
+                        label: "Change Password...",
+                        title: app.archiveUnlocked ? "Change the archive password" : "Unlock the archive before changing its password",
+                        disabled: !app.archiveUnlocked,
 
-                    action: () => {
-                        if (!app.archiveUnlocked) {
-                            return;
+                        action: () => {
+                            if (!app.archiveUnlocked) {
+                                return;
+                            }
+
+                            vscode.postMessage({type: "prepareArchivePasswordChange"});
                         }
+                    });
 
-                        vscode.postMessage({type: "prepareArchivePasswordChange"});
-                    }
-                });
+                    items.push({
+                        label: "Delete Password",
+                        title: app.archiveUnlocked ? "Remove password protection from the archive" : "Unlock the archive before removing its password",
+                        disabled: !app.archiveUnlocked,
 
-                items.push({
-                    label: "Delete Password",
-                    title: app.archiveUnlocked ? "Remove password protection from the archive" : "Unlock the archive before removing its password",
-                    disabled: !app.archiveUnlocked,
+                        action: () => {
+                            if (!app.archiveUnlocked) {
+                                return;
+                            }
 
-                    action: () => {
-                        if (!app.archiveUnlocked) {
-                            return;
+                            vscode.postMessage({type: "deleteArchivePassword"});
                         }
+                    });
+                } else {
+                    items.push({
+                        label: "Set Password...",
+                        title: "Protect the archive with a password",
 
-                        vscode.postMessage({type: "deleteArchivePassword"});
-                    }
-                });
-            } else {
-                items.push({
-                    label: "Set Password...",
-                    title: "Protect the archive with a password",
-                    action: () => {vscode.postMessage({type: "prepareArchivePasswordSet"});}
-                });
+                        action: () => {vscode.postMessage({type: "prepareArchivePasswordSet"});}
+                    });
+                }
             }
 
             items.push({sep: true});
@@ -112,16 +119,20 @@ export function openGroupMenu(
 
         const items: MenuItem[] = [
             { label: "Extract Folder to...", action: () => {vscode.postMessage({type: "extractArchiveFolder", groupId}); }},
-            { label: "Extract all to...", action: () => {vscode.postMessage({type: "extractArchiveAll"}); }},
-            { sep: true },
-            { label: "Create Folder...", action: () => {vscode.postMessage({type: "createArchiveFolder", groupId}); }},
-            { label: "Delete Folder...", action: () => {vscode.postMessage({type:"deleteArchiveFolder", groupId}); }},
-            { sep: true },
-            { label: "Add File...", action: () => {vscode.postMessage({type: "addArchiveFile", groupId}); }}
+            { label: "Extract all to...", action: () => {vscode.postMessage({type: "extractArchiveAll"}); }}
         ];
 
-        showMenu(x, y, items);
+        if (archiveEditable) {
+            items.push(
+                { sep: true },
+                { label: "Create Folder...", action: () => {vscode.postMessage({type: "createArchiveFolder", groupId}); }},
+                { label: "Delete Folder...", action: () => { vscode.postMessage({type: "deleteArchiveFolder", groupId}); }},
+                { sep: true },
+                { label: "Add File...", action: () => {vscode.postMessage({type: "addArchiveFile", groupId});}}
+            );
+        }
 
+        showMenu(x, y, items);
         return;
     }
 
@@ -158,20 +169,4 @@ function hasEncryptedArchiveEntries(): boolean {
     };
 
     return walk(app.state.tree);
-}
-
-function archiveExtractionFolderName(
-    archiveName: string
-): string {
-    const lowerName = archiveName.toLowerCase();
-
-    if (lowerName.endsWith(".zip.bak")) {
-        return archiveName.slice(0, -8);
-    }
-
-    if (lowerName.endsWith(".zip")) {
-        return archiveName.slice(0, -4);
-    }
-
-    return archiveName;
 }

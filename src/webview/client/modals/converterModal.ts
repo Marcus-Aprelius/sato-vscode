@@ -1,3 +1,4 @@
+import QRCode from "qrcode";
 import { maybeById } from "../dom";
 import { vscode } from "../globals";
 import { closeModal, openModal } from "./modalLifecycle";
@@ -7,7 +8,6 @@ type CryptoOutputFormat = | "PEM" | "DER" | "RFC4716" | "PKCS8"
     | "RSA_SPKI_PEM" | "RSA_SPKI_DER" | "RSA_PUBLIC_PKCS1_PEM" | "RSA_PUBLIC_PKCS1_DER"
     | "EC_SEC1_PEM" | "EC_SEC1_DER" | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER"
     | "SPC_CMS_PEM" | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
-
 
 interface AvailableOutputFormat {
     value: CryptoOutputFormat;
@@ -34,9 +34,10 @@ interface CryptoConversionData {
 }
 
 let conversionData: CryptoConversionData | undefined;
-type ConverterTab = "convert" | "extract" | "base64";
+type ConverterTab = "convert" | "extract" | "base64" | "qr";
 let activeConverterTab: ConverterTab = "convert";
 let base64LiveMode = true;
+let qrDataUrl = "";
 
 export function openCryptoConverter(
     data: CryptoConversionData
@@ -102,7 +103,6 @@ export function openCryptoConverter(
 
     updateConverterTabs();
     openModal("converter-modal");
-
     setTimeout(() => {outputFileName?.focus(); outputFileName?.select();}, 0);
 }
 
@@ -122,7 +122,8 @@ export function bindConverterModalActions(): void {
 
         const outputFilePath = maybeById<HTMLInputElement>("converter-output-file-path");
 
-        vscode.postMessage({type: "selectCryptoConversionDirectory",
+        vscode.postMessage({
+            type: "selectCryptoConversionDirectory",
             initialPath: outputFilePath?.value.trim() || sourceDirectory(conversionData.filePath)
         });
     });
@@ -156,10 +157,10 @@ export function bindConverterModalActions(): void {
     });
 
     maybeById("converter-tab-base64")?.addEventListener("click", () => {setConverterTab("base64");});
+    maybeById("converter-tab-qr")?.addEventListener("click", () => {setConverterTab("qr");});
 
     maybeById("base64-live-mode")?.addEventListener("click", () => {
         base64LiveMode = !base64LiveMode;
-
         updateBase64LiveModeButton();
         updateBase64ActionButton();
 
@@ -184,6 +185,7 @@ export function bindConverterModalActions(): void {
             processBase64Text();
         }
     });
+
     maybeById("base64-input")?.addEventListener("input", () => {updateBase64CharacterCounts(); clearBase64Error(); updateBase64ActionButton();
 
         if (base64LiveMode) {
@@ -200,10 +202,10 @@ export function bindConverterModalActions(): void {
             }
 
             input.value = await navigator.clipboard.readText();
-
             updateBase64CharacterCounts();
             clearBase64Error();
             updateBase64ActionButton();
+
             if (base64LiveMode) {
                 processBase64Text();
             }
@@ -224,13 +226,59 @@ export function bindConverterModalActions(): void {
         vscode.postMessage({type: "copyText", text: output});
     });
 
+    maybeById("base64-show-qr")?.addEventListener("click", showBase64OutputQr);
     maybeById("base64-clear")?.addEventListener("click", () => {clearBase64Fields(); maybeById<HTMLTextAreaElement>("base64-input")?.focus();});
     maybeById("base64-swap")?.addEventListener("click", () => {swapBase64Fields();});
+    maybeById("qr-input")?.addEventListener("input", () => {void generateQrCode();});
+    maybeById("qr-paste")?.addEventListener("click", async () => {const input = maybeById<HTMLTextAreaElement>("qr-input");
+
+        if (!input) {
+            return;
+        }
+
+        try {
+            input.value = await navigator.clipboard.readText();
+            input.focus();
+
+            await generateQrCode();
+
+        } catch {
+            showQrError("Failed to read text from the clipboard.");
+        }
+    });
+
+    maybeById("qr-clear")?.addEventListener("click", () => {clearQrCode(); maybeById<HTMLTextAreaElement>("qr-input")?.focus();});
+    maybeById("qr-copy")?.addEventListener("click", () => {void copyQrCodeImage();});
+    maybeById("qr-save")?.addEventListener("click", () => {void saveQrCodeImage();});
 }
 
 export function openBase64Converter(): void {
     openEmptyCryptoConverter();
     setConverterTab("base64");
+}
+
+export function openQrCodeGenerator(): void {
+    openEmptyCryptoConverter();
+    clearQrCode();
+    setConverterTab("qr");
+}
+
+export function openQrCodeGeneratorWithValue(
+    value: string
+): void {
+    openEmptyCryptoConverter();
+    clearQrCode();
+    setConverterTab("qr");
+
+    const input = maybeById<HTMLTextAreaElement>("qr-input");
+
+    if (!input) {
+        return;
+    }
+
+    input.value = value;
+    void generateQrCode();
+    setTimeout(() => {input.focus(); input.select();}, 0);
 }
 
 export function openEmptyCryptoConverter(): void {
@@ -255,6 +303,7 @@ export function openEmptyCryptoConverter(): void {
     setText("converter-source-issuer", "");
     setText("converter-source-valid-to", "");
     setText("converter-source-sha256", "");
+
     activeConverterTab = "convert";
     updateConverterTabs();
 
@@ -429,6 +478,16 @@ function setOptionalText(
 function setConverterTab(
     tab: ConverterTab
 ): void {
+    if (tab === "qr") {
+        clearQrCode();
+        activeConverterTab = "qr";
+        updateConverterTabs();
+        const input = maybeById<HTMLTextAreaElement>("qr-input");
+        setTimeout(() => {input?.focus();}, 0);
+
+        return;
+    }
+
     if (tab === "base64") {
         activeConverterTab = "base64";
         clearBase64Fields();
@@ -518,13 +577,17 @@ function updateConverterTabs(): void {
     const convertTab = maybeById<HTMLButtonElement>("converter-tab-convert");
     const extractTab = maybeById<HTMLButtonElement>("converter-tab-extract");
     const base64Tab = maybeById<HTMLButtonElement>("converter-tab-base64");
+    const qrTab = maybeById<HTMLButtonElement>("converter-tab-qr");
     const actionButton = maybeById<HTMLButtonElement>("converter-convert");
     const fileContent = maybeById<HTMLElement>("converter-file-content");
     const base64Content = maybeById<HTMLElement>("converter-base64-content");
+    const qrContent = maybeById<HTMLElement>("converter-qr-content");
     const outputTitle = maybeById<HTMLElement>("converter-output-title");
     const convertFormats = conversionData ? formatsForTab(conversionData, "convert") : [];
     const extractFormats = conversionData ? formatsForTab(conversionData, "extract") : [];
     const base64Mode = activeConverterTab === "base64";
+    const qrMode = activeConverterTab === "qr";
+    const textToolMode = base64Mode || qrMode;
 
     if (convertTab) {
         convertTab.disabled = !!conversionData && convertFormats.length === 0;
@@ -537,13 +600,30 @@ function updateConverterTabs(): void {
     }
 
     base64Tab?.classList.toggle("active", base64Mode);
+    qrTab?.classList.toggle("active", qrMode);
 
     if (fileContent) {
-        fileContent.style.display = base64Mode ? "none" : "";
+        fileContent.style.display = textToolMode ? "none" : "";
     }
 
     if (base64Content) {
         base64Content.style.display = base64Mode ? "flex" : "none";
+    }
+
+    if (qrContent) {
+        qrContent.style.display = qrMode ? "block" : "none";
+    }
+
+    if (qrMode) {
+        if (actionButton) {
+            actionButton.style.display = "none";
+        }
+
+        return;
+    }
+
+    if (actionButton) {
+        actionButton.style.display = "";
     }
 
     if (base64Mode) {
@@ -692,7 +772,6 @@ function decodeBase64Bytes(
     }
 
     normalized += "=".repeat((4 - remainder) % 4);
-
     let binary: string;
 
     try {
@@ -730,9 +809,7 @@ function encodeBase32Bytes(
     }
 
     if (bits > 0) {
-        output += alphabet[
-            (buffer << (5 - bits)) & 31
-        ];
+        output += alphabet[(buffer << (5 - bits)) & 31];
     }
 
     while (output.length % 8 !== 0) {
@@ -869,6 +946,22 @@ function clearBase64Fields(): void {
     updateBase64ActionButton();
 }
 
+function showBase64OutputQr(): void {
+    const output = maybeById<HTMLTextAreaElement>("base64-output");
+    const qrInput = maybeById<HTMLTextAreaElement>("qr-input");
+
+    if (!output?.value || !qrInput) {
+        return;
+    }
+
+    const value = output.value;
+    setConverterTab("qr");
+    qrInput.value = value;
+    void generateQrCode();
+
+    setTimeout(() => {qrInput.focus(); qrInput.select();}, 0);
+}
+
 function updateBase64CharacterCounts(): void {
     const input = maybeById<HTMLTextAreaElement>("base64-input");
     const output = maybeById<HTMLTextAreaElement>("base64-output");
@@ -876,6 +969,12 @@ function updateBase64CharacterCounts(): void {
     const outputCount = maybeById<HTMLElement>("base64-output-count");
     const inputLength = input?.value.length || 0;
     const outputLength = output?.value.length || 0;
+
+    const showQrButton = maybeById<HTMLButtonElement>("base64-show-qr");
+
+    if (showQrButton) {
+        showQrButton.disabled = outputLength === 0;
+    }
 
     if (inputCount) {
         inputCount.textContent = `${inputLength} ${inputLength === 1 ? "character" : "characters"}`;
@@ -942,4 +1041,171 @@ function updateBase64LiveModeButton(): void {
     const description = base64LiveMode ? "Disable automatic Base64 conversion" : "Enable automatic Base64 conversion";
     button.title = description;
     button.setAttribute("aria-label", description);
+}
+
+async function generateQrCode(): Promise<void> {
+    const input = maybeById<HTMLTextAreaElement>("qr-input");
+    const preview = maybeById<HTMLElement>("qr-preview");
+    const canvas = maybeById<HTMLCanvasElement>("qr-canvas");
+
+    if (!input || !preview || !canvas) {
+        return;
+    }
+
+    updateQrCharacterCount();
+    clearQrError();
+
+    const value = input.value;
+
+    if (!value) {
+        clearQrPreview();
+        return;
+    }
+
+    try {
+        await QRCode.toCanvas(canvas, value, {
+            errorCorrectionLevel: "M",
+            margin: 2,
+            width: 320,
+            color: {dark: "#000000", light: "#ffffff"}
+        });
+
+        canvas.style.display = "block";
+        const empty = preview.querySelector(".empty");
+
+        if (empty) {
+            empty.remove();
+        }
+
+        qrDataUrl = canvas.toDataURL("image/png");
+        updateQrButtons();
+
+    } catch (error) {
+        clearQrPreview();
+        showQrError(error instanceof Error ? error.message : "Failed to generate the QR code.");
+    }
+}
+
+function clearQrPreview(): void {
+    const preview = maybeById<HTMLElement>("qr-preview");
+    const canvas = maybeById<HTMLCanvasElement>("qr-canvas");
+
+    qrDataUrl = "";
+
+    if (canvas) {
+        canvas.style.display = "none";
+
+        const context = canvas.getContext("2d");
+        context?.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    if (preview && !preview.querySelector(".empty")) {
+        const empty = document.createElement("div");
+
+        empty.className = "empty";
+        empty.textContent = "Enter text to generate a QR code.";
+        preview.appendChild(empty);
+    }
+
+    updateQrButtons();
+}
+
+function clearQrCode(): void {
+    const input = maybeById<HTMLTextAreaElement>("qr-input");
+
+    if (input) {
+        input.value = "";
+    }
+
+    clearQrPreview();
+    clearQrError();
+    updateQrCharacterCount();
+}
+
+function updateQrCharacterCount(): void {
+    const input = maybeById<HTMLTextAreaElement>("qr-input");
+    const count = maybeById<HTMLElement>("qr-input-count");
+    const length = input?.value.length || 0;
+
+    if (count) {
+        count.textContent = `${length} ${length === 1 ? "character" : "characters"}`;
+    }
+}
+
+function updateQrButtons(): void {
+    const copyButton = maybeById<HTMLButtonElement>("qr-copy");
+    const saveButton = maybeById<HTMLButtonElement>("qr-save");
+    const disabled = !qrDataUrl;
+
+    if (copyButton) {
+        copyButton.disabled = disabled;
+    }
+
+    if (saveButton) {
+        saveButton.disabled = disabled;
+    }
+}
+
+async function copyQrCodeImage(): Promise<void> {
+    const canvas = maybeById<HTMLCanvasElement>("qr-canvas");
+
+    if (!canvas || !qrDataUrl) {
+        return;
+    }
+
+    try {
+        const blob = await canvasToBlob(canvas);
+        await navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
+        clearQrError();
+
+    } catch {
+        showQrError("Failed to copy the QR code image. Saving as PNG is still available.");
+    }
+}
+
+function canvasToBlob(
+    canvas: HTMLCanvasElement
+): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob(blob => {
+            if (blob) {
+                resolve(blob);
+                return;
+            }
+
+            reject(new Error("Failed to create PNG image."));
+        }, "image/png");
+    });
+}
+
+function saveQrCodeImage(): void {
+    if (!qrDataUrl) {
+        return;
+    }
+
+    vscode.postMessage({type: "saveQrCode", pngBase64: qrDataUrl});
+}
+
+function clearQrError(): void {
+    const error = maybeById<HTMLElement>("qr-error");
+
+    if (!error) {
+        return;
+    }
+
+    error.textContent = "";
+    error.style.display = "none";
+}
+
+function showQrError(
+    message: string
+): void {
+    const error = maybeById<HTMLElement>("qr-error");
+
+    if (!error) {
+        return;
+    }
+
+    error.textContent = message;
+    error.style.display = "";
 }

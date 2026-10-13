@@ -1,13 +1,16 @@
 import { vscode } from "./globals";
+import type { MenuItem } from "./types";
 import { renderDetails } from "./details";
 import { byId, closestElement } from "./dom";
-import { updateMainActionButton } from "./buttons";
 import { openEntryMenu, openGroupMenu, showMenu } from "./contextMenu";
 import { app, groupIndex, resetCryptoUiState, isCryptoFileView } from "./state";
+import { archiveExtractionFolderName } from "../../shared/archiveFileName";
 
 import type { EntryView, GroupView } from "../../vault";
 
 const expandedArchiveGroups = new Set<string>();
+const ARCHIVE_TREE_INDENT = 18;
+const ARCHIVE_ROW_PADDING = 8;
 
 export function collapseAllArchiveGroups(): void {
     expandedArchiveGroups.clear();
@@ -40,19 +43,44 @@ export function renderEntries(): void {
 
         if (app.state.vaultFormat === "archive") {
             const folderName = archiveExtractionFolderName(app.state.tree.name);
+            const selectedArchive = app.state.archives?.find(archive => archive.filePath === app.state.selectedArchivePath);
+            const archiveEditable = selectedArchive?.editable === true && selectedArchive.backup !== true;
 
-            showMenu(event.clientX, event.clientY, [
-                { label: "Extract all to...", action: () => {vscode.postMessage({type: "extractArchiveAll"}); }},
-                { label: `Extract all to "${folderName}"`, action: () => {vscode.postMessage({type: "extractArchiveToFolder"}); }},
-                { sep: true },
-                { label: "Create Folder...", action: () => {vscode.postMessage({type: "createArchiveFolder", groupId: app.selectedGroupId}); }},
-                { label: "Add File...", action: () => {vscode.postMessage({ type: "addArchiveFile", groupId: app.selectedGroupId }); }},
+            const items: MenuItem[] = [
+                {
+                    label: "Extract all to...",
+                    action: () => {vscode.postMessage({type: "extractArchiveAll"}); }
+                },
+                {
+                    label: `Extract all to "${folderName}"`,
+                    action: () => {vscode.postMessage({type: "extractArchiveToFolder"}); }
+                }
+            ];
+
+            if (archiveEditable) {
+                items.push(
+                    {sep: true},
+                    {
+                        label: "Create Folder...",
+                        action: () => {vscode.postMessage({ type: "createArchiveFolder", groupId: app.selectedGroupId});
+                        }
+                    },
+                    {
+                        label: "Add File...",
+                        action: () => {vscode.postMessage({type: "addArchiveFile", groupId: app.selectedGroupId});}
+                    }
+                );
+            }
+
+            items.push(
                 { sep: true },
                 { label: "Collapse All", action: () => {collapseAllArchiveGroups();} },
                 { label: "Expand All", action: () => {expandAllArchiveGroups();} },
                 { sep: true },
-                { label: "Reload from Disk", action: () => {vscode.postMessage({type: "reload"});} }
-            ]);
+                { label: "Reload from Disk", action: () => {vscode.postMessage({type: "reload" });} }
+            );
+
+            showMenu(event.clientX, event.clientY, items);
 
             return;
         }
@@ -165,7 +193,6 @@ export function selectEntry(entryId: string): void {
     app.showVaultEmptyValues = app.settings.showEmptyValuesByDefault;
     renderEntries();
     renderDetails();
-    updateMainActionButton();
 }
 
 function entryMatches(entry: EntryView): boolean {
@@ -197,7 +224,7 @@ function renderArchiveEntriesTree(
 ): void {
     const root = app.state.tree;
 
-    titleElement.textContent = `${root.name.toUpperCase()} ` + `(${countArchiveItems(root)})`;
+    titleElement.textContent = `${root.name} ` + `(${countArchiveItems(root)})`;
 
     if (root.groups.length === 0 && root.entries.length === 0) {
         const empty = document.createElement("div");
@@ -205,7 +232,6 @@ function renderArchiveEntriesTree(
         empty.textContent = "The archive is empty.";
 
         list.appendChild(empty);
-
         return;
     }
 
@@ -228,7 +254,7 @@ function renderArchiveGroupNode(
     const row = document.createElement("div");
     row.className = "entry-row archive-folder-row";
     row.dataset.groupId = group.id;
-    row.style.paddingLeft = `${8 + depth * 18}px`;
+    row.style.paddingLeft = `${ARCHIVE_ROW_PADDING}px`;
 
     const expanded = expandedArchiveGroups.has(group.id);
     const chevron = document.createElement("span");
@@ -274,7 +300,7 @@ function renderArchiveGroupNode(
     if (expanded) {
         const children = document.createElement("div");
         children.className = "archive-tree-children";
-        children.style.marginLeft = `${17 + depth * 18}px`;
+        children.style.marginLeft = `${ARCHIVE_TREE_INDENT}px`;
 
         for (const child of group.groups) {
             children.appendChild(renderArchiveGroupNode(child, depth + 1));
@@ -296,7 +322,7 @@ function renderArchiveEntryNode(
 ): HTMLElement {
     const row = renderEntryRow(entry);
     row.classList.add("archive-file-row");
-    row.style.paddingLeft = `${26 + depth * 18}px`;
+    row.style.paddingLeft = `${ARCHIVE_ROW_PADDING}px`;
 
     const icon = document.createElement("span");
     icon.className = "codicon codicon-file";
@@ -327,20 +353,4 @@ function collectArchiveGroupIds(
 
         collectArchiveGroupIds(child, target);
     }
-}
-
-function archiveExtractionFolderName(
-    archiveName: string
-): string {
-    const lowerName = archiveName.toLowerCase();
-
-    if (lowerName.endsWith(".zip.bak")) {
-        return archiveName.slice(0, -8);
-    }
-
-    if (lowerName.endsWith(".zip")) {
-        return archiveName.slice(0, -4);
-    }
-
-    return archiveName;
 }

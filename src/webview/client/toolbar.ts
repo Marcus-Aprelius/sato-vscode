@@ -7,7 +7,6 @@ import { openEntryMenu } from "./menus/entryMenu";
 import { openToolsMenu } from "./menus/toolsMenu";
 import { openFolderMenu } from "./menus/folderMenu";
 
-
 export function bindToolbarActions(): void {
 
     byId("btn-file").addEventListener("click", (event) => {

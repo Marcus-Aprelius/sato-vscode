@@ -1,24 +1,24 @@
-import { hasExtension } from "./uriExtensions";
-import { ARCHIVE_FILE_EXTENSIONS } from "../fileFormats";
+import { ARCHIVE_FILE_EXTENSIONS, normalizeBackupFileName } from "../fileFormats";
 
 import type * as vscode from "vscode";
 
 export function isArchiveUri(
     uri: vscode.Uri
 ): boolean {
-    return (hasExtension(uri, ".zip.bak") || ARCHIVE_FILE_EXTENSIONS.some(extension => hasExtension(uri, `.${extension}`)));
+    const fileName = normalizedOriginalFileName(uri);
+    return ARCHIVE_FILE_EXTENSIONS.some(extension => fileName.endsWith(`.${extension}`));
 }
 
 export function isOnePifUri(
     uri: vscode.Uri
 ): boolean {
-    return hasExtension(uri, ".1pif");
+    return normalizedOriginalFileName(uri).endsWith(".1pif");
 }
 
 export function isButtercupUri(
     uri: vscode.Uri
 ): boolean {
-    return hasExtension(uri, ".bcup");
+    return normalizedOriginalFileName(uri).endsWith(".bcup");
 }
 
 export function isOpenPgpEncryptedFile(
@@ -28,5 +28,15 @@ export function isOpenPgpEncryptedFile(
         return false;
     }
 
-    return (hasExtension(uri, ".gpg") || hasExtension(uri, ".pgp") || hasExtension(uri, ".asc"));
+    const fileName = normalizedOriginalFileName(uri);
+
+    return (fileName.endsWith(".gpg") || fileName.endsWith(".pgp") || fileName.endsWith(".asc"));
+}
+
+function normalizedOriginalFileName(
+    uri: vscode.Uri
+): string {
+    const fileName = uri.fsPath.replace(/\\/g, "/").split("/").at(-1) || "";
+
+    return normalizeBackupFileName(fileName);
 }

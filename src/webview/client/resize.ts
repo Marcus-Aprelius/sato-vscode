@@ -9,7 +9,6 @@ export function applyColumnWidths(): void {
 
     if (cryptoMode) {
         layout.style.gridTemplateColumns = app.groupsWidth + "px 4px minmax(0, 1fr)";
-
         return;
     }
 
@@ -34,7 +33,6 @@ export function setupColumnResize(): void {
 
         const onMove = (moveEvent: PointerEvent): void => {
             moveEvent.preventDefault();
-
             const dx = moveEvent.clientX - startX;
 
             if (kind === "groups") {

@@ -102,6 +102,18 @@ export function inspectPpkUnlocked(
         };
     }
 
+    if (privateKeyPem.startsWith("-----BEGIN OPENSSH PRIVATE KEY-----")) {
+        return {
+            values: {
+                ...inspectPpk(text, bytes, filePath).values,
+                Status: "Unlocked",
+                Protection: parsed.encryption !== "none" ? "Password encrypted" : "None",
+                Summary: buildUnlockedSummary(parsed, "", "")
+            },
+            privateKeyPem
+        };
+    }
+
     try {
         const privateKey = crypto.createPrivateKey({key: privateKeyPem, format: "pem"});
         const publicKey = crypto.createPublicKey(privateKey);

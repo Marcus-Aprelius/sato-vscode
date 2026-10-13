@@ -10,32 +10,26 @@ import {
 
 import type { GroupView } from "../vault";
 import type { VaultDocument } from "../types";
+import type { SupportedDirectoryFile } from "../archives";
+
 import { describeError } from "../utils/errors";
+import { supportedFileCategory } from "../fileFormats";
 
 export async function openCertificateFile(
     document: VaultDocument
 ): Promise<boolean> {
-    const directoryUri = cryptoDirectoryUri(document.uri);
-    const files = await readCryptoFilesFromDirectory(directoryUri);
+    const activeUri = document.activeUri ?? document.uri;
+    const directoryUri = cryptoDirectoryUri(activeUri);
+    const supportedFiles = await readSupportedFilesFromDirectory(directoryUri);
 
-    let selectedFiles = files;
+    let selectedFiles: CryptoFileInput[] = [];
 
-    if (!selectedFiles.some((file) => file.uri.fsPath === document.uri.fsPath)) {
-        try {
-            const bytes = await vscode.workspace.fs.readFile(document.uri);
+    try {
+        const bytes = await vscode.workspace.fs.readFile(activeUri);
+        selectedFiles = [{uri: activeUri, bytes}];
 
-            selectedFiles = [...selectedFiles, {uri: document.uri, bytes}];
-
-        } catch (err) {
-            vscode.window.showErrorMessage(`SATO: failed to read file - ${describeError(err)}`);
-
-            return false;
-        }
-    }
-
-    if (!selectedFiles.length) {
-        vscode.window.showErrorMessage("SATO: no supported crypto files found");
-
+    } catch (err) {
+        vscode.window.showErrorMessage(`SATO: failed to read file - ${describeError(err)}`);
         return false;
     }
 
@@ -44,8 +38,19 @@ export async function openCertificateFile(
     document.psafe = undefined;
     document.archive = undefined;
     document.importedVault = undefined;
-    document.certificate = buildCertificateDirectoryVault(selectedFiles, document.uri);
 
+    const selectedCategory = supportedFileCategory(path.basename(activeUri.fsPath));
+
+    if (selectedCategory && !supportedFiles.some(file => file.filePath === activeUri.fsPath)) {
+        supportedFiles.push({
+            fileName: path.basename(activeUri.fsPath),
+            filePath: activeUri.fsPath,
+            category: selectedCategory
+        });
+    }
+
+    supportedFiles.sort((left, right) => left.fileName.localeCompare(right.fileName, undefined, {sensitivity: "base"}));
+    document.certificate = buildCertificateDirectoryVault(selectedFiles, activeUri, supportedFiles);
     return true;
 }
 
@@ -87,6 +92,38 @@ export async function readCryptoFilesFromDirectory(
     return result.sort((left, right) =>
         left.uri.fsPath.localeCompare(right.uri.fsPath)
     );
+}
+
+async function readSupportedFilesFromDirectory(
+    directoryUri: vscode.Uri
+): Promise<SupportedDirectoryFile[]> {
+    let entries: [string, vscode.FileType][];
+
+    try {
+        entries = await vscode.workspace.fs.readDirectory(directoryUri);
+
+    } catch {
+        return [];
+    }
+
+    const files: SupportedDirectoryFile[] = [];
+
+    for (const [name, fileType] of entries) {
+        if (fileType !== vscode.FileType.File) {
+            continue;
+        }
+
+        const category = supportedFileCategory(name);
+
+        if (!category) {
+            continue;
+        }
+
+        const uri = vscode.Uri.joinPath(directoryUri, name);
+        files.push({fileName: name, filePath: uri.fsPath, category});
+    }
+
+    return files;
 }
 
 export function collectCryptoFileInfo(
@@ -149,9 +186,7 @@ export function findCryptoEntry(
     certificate: CertificateVault,
     entryId: string
 ): GroupView["entries"][number] | undefined {
-    const walk = (
-        group: GroupView
-    ): GroupView["entries"][number] | undefined => {
+    const walk = (group: GroupView): GroupView["entries"][number] | undefined => {
         for (const entry of group.entries) {
             if (entry.id === entryId) {
                 return entry;
@@ -183,4 +218,3 @@ function addRow(
 
     rows.push([label, value]);
 }
-

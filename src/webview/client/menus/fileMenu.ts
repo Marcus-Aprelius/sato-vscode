@@ -2,15 +2,9 @@ import { byId } from "../dom";
 import { vscode } from "../globals";
 import { openModal } from "../modals";
 import { openDropdown } from "../contextMenu";
+import { app, isCryptoFileView, isReadOnlyVault, vaultFormat } from "../state";
 
 import type { MenuItem } from "../types";
-
-import {
-    app,
-    isCryptoFileView,
-    isReadOnlyVault,
-    vaultFormat
-} from "../state";
 
 export function openFileMenu(button: HTMLElement): void {
     const crypto = isCryptoFileView();
@@ -56,11 +50,7 @@ export function openFileMenu(button: HTMLElement): void {
 
         {
             label: "Show Info",
-            title: crypto
-                ? "Show current crypto file information"
-                : readOnly
-                    ? `Show ${format || "vault"} information`
-                    : "Show current database information",
+            title: crypto ? "Show current crypto file information" : readOnly ? `Show ${format || "vault"} information` : "Show current database information",
             disabled: app.vaultLocked,
             action: () => {
                 if (app.vaultLocked) {

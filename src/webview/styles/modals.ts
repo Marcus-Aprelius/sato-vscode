@@ -349,4 +349,83 @@ export const MODAL_STYLES = `
 .converter-close-button:focus-visible {outline: 1px solid var(--vscode-focusBorder); outline-offset: 1px;}
 .converter-close-button .codicon {font-size: 16px;}
 
+.archive-password-row {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        34px
+        90px;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+}
+.archive-password-input {flex: 1; min-width: 0;}
+.archive-password-input input {width: 100%; min-width: 0;}
+.archive-password-toggle {flex: 0 0 34px; width: 34px; min-width: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center;}
+.archive-password-toggle .codicon {font-size: 16px;}
+#archive-password-generate {flex: 0 0 auto;}
+
+.archive-password-action-spacer {width: 90px; min-width: 90px; visibility: hidden; pointer-events: none;}
+#archive-password-generate {width: 90px; min-width: 90px;}
+
+.archive-password-strength-row {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        34px
+        90px;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    min-height: 20px;
+}
+
+.archive-password-strength-row .strength {grid-column: 1; width: 100%; min-width: 0; margin: 0;}
+.archive-password-strength-row .strength-bar {min-width: 0;}
+.archive-password-toggle-spacer {grid-column: 2; width: 34px; min-width: 34px; visibility: hidden;}
+.archive-password-strength-row
+.archive-password-action-spacer {grid-column: 3;}
+
+#converter-qr-content {flex: 1; width: 100%; min-width: 0; min-height: 0;}
+#converter-qr-content .base64-columns {height: 100%;}
+
+.qr-preview {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding: 12px;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+}
+
+.qr-preview-image {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+.qr-preview .empty {color: #555555; text-align: center;}
+
+.password-generator-footer {justify-content: space-between;}
+.password-generator-actions {display: flex; align-items: center; gap: 8px;}
+
+.crypto-unlock-password-row {display: grid; grid-template-columns: minmax(0, 1fr) 36px; gap: 8px; align-items: center;}
+.crypto-unlock-password-input {min-width: 0;}
+.crypto-unlock-password-row .archive-password-toggle {width: 32px; height: 32px; margin: 0;}
+
+.unlock-password-row {display: grid; grid-template-columns: minmax(0, 1fr) 36px; gap: 8px; align-items: center;}
+.unlock-password-input {min-width: 0;}
+.unlock-password-row .archive-password-toggle {width: 32px; height: 32px; margin: 0;}
+
 `;

@@ -1,6 +1,5 @@
 import { byId } from "../dom";
 import { app, entryIndex } from "../state";
-import { updateMainActionButton } from "../buttons";
 import { renderCryptoDetails } from "./cryptoDetails";
 import { renderVaultDetails } from "./vaultDetails";
 
@@ -28,15 +27,12 @@ export function renderDetails(): void {
         empty.textContent = "Select an entry to view its fields.";
 
         container.appendChild(empty);
-        updateMainActionButton();
-
         return;
     }
 
     const entry = entryIndex.get(app.selectedEntryId);
 
     if (!entry) {
-        updateMainActionButton();
         return;
     }
 
@@ -47,11 +43,9 @@ export function renderDetails(): void {
 
     if (entry.readOnly) {
         renderCryptoDetails(container, entry);
-        updateMainActionButton();
 
         return;
     }
 
     renderVaultDetails(container, entry);
-    updateMainActionButton();
 }

@@ -1,9 +1,8 @@
-import * as fs from "fs";
-import { Uint8ArrayReader, Uint8ArrayWriter, ZipReader } from "@zip.js/zip.js";
+import { openAsBlob } from "fs";
+import {checkCompressionRatio, checkEntrySize} from "./limits";
+import { BlobReader, Uint8ArrayWriter, ZipReader } from "@zip.js/zip.js";
 
-import type { Entry, FileEntry } from "@zip.js/zip.js";
-
-const MAX_PASSWORD_CHECK_ARCHIVE_SIZE = 256 * 1024 * 1024;
+import type {Entry, FileEntry} from "@zip.js/zip.js";
 
 export async function testEncryptedZipPassword(
     archivePath: string,
@@ -13,14 +12,12 @@ export async function testEncryptedZipPassword(
         return false;
     }
 
-    const stat = await fs.promises.stat(archivePath);
-
-    if (stat.size > MAX_PASSWORD_CHECK_ARCHIVE_SIZE) {
-        throw new Error("The encrypted ZIP is too large for password " + "verification with the built-in ZIP engine.");
-    }
-
-    const archiveBytes = await fs.promises.readFile(archivePath);
-    const zipReader = new ZipReader(new Uint8ArrayReader(archiveBytes));
+    /*
+     * openAsBlob provides lazy random-access reading.
+     * The complete ZIP archive is not copied into memory.
+     */
+    const archiveBlob = await openAsBlob(archivePath);
+    const zipReader = new ZipReader(new BlobReader(archiveBlob));
 
     try {
         const entries = await zipReader.getEntries();
@@ -29,6 +26,9 @@ export async function testEncryptedZipPassword(
         if (!encryptedEntry) {
             return true;
         }
+
+        checkEntrySize(encryptedEntry.filename, encryptedEntry.uncompressedSize);
+        checkCompressionRatio(encryptedEntry.filename, encryptedEntry.compressedSize, encryptedEntry.uncompressedSize);
 
         try {
             await encryptedEntry.getData(new Uint8ArrayWriter(), {password, checkPasswordOnly: true, checkAuthenticationCode: true});
@@ -42,9 +42,16 @@ export async function testEncryptedZipPassword(
 
             throw error;
         }
+
     } finally {
         await zipReader.close();
     }
+}
+
+function isEncryptedFileEntry(
+    entry: Entry
+): entry is FileEntry {
+    return (!entry.directory && entry.encrypted === true && "getData" in entry && typeof entry.getData === "function");
 }
 
 function isWrongZipPasswordError(
@@ -54,10 +61,4 @@ function isWrongZipPasswordError(
     const normalized = message.toLowerCase();
 
     return (normalized.includes("password") || normalized.includes("authentication") || normalized.includes("encrypted"));
-}
-
-function isEncryptedFileEntry(
-    entry: Entry
-): entry is FileEntry {
-    return (!entry.directory && entry.encrypted === true && "getData" in entry && typeof entry.getData === "function");
 }

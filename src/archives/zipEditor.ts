@@ -1,6 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
+
 import { validateArchiveEntryPath } from "./security";
+import { preserveFileMetadata } from "./archiveFileMetadata";
 import { Uint8ArrayReader, Uint8ArrayWriter, ZipReader, ZipWriter} from "@zip.js/zip.js";
 
 export type ZipEditOperation =
@@ -25,12 +27,10 @@ export async function editZipArchive(
     operation: ZipEditOperation,
     options: ZipEditOptions = {}
 ): Promise<ZipEditResult> {
-    if (options.password) {
-        throw new Error("Editing password-protected ZIP archives is not implemented yet.");
-    }
 
     validateEditOperation(operation);
 
+    const originalStat = await fs.promises.stat(archiveFilePath);
     const archiveBytes = await fs.promises.readFile(archiveFilePath);
     const reader = new ZipReader(new Uint8ArrayReader(archiveBytes));
     const outputWriter = new Uint8ArrayWriter();
@@ -54,16 +54,18 @@ export async function editZipArchive(
             }
 
             if (entry.directory) {
-                await writer.add(ensureDirectoryPath(entryPath), undefined, {directory: true, lastModDate: entry.lastModDate});
-
+                await writer.add(ensureDirectoryPath(entryPath), undefined, createEntryWriteOptions(options.password, true, entry.lastModDate));
                 continue;
             }
 
-            const data = await entry.getData(new Uint8ArrayWriter(), { checkCrc32: true, checkAuthenticationCode: true});
-            await writer.add(entryPath, new Uint8ArrayReader(data), {lastModDate: entry.lastModDate});
+            const data = await entry.getData(new Uint8ArrayWriter(), options.password
+                ? {password: options.password, checkCrc32: true, checkAuthenticationCode: true}
+                : {checkCrc32: true, checkAuthenticationCode: true}
+            );
+            await writer.add(entryPath, new Uint8ArrayReader(data), createEntryWriteOptions(options.password, false, entry.lastModDate));
         }
 
-        await applyEditOperation(writer, operation, addedEntries);
+        await applyEditOperation(writer, operation, addedEntries, options.password);
         await writer.close();
 
         const newArchiveBytes = await outputWriter.getData();
@@ -72,14 +74,15 @@ export async function editZipArchive(
 
         try {
             await fs.promises.writeFile(temporaryPath, newArchiveBytes, {flag: "wx", mode: 0o600});
-            await verifyCreatedZip(temporaryPath);
+            await verifyCreatedZip(temporaryPath, options.password);
+            await preserveFileMetadata(temporaryPath, originalStat);
 
             if (backupPath) {
                 await fs.promises.copyFile(archiveFilePath, backupPath);
+                await preserveFileMetadata(backupPath, originalStat);
             }
 
             await replaceArchiveFile(temporaryPath, archiveFilePath);
-
             return {backupPath, addedEntries, deletedEntries};
 
         } catch (error) {
@@ -102,13 +105,14 @@ export async function editZipArchive(
 async function applyEditOperation(
     writer: ZipWriter<Uint8Array>,
     operation: ZipEditOperation,
-    addedEntries: string[]
+    addedEntries: string[],
+    password?: string
 ): Promise<void> {
     switch (operation.type) {
         case "addFile": {
             const sourceBytes = await fs.promises.readFile(operation.sourcePath);
             const archivePath = normalizeArchivePath(operation.archivePath);
-            await writer.add(archivePath, new Uint8ArrayReader(sourceBytes), {lastModDate: (await fs.promises.stat(operation.sourcePath)).mtime});
+            await writer.add(archivePath, new Uint8ArrayReader(sourceBytes), createEntryWriteOptions(password, false, (await fs.promises.stat(operation.sourcePath)).mtime));
             addedEntries.push(archivePath);
 
             return;
@@ -116,7 +120,7 @@ async function applyEditOperation(
 
         case "createFolder": {
             const archivePath = ensureDirectoryPath(normalizeArchivePath(operation.archivePath));
-            await writer.add(archivePath, undefined, { directory: true, lastModDate: new Date()});
+            await writer.add(archivePath, undefined, createEntryWriteOptions(password, true, new Date()));
             addedEntries.push(archivePath);
 
             return;
@@ -126,6 +130,18 @@ async function applyEditOperation(
         case "deleteFolder":
             return;
     }
+}
+
+function createEntryWriteOptions(
+    password: string | undefined,
+    directory: boolean,
+    lastModDate: Date
+) {
+    if (!password) {
+        return {directory, lastModDate};
+    }
+
+    return {directory, lastModDate, password, encrypted: true, encryptionStrength: 3 as const};
 }
 
 function shouldDeleteEntry(
@@ -138,7 +154,6 @@ function shouldDeleteEntry(
 
     if (operation.type === "deleteFolder") {
         const folderPath = ensureDirectoryPath(normalizeArchivePath( operation.archivePath));
-
         return (entryPath === folderPath || entryPath.startsWith(folderPath));
     }
 
@@ -179,13 +194,24 @@ function createTemporaryArchivePath(
 }
 
 async function verifyCreatedZip(
-    archiveFilePath: string
+    archiveFilePath: string,
+    password?: string
 ): Promise<void> {
     const bytes = await fs.promises.readFile(archiveFilePath);
     const reader = new ZipReader(new Uint8ArrayReader(bytes));
 
     try {
-        await reader.getEntries();
+        const entries = await reader.getEntries();
+        const firstFile = entries.find(entry => !entry.directory );
+
+        if (!firstFile) {
+            return;
+        }
+
+        await firstFile.getData(new Uint8ArrayWriter(), password
+            ? {password, checkCrc32: true, checkAuthenticationCode: true}
+            : {checkCrc32: true, checkAuthenticationCode: true}
+        );
 
     } finally {
         await reader.close();

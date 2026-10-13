@@ -2,9 +2,11 @@ import * as fs from "fs";
 import * as path from "path";
 import * as yauzl from "yauzl";
 
+import { Transform } from "stream";
 import { inspectZipArchive } from "./zipReader";
 import { inspectArchiveSecurity, resolveSafeExtractionPath } from "./security";
 import { applyExtractionMetadata, readExtractionMetadata } from "./extractionMetadata";
+import { ARCHIVE_LIMITS, checkActualBytes, checkCompressionRatio, checkEntrySize } from "./limits";
 
 import type { Readable } from "stream";
 import type { ExtractionMetadata } from "./extractionMetadata";
@@ -71,6 +73,8 @@ function extractEntries(
                 const selectedPaths = new Set(selectedEntries.map(entry => entry.path));
                 const extractedFiles: string[] = [];
                 const skippedEntries: string[] = [];
+                const extractionProgress = {totalBytes: 0};
+
                 let settled = false;
 
                 const finish = (error?: Error): void => {
@@ -90,11 +94,7 @@ function extractEntries(
 
                 zipFile.on("error", finish);
                 zipFile.on("end", () => finish());
-
-                zipFile.on("entry",entry => {
-                    void processZipEntry(zipFile, entry, destinationDirectory, selectedPaths, extractedFiles, skippedEntries, extractionMetadata).catch(finish);
-                });
-
+                zipFile.on("entry",entry => {void processZipEntry(zipFile, entry, destinationDirectory, selectedPaths, extractedFiles, skippedEntries, extractionMetadata, extractionProgress).catch(finish);});
                 zipFile.readEntry();
             }
         );
@@ -108,7 +108,8 @@ async function processZipEntry(
     selectedPaths: ReadonlySet<string>,
     extractedFiles: string[],
     skippedEntries: string[],
-    extractionMetadata: ExtractionMetadata
+    extractionMetadata: ExtractionMetadata,
+    extractionProgress: {totalBytes: number;}
 ): Promise<void> {
     if (!selectedPaths.has(entry.fileName)) {
         skippedEntries.push(entry.fileName);
@@ -130,16 +131,19 @@ async function processZipEntry(
     const parentDirectory = path.dirname(destinationPath);
     await fs.promises.mkdir(parentDirectory, {recursive: true});
     await applyExtractionMetadata(parentDirectory, extractionMetadata, true);
+
+    checkEntrySize(entry.fileName, entry.uncompressedSize);
+    checkCompressionRatio(entry.fileName, entry.compressedSize, entry.uncompressedSize);
+
     const exists = await pathExists(destinationPath);
 
     if (exists) {
-        throw new Error(
-            `Destination file already exists: ${destinationPath}`
-        );
+        throw new Error(`Destination file already exists: ${destinationPath}`);
     }
 
     const input = await openEntryStream(zipFile, entry);
-    await writeEntryStream(input, destinationPath);
+
+    await writeEntryStream(input, destinationPath, entry.fileName, entry.uncompressedSize, extractionProgress);
     await applyExtractionMetadata(destinationPath, extractionMetadata, false);
 
     extractedFiles.push(destinationPath);
@@ -170,11 +174,35 @@ function openEntryStream(
 
 function writeEntryStream(
     input: Readable,
-    destinationPath: string
+    destinationPath: string,
+    entryPath: string,
+    declaredSize: number,
+    extractionProgress: {
+        totalBytes: number;
+    }
 ): Promise<void> {
+    const actualEntryLimit = Math.min(declaredSize + 64 * 1024, ARCHIVE_LIMITS.maxEntrySize);
+
     return new Promise((resolve, reject) => {
         const output = fs.createWriteStream(destinationPath, {flags: "wx", mode: 0o600});
+        let actualEntryBytes = 0;
         let settled = false;
+
+        const limiter = new Transform({
+            transform(chunk: Buffer, _encoding, callback): void {
+                actualEntryBytes += chunk.length;
+                extractionProgress.totalBytes += chunk.length;
+
+                try {
+                    checkActualBytes(entryPath, actualEntryBytes, actualEntryLimit);
+                    checkActualBytes("archive total", extractionProgress.totalBytes, ARCHIVE_LIMITS.maxTotalUncompressedSize);
+                    callback(null, chunk);
+
+                } catch (error) {
+                    callback(error instanceof Error ? error : new Error(String(error)));
+                }
+            }
+        });
 
         const finish = (error?: Error): void => {
             if (settled) {
@@ -185,11 +213,13 @@ function writeEntryStream(
 
             if (error) {
                 input.destroy();
+                limiter.destroy();
                 output.destroy();
 
                 void fs.promises.unlink(destinationPath).catch(() => undefined);
 
                 reject(error);
+
                 return;
             }
 
@@ -197,10 +227,11 @@ function writeEntryStream(
         };
 
         input.once("error", finish);
+        limiter.once("error", finish);
         output.once("error", finish);
         output.once("finish", () => finish());
 
-        input.pipe(output);
+        input.pipe(limiter).pipe(output);
     });
 }
 

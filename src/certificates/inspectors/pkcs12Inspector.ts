@@ -1,24 +1,34 @@
 import * as crypto from "crypto";
+
 import { runWithTempFile } from "../cli";
 import { containerMetadata } from "../fileMetadata";
+import { collectOpenSslValues, sanitizeOpenSslDetails, uniqueValues } from "../format";
 
 import type { CryptoInspection } from "../types";
-
-import {
-    collectOpenSslValues,
-    sanitizeOpenSslDetails,
-    uniqueValues
-} from "../format";
 
 export function inspectPkcs12(
     bytes: Uint8Array,
     filePath: string
 ): CryptoInspection {
+    const unprotected = inspectPkcs12Unlocked(bytes, filePath, "");
+
+    if (unprotected.values.Status === "Unlocked") {
+        return {
+            ...unprotected,
+            values: {
+                ...unprotected.values,
+                Protection: "None",
+                Summary: "PKCS#12 container detected without password protection."
+            }
+        };
+    }
+
     return {
         values: {
             Type: "PKCS#12 Container",
             Status: "Locked",
-            Summary: "PKCS#12/PFX container detected. Password required to inspect certificates and private keys.",
+            Protection: "Password encrypted",
+            Summary:"PKCS#12/PFX container detected. Password required to inspect certificates and private keys.",
             ...containerMetadata(bytes, filePath)
         }
     };
@@ -38,6 +48,7 @@ export function inspectPkcs12Unlocked(
             values: {
                 Type: "PKCS#12 Container",
                 Status: "Unlock failed",
+                Protection: password ? "Password encrypted" : "None",
                 Summary: "Wrong password or unsupported PKCS#12/PFX container.",
                 ...containerMetadata(bytes, filePath)
             }
@@ -57,6 +68,7 @@ export function inspectPkcs12Unlocked(
         values: {
             Type: "PKCS#12 Container",
             Status: "Unlocked",
+            Protection: password ? "Password encrypted" : "None",
             "Certificate count": String(certificateCount),
             "Private key bags": String(privateKeyBagCount),
             "Extracted private keys": String(extractedPrivateKeyCount),
@@ -65,10 +77,7 @@ export function inspectPkcs12Unlocked(
             Issuers: issuers.join("\n"),
             ...containerMetadata(bytes, filePath),
             Details: details,
-            Summary:
-                certificateCount > 0
-                    ? `PKCS#12 container unlocked. Certificates: ${certificateCount}.`
-                    : "PKCS#12 container unlocked."
+            Summary: certificateCount > 0 ? `PKCS#12 container unlocked. Certificates: ${certificateCount}.` : "PKCS#12 container unlocked."
         },
         privateKeyPem
     };

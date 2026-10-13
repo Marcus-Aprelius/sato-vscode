@@ -22,18 +22,13 @@ export async function handleImportedVaultMessage(
 
     switch (msg.type) {
         case "copySecret": {
-            const value = readImportedVaultField(
-                vault,
-                msg.entryId,
-                msg.field
-            );
+            const value = readImportedVaultField(vault, msg.entryId, msg.field);
 
             if (value === undefined) {
                 return;
             }
 
             await runtime.copyToClipboard(value, `SATO: copied ${msg.field}`, settings);
-
             return;
         }
 
@@ -43,7 +38,6 @@ export async function handleImportedVaultMessage(
             }
 
             await runtime.copyToClipboard(msg.text, "SATO: copied text", settings);
-
             return;
         }
 
@@ -55,7 +49,6 @@ export async function handleImportedVaultMessage(
             }
 
             panel.webview.postMessage({type: "secretRevealed", entryId: msg.entryId, field: msg.field, value});
-
             return;
         }
 
@@ -83,12 +76,8 @@ export async function handleImportedVaultMessage(
         }
 
         case "getDbInfo": {
-            const fileSize = await readFileSize(
-                document.uri
-            );
-
+            const fileSize = await readFileSize(document.uri);
             panel.webview.postMessage({type: "dbInfo", info: buildImportedVaultInfo(document, vault, fileSize)});
-
             return;
         }
 
@@ -99,10 +88,7 @@ export async function handleImportedVaultMessage(
         case "createGroup":
         case "renameGroup":
         case "deleteGroup": {
-            vscode.window.showInformationMessage(
-                `SATO: ${formatName(vault.format)} is currently read-only.`
-            );
-
+            vscode.window.showInformationMessage(`SATO: ${formatName(vault.format)} is currently read-only.`);
             return;
         }
     }

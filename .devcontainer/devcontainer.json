@@ -1,13 +1,12 @@
 {
   "name": "sato-vscode",
-  "image": "node:26",
+  "image": "node:26.11.1",
   "remoteUser": "root",
-  "postCreateCommand": "apt-get update && apt-get install -y --no-install-recommends openssl gnupg default-jre-headless putty-tools openssh-client && rm -rf /var/lib/apt/lists/* && npm install && npm run build",
+  "postCreateCommand": "apt-get update && apt-get install -y --no-install-recommends openssl gnupg default-jre-headless putty-tools openssh-client 7zip curl ca-certificates age cryptsetup util-linux genisoimage file rpm cpio gcab && curl -fsSL https://github.com/blurfx/unegg/releases/download/v0.2.0/unegg_Linux_x86_64.tar.gz -o /tmp/unegg.tar.gz && echo 'a47753e7023a139c1ced7d3b8a2eeccf151954f767c308bf5eadef3450440deb  /tmp/unegg.tar.gz' | sha256sum -c - && tar -xzf /tmp/unegg.tar.gz -C /tmp && install -m 0755 /tmp/unegg /usr/local/bin/unegg && rm -f /tmp/unegg /tmp/unegg.tar.gz && rm -rf /var/lib/apt/lists/* && npm install && npm run build && npm run build:extension-bundle:production",
   "customizations": {
     "vscode": {
       "extensions": [
-        "MarcusApreliusAntoninus.sato-vscode-ext",
-        "onlyutkarsh.vsix-viewer"
+        "MarcusApreliusAntoninus.sato-vscode-ext"
       ]
     }
   }

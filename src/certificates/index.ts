@@ -1,15 +1,33 @@
 import { inspectCryptoFile } from "./inspectionRouter";
 
-import type * as vscode from "vscode";
-import type { CertificateVault, CryptoFileInput } from "./types";
-
 import {
     buildCertificateDirectoryVault as buildVaultDirectory,
     buildCertificateVault as buildSingleVault
 } from "./vaultBuilder";
 
+import type * as vscode from "vscode";
+import type { CertificateVault, CryptoFileInput } from "./types";
+import type { SupportedDirectoryFile } from "../archives";
+
 export { isCertificateLikeFileName, isCertificateLikeUri } from "./fileTypes";
 export { lockCryptoContainer, unlockCryptoContainer } from "./containerActions";
+export { changePrivateKeyPassword } from "./privateKeyPasswordEditor";
+export { changeSshKeyPassword } from "./sshKeyPasswordEditor";
+export { changePpkPassword } from "./ppkPasswordEditor";
+export { changeJksPassword } from "./jksPasswordEditor";
+export { changePkcs12Password } from "./pkcs12PasswordEditor";
+export { changeAgePassword } from "./agePasswordEditor";
+export { changeGpgPassword } from "./gpgPasswordEditor";
+export { changeLuksPassword } from "./luksPasswordEditor";
+
+export type { LuksPasswordChangeOptions, LuksPasswordChangeResult } from "./luksPasswordEditor";
+export type { GpgPasswordChangeOptions, GpgPasswordChangeResult } from "./gpgPasswordEditor";
+export type { AgePasswordChangeOptions, AgePasswordChangeResult } from "./agePasswordEditor";
+export type { Pkcs12PasswordChangeOptions, Pkcs12PasswordChangeResult } from "./pkcs12PasswordEditor";
+export type { JksPasswordChangeOptions } from "./jksPasswordEditor";
+export type { PpkPasswordChangeOptions } from "./ppkPasswordEditor";
+export type { SshKeyPasswordChangeOptions } from "./sshKeyPasswordEditor";
+export type { PrivateKeyPasswordChangeOptions, PrivateKeyPasswordChangeResult } from "./privateKeyPasswordEditor";
 
 export {
     certificateOutputFormat,
@@ -56,7 +74,8 @@ export function buildCertificateVault(
 
 export function buildCertificateDirectoryVault(
     files: CryptoFileInput[],
-    selectedUri: vscode.Uri
+    selectedUri: vscode.Uri,
+    supportedFiles?: SupportedDirectoryFile[]
 ): CertificateVault {
-    return buildVaultDirectory(files, selectedUri, inspectCryptoFile);
+    return buildVaultDirectory(files, selectedUri, inspectCryptoFile, supportedFiles);
 }

@@ -1,10 +1,6 @@
 import type { AppTheme } from "../render/types";
 
-const THEME_CLASSES = [
-    "sato-theme-dark",
-    "sato-theme-gray",
-    "sato-theme-light"
-];
+const THEME_CLASSES = ["sato-theme-dark", "sato-theme-gray", "sato-theme-light"];
 
 export function applyTheme(
     theme: AppTheme

@@ -1,7 +1,8 @@
-
+import * as path from "path";
 import * as vscode from "vscode";
 
 import { APP_VERSION } from "./buildInfo";
+import { isArchiveUri } from "./editor/uriTypes";
 import { persistKdbx } from "./editor/persistence";
 import { copyToClipboard } from "./editor/clipboard";
 import { openArchiveFile } from "./editor/archiveFiles";
@@ -16,7 +17,6 @@ import { checkForUpdates, openExternalUrl } from "./editor/updates";
 import { openOnePifFile, unlockVaultWithPassword } from "./editor/vaultOpeners";
 import { registerConfigurationLifecycle } from "./editor/configurationLifecycle";
 import { renderEditorState, renderLockedShell } from "./editor/renderEditorState";
-
 
 import type { Settings } from "./webview";
 import type { VaultAdapterRuntime } from "./vaultAdapters";
@@ -71,19 +71,77 @@ implements vscode.CustomReadonlyEditorProvider<VaultDocument> {
 
         this.editors.add(editor);
 
-        configurePanelLifecycle(
-            editor,
+        configurePanelLifecycle(editor,
             {
                 extensionUri: this.context.extensionUri,
                 scheduleAutoLock: (targetEditor) => {this.scheduleAutoLock(targetEditor);},
                 clearAutoLock: (targetEditor) => {this.clearAutoLock(targetEditor);},
-                handleMessage: (msg) => {return this.handleMessage(document, panel, msg, editor.reload, editor.lock, () => this.scheduleAutoLock(editor));},
+                handleMessage: (msg) => {
+                    return this.handleMessage(
+                        document, panel, msg, editor.reload, editor.lock,
+                        filePath => this.openSupportedFile(document, panel, filePath),
+                        () => this.scheduleAutoLock(editor)
+                    );
+                },
                 removeEditor: (targetEditor) => {this.editors.delete(targetEditor);
                 }
             }
         );
 
         await editor.unlock();
+
+        if (document.archive) {
+            this.configureArchiveDirectoryWatcher(editor);
+        }
+
+    }
+
+    private configureArchiveDirectoryWatcher(
+        editor: ActiveEditor
+    ): void {
+        const directoryPath = path.dirname(editor.document.uri.fsPath);
+        const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.file(directoryPath), "*"));
+
+        let refreshTimer: NodeJS.Timeout | undefined;
+        let disposed = false;
+
+        const scheduleRefresh = (
+            uri: vscode.Uri
+        ): void => {
+            if (!isArchiveUri(uri)) {
+                return;
+            }
+
+            if (refreshTimer) {
+                clearTimeout(refreshTimer);
+            }
+
+            refreshTimer = setTimeout(() => {
+                if (disposed) {
+                    return;
+                }
+
+                void editor.reload();
+            }, 400
+        );
+    };
+
+        const createSubscription = watcher.onDidCreate(scheduleRefresh);
+        const changeSubscription = watcher.onDidChange(scheduleRefresh);
+        const deleteSubscription = watcher.onDidDelete(scheduleRefresh);
+
+        editor.panel.onDidDispose(() => {disposed = true;
+
+            if (refreshTimer) {
+                clearTimeout(refreshTimer);
+                refreshTimer = undefined;
+            }
+
+            createSubscription.dispose();
+            changeSubscription.dispose();
+            deleteSubscription.dispose();
+            watcher.dispose();
+        });
     }
 
     private adapterRuntime(): VaultAdapterRuntime {
@@ -111,11 +169,13 @@ implements vscode.CustomReadonlyEditorProvider<VaultDocument> {
         msg: FromWebview,
         reload: () => Promise<void>,
         lock: () => void,
+        openSupportedFile: (filePath: string) => Promise<void>,
         scheduleAutoLockCallback: () => void
     ): Promise<void> {
         await handleEditorMessage(document, panel, msg, {
             viewType: KdbxEditorProvider.viewType,
             reload, lock,
+            openSupportedFile,
             scheduleAutoLock: scheduleAutoLockCallback,
             readSettings: () => this.readSettings(),
             updateSettings: (settings) => this.updateSettings(settings),
@@ -124,6 +184,29 @@ implements vscode.CustomReadonlyEditorProvider<VaultDocument> {
             unlockWithPassword: (password) => this.unlockWithPassword(document, panel, password, scheduleAutoLockCallback),
             adapterRuntime: this.adapterRuntime()
         });
+    }
+
+    private async openSupportedFile(
+        document: VaultDocument,
+        panel: vscode.WebviewPanel,
+        filePath: string
+    ): Promise<void> {
+        const previousActiveUri = document.activeUri;
+        const targetUri = vscode.Uri.file(filePath);
+
+        document.activeUri = targetUri;
+        const opened = isArchiveUri(targetUri) ? await openArchiveFile(document) : await openCertificateFile(document);
+
+        if (!opened) {
+            document.activeUri = previousActiveUri;
+            return;
+        }
+
+        this.renderState(document, panel, false);
+
+        if (document.archive?.inspection.encrypted && !document.archive.password) {
+            setTimeout(() => {void panel.webview.postMessage({type: "openArchiveUnlock"});}, 100);
+        }
     }
 
     private async openArchiveFile(

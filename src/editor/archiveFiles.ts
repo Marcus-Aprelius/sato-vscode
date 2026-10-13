@@ -1,52 +1,95 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { inspectArchive } from "../archives";
+import { inspectArchive, archiveFormatLabel } from "../archives";
 import { describeError} from "../utils/errors";
+import { supportedFileCategory } from "../fileFormats";
+import { SevenZipUnavailableError } from "../archives/sevenZipCli";
+import { UneggUnavailableError } from "../archives/uneggCli";
+import { splitArchivePrimaryPathCandidate } from "../archives/splitArchivePath";
 
 import type { VaultDocument } from "../types";
 import type { GroupView, VaultStats } from "../vault";
-import type { ArchiveEntry, ArchiveFile, ArchiveInspection, ArchiveVault } from "../archives";
-
+import type { ArchiveEntry, ArchiveFile, ArchiveInspection, ArchiveVault, SupportedDirectoryFile } from "../archives";
 
 export async function openArchiveFile(
     document: VaultDocument
 ): Promise<boolean> {
-    const previousSelectedArchivePath = document.archive?.selectedArchivePath;
     const previousPasswords = collectArchivePasswords(document.archive);
+    const activeUri = document.activeUri ?? document.uri;
 
     try {
-        const archives = await readArchivesFromDirectory(document.uri, previousPasswords);
-        const selectedArchive = findSelectedArchive(archives, previousSelectedArchivePath || document.uri.fsPath);
+        const directoryFiles = await readSupportedFilesFromDirectory(activeUri, previousPasswords);
+        const selectedArchive = findSelectedArchive(directoryFiles.archives, activeUri.fsPath);
 
-        if (!selectedArchive) {
-            vscode.window.showErrorMessage("SATO: the selected archive could not be opened.");
+            if (!selectedArchive) {
+                vscode.window.showErrorMessage("SATO: the selected archive could not be opened.");
+                return false;
+            }
 
+            document.db = undefined;
+            document.credentials = undefined;
+            document.psafe = undefined;
+            document.certificate = undefined;
+            document.importedVault = undefined;
+            document.archive = createArchiveVault(directoryFiles.archives, directoryFiles.supportedFiles, selectedArchive);
+
+            return true;
+
+    } catch (error) {
+        if (error instanceof SevenZipUnavailableError || error instanceof UneggUnavailableError) {
             return false;
         }
 
-        document.db = undefined;
-        document.credentials = undefined;
-        document.psafe = undefined;
-        document.certificate = undefined;
-        document.importedVault = undefined;
-        document.archive = createArchiveVault(archives, selectedArchive);
-
-        return true;
-
-    } catch (error) {
         vscode.window.showErrorMessage("SATO: failed to open archive - " + describeError(error));
-
         return false;
     }
 }
 
-async function readArchivesFromDirectory(
+export async function refreshSelectedArchive(
+    document: VaultDocument,
+    password?: string
+): Promise<boolean> {
+    const archiveVault = document.archive;
+
+    if (!archiveVault) {
+        return false;
+    }
+
+    const selectedPath = archiveVault.selectedArchivePath;
+
+    try {
+        const inspection = await inspectArchive(selectedPath, undefined, password);
+        const refreshedArchive = createArchiveFile(inspection);
+        refreshedArchive.password = password;
+        const archiveIndex = archiveVault.archives.findIndex(archive => sameFilePath(archive.filePath, selectedPath));
+
+        if (archiveIndex >= 0) {
+            archiveVault.archives[archiveIndex] = refreshedArchive;
+        }
+
+        archiveVault.tree = refreshedArchive.tree;
+        archiveVault.stats = refreshedArchive.stats;
+        archiveVault.inspection = refreshedArchive.inspection;
+        archiveVault.selectedEntryId = refreshedArchive.selectedEntryId;
+        archiveVault.password = password;
+
+        return true;
+
+    } catch (error) {
+        vscode.window.showErrorMessage("SATO: failed to refresh archive - " + describeError(error));
+        return false;
+    }
+}
+
+async function readSupportedFilesFromDirectory(
     selectedUri: vscode.Uri,
     previousPasswords: ReadonlyMap<string, string>
-): Promise<ArchiveFile[]> {
+): Promise<{
+    archives: ArchiveFile[];
+    supportedFiles: SupportedDirectoryFile[];
+}> {
     const directoryUri = vscode.Uri.file(path.dirname(selectedUri.fsPath));
-
     let directoryEntries: [string, vscode.FileType][];
 
     try {
@@ -56,29 +99,115 @@ async function readArchivesFromDirectory(
         directoryEntries = [];
     }
 
-    const archiveUris = directoryEntries
-        .filter(([name, fileType]) => fileType === vscode.FileType.File && isSupportedArchiveName(name))
-        .map(([name]) => vscode.Uri
-        .joinPath(directoryUri, name));
+    const supportedFiles: SupportedDirectoryFile[] = [];
+    const archiveUris: vscode.Uri[] = [];
 
-    if (!archiveUris.some(uri => sameFilePath(uri.fsPath, selectedUri.fsPath))) {
-        archiveUris.push(selectedUri);
+    /*
+     * Additional volumes such as *.vol2.egg and *.a00 must not
+     * appear as independent archives in the SATO file list.
+     *
+     * They may still be opened directly from VS Code. In that case
+     * selectedUri is resolved to the primary archive below.
+     */
+    for (const [name, fileType] of directoryEntries) {
+        if (fileType !== vscode.FileType.File) {
+            continue;
+        }
+
+        const category = supportedFileCategory(name);
+
+        if (!category) {
+            continue;
+        }
+
+        const uri = vscode.Uri.joinPath(directoryUri, name);
+
+        if (category === "archives") {
+            const splitResolution = splitArchivePrimaryPathCandidate(uri.fsPath);
+
+            if (splitResolution.split && !splitResolution.primary) {
+                continue;
+            }
+        }
+
+        supportedFiles.push({fileName: name, filePath: uri.fsPath, category});
+
+        if (category === "archives") {
+            archiveUris.push(uri);
+        }
     }
 
+    const selectedFileName = path.basename(selectedUri.fsPath);
+    const selectedCategory = supportedFileCategory(selectedFileName);
+
+    /*
+     * If the user opened an additional volume directly, use its
+     * primary volume as the actual selected archive.
+     *
+     * Examples:
+     *
+     * split.high.vol2.egg -> split.high.vol1.egg
+     * split.a00           -> split.alz
+     */
+    const selectedArchiveResolution = selectedCategory === "archives" ? splitArchivePrimaryPathCandidate(selectedUri.fsPath): undefined;
+    const effectiveSelectedPath = selectedArchiveResolution?.primaryPath ?? selectedUri.fsPath;
+
+    if (selectedCategory === "archives") {
+        const effectiveSelectedUri = vscode.Uri.file(effectiveSelectedPath);
+
+        if (!archiveUris.some(uri => sameFilePath(uri.fsPath, effectiveSelectedUri.fsPath))) {
+            archiveUris.push(effectiveSelectedUri);
+        }
+    }
+
+    if (selectedCategory && !supportedFiles.some(file => sameFilePath(file.filePath, effectiveSelectedPath))) {
+        supportedFiles.push({ fileName: path.basename(effectiveSelectedPath), filePath: effectiveSelectedPath, category: selectedCategory});
+    }
+
+    supportedFiles.sort((left, right) => left.fileName.localeCompare(right.fileName, undefined, {sensitivity: "base"}));
     archiveUris.sort((left, right) => left.fsPath.localeCompare(right.fsPath, undefined, {sensitivity: "base"}));
 
     const archives: ArchiveFile[] = [];
+    const inspectedArchivePaths = new Set<string>();
 
     for (const uri of archiveUris) {
         try {
-            const inspection = await inspectArchive(uri.fsPath);
-            const archiveFile = createArchiveFile(inspection);
+            /*
+             * A password may have been stored under either the primary
+             * archive path or the originally selected additional volume.
+             */
+            const archiveResolution = splitArchivePrimaryPathCandidate(uri.fsPath);
+            const primaryPassword = previousPasswords.get(normalizeFilePath( archiveResolution.primaryPath));
+            const requestedPassword = previousPasswords.get(normalizeFilePath(uri.fsPath));
 
-            archiveFile.password = previousPasswords.get(normalizeFilePath(uri.fsPath));
+            const selectedVolumePassword = selectedArchiveResolution &&
+                sameFilePath(selectedArchiveResolution.primaryPath, archiveResolution.primaryPath )
+                ? previousPasswords.get(normalizeFilePath(selectedUri.fsPath))
+                : undefined;
+
+            const password = primaryPassword ?? requestedPassword ?? selectedVolumePassword;
+            const inspection = await inspectArchive(uri.fsPath, undefined, password);
+            const canonicalPath = normalizeFilePath(inspection.filePath);
+
+            /*
+             * A primary volume and any additional volumes resolve to
+             * the same canonical archive. Add that archive only once.
+             */
+            if (inspectedArchivePaths.has(canonicalPath)) {
+                continue;
+            }
+
+            inspectedArchivePaths.add(canonicalPath);
+            const archiveFile = createArchiveFile(inspection);
+            archiveFile.password = password;
             archives.push(archiveFile);
 
         } catch (error) {
-            if (sameFilePath(uri.fsPath, selectedUri.fsPath)) {
+            const failedResolution = splitArchivePrimaryPathCandidate(uri.fsPath);
+            const selectedResolution = splitArchivePrimaryPathCandidate(selectedUri.fsPath);
+            const selectedArchiveFailed = sameFilePath(failedResolution.primaryPath, selectedResolution.primaryPath);
+
+            if (selectedArchiveFailed) {
                 throw error;
             }
 
@@ -86,7 +215,7 @@ async function readArchivesFromDirectory(
         }
     }
 
-    return archives;
+    return {archives, supportedFiles};
 }
 
 function createArchiveFile(
@@ -106,10 +235,12 @@ function createArchiveFile(
 
 function createArchiveVault(
     archives: ArchiveFile[],
+    supportedFiles: SupportedDirectoryFile[],
     selectedArchive: ArchiveFile
 ): ArchiveVault {
     return {
         archives,
+        supportedFiles,
         selectedArchivePath: selectedArchive.filePath,
         tree: selectedArchive.tree,
         stats: selectedArchive.stats,
@@ -123,9 +254,20 @@ function findSelectedArchive(
     archives: ArchiveFile[],
     selectedPath: string
 ): ArchiveFile | undefined {
-    return (
-        archives.find(archive => sameFilePath(archive.filePath, selectedPath)) || archives[0]
-    );
+    const selectedResolution = splitArchivePrimaryPathCandidate(selectedPath);
+    const primaryArchive = archives.find(archive => sameFilePath(archive.filePath, selectedResolution.primaryPath));
+
+    if (primaryArchive) {
+        return primaryArchive;
+    }
+
+    const directlySelectedArchive = archives.find(archive => sameFilePath(archive.filePath, selectedPath));
+
+    if (directlySelectedArchive) {
+        return directlySelectedArchive;
+    }
+
+    return archives[0];
 }
 
 function collectArchivePasswords(
@@ -150,14 +292,6 @@ function collectArchivePasswords(
     return passwords;
 }
 
-function isSupportedArchiveName(
-    fileName: string
-): boolean {
-    const normalized = fileName.toLowerCase();
-
-    return (normalized.endsWith(".zip") || normalized.endsWith(".zip.bak"));
-}
-
 function sameFilePath(
     left: string,
     right: string
@@ -169,7 +303,6 @@ function normalizeFilePath(
     filePath: string
 ): string {
     const normalized = path.resolve(filePath);
-
     return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }
 
@@ -210,7 +343,6 @@ function createArchiveTree(
     }
 
     sortArchiveGroup(root);
-
     return root;
 }
 
@@ -256,9 +388,10 @@ function createArchiveEntryView(
     const values:
         Record<string, string> = {
             Type: archiveEntryTypeLabel(archiveEntry),
-            Format: "ZIP",
+            Format: archiveDisplayFormat(inspection),
             Archive: inspection.fileName,
             File: archiveEntry.path,
+            Details: inspection.details || "",
             Extension: archiveFileExtension(fileName),
             "Compression method": archiveEntry.compressionMethod || "",
             "Compressed size": archiveEntry.compressedSize !== undefined ? `${archiveEntry.compressedSize} bytes` : "",
@@ -289,6 +422,26 @@ function createArchiveEntryView(
     };
 }
 
+function archiveDisplayFormat(
+    inspection: ArchiveInspection
+): string {
+    if (inspection.format === "lzh") {
+        return inspection.fileName.toLowerCase().endsWith(".lha") ? "LHA Archive" : "LZH Archive";
+    }
+
+    if (inspection.format !== "ar") {
+        return archiveFormatLabel(inspection.format);
+    }
+
+    const lowerFileName = inspection.fileName.toLowerCase();
+    
+    if (lowerFileName.endsWith(".a") || lowerFileName.endsWith(".lib")) {
+        return "Static Library";
+    }
+
+    return "AR Archive";
+}
+
 function createArchiveStats(
     root: GroupView
 ): VaultStats {
@@ -296,10 +449,7 @@ function createArchiveStats(
     let entries = 0;
     let emptyGroups = 0;
 
-    const walk = (
-        group: GroupView,
-        isRoot: boolean
-    ): void => {
+    const walk = (group: GroupView, isRoot: boolean): void => {
         if (!isRoot) {
             groups++;
         }
@@ -316,7 +466,6 @@ function createArchiveStats(
     };
 
     walk(root, true);
-
     return {groups, entries, duplicates: 0, expired: 0, emptyGroups, weak: 0};
 }
 

@@ -9,28 +9,26 @@ export async function openPsafeVault(
     bytes: Uint8Array,
     password: string
 ): Promise<PsafeVault> {
-    return new Promise(
-        (resolve, reject) => {
-            const safe = new PasswordSafe({password});
+    return new Promise((resolve, reject) => {
+        const safe = new PasswordSafe({password});
 
-            safe.load(
-                Buffer.from(bytes),
-                (error: unknown, header: unknown, records: unknown[]) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-
-                    const entries = createEntries(records);
-                    const emptyGroups = readHeaderEmptyGroups(header);
-                    const tree = buildPsafeTree(entries, emptyGroups);
-                    const stats = computePsafeStats(tree, entries);
-
-                    resolve({tree, stats, entries, password, headerRecord: header, databaseRecords: records, emptyGroups});
+        safe.load(
+            Buffer.from(bytes),
+            (error: unknown, header: unknown, records: unknown[]) => {
+                if (error) {
+                    reject(error);
+                    return;
                 }
-            );
-        }
-    );
+
+                const entries = createEntries(records);
+                const emptyGroups = readHeaderEmptyGroups(header);
+                const tree = buildPsafeTree(entries, emptyGroups);
+                const stats = computePsafeStats(tree, entries);
+
+                resolve({tree, stats, entries, password, headerRecord: header, databaseRecords: records, emptyGroups});
+            }
+        );
+    });
 }
 
 export function savePsafeVaultToBytes(

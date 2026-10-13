@@ -1,7 +1,7 @@
 import { app } from "./state";
 import { vscode } from "./globals";
-import { closeModal } from "./modals";
 import { byId, maybeById } from "./dom";
+import { closeModal, openQrCodeGeneratorWithValue } from "./modals";
 
 interface GeneratorOptions {
     length: number;
@@ -17,11 +17,7 @@ export function strengthOf(password: string): {
     label: string;
 } {
     if (!password) {
-        return {
-            pct: 0,
-            color: "#666",
-            label: "empty"
-        };
+        return {pct: 0, color: "#666", label: "empty"};
     }
 
     let score = 0;
@@ -113,6 +109,7 @@ function regenGen(): void {
     const password = generatePassword(currentGenOptions());
 
     byId<HTMLInputElement>("gen-output").value = password;
+    updateShowQrButtonState();
 
     const strength = strengthOf(password);
     const bar = byId<HTMLElement>("gen-strength-bar");
@@ -120,7 +117,9 @@ function regenGen(): void {
     bar.style.setProperty("--pct", strength.pct + "%");
     bar.style.setProperty("--color", strength.color);
 
-    byId("gen-strength-label").textContent = strength.label;
+    const strengthLabel = byId<HTMLElement>("gen-strength-label");
+    strengthLabel.textContent = strength.label;
+    strengthLabel.style.color = strength.color;
 }
 
 export function bindGeneratorActions(): void {
@@ -129,12 +128,22 @@ export function bindGeneratorActions(): void {
         regenGen();
     });
 
-    document.querySelectorAll("#gen-upper, #gen-lower, #gen-digits, #gen-symbols")
-        .forEach((element) => {element.addEventListener("change", regenGen);});
+    document.querySelectorAll("#gen-upper, #gen-lower, #gen-digits, #gen-symbols").forEach((element) => {element.addEventListener("change", regenGen);});
 
     byId("gen-regen").addEventListener("click", regenGen);
     byId("gen-close").addEventListener("click", closeModal);
     byId("gen-header-close").addEventListener("click", closeModal);
+
+    byId("gen-show-qr").addEventListener("click", () => {
+        const password = byId<HTMLInputElement>("gen-output").value;
+
+        if (!password) {
+            return;
+        }
+
+        closeModal();
+        openQrCodeGeneratorWithValue(password);
+    });
 
     byId("gen-copy").addEventListener("click", () => {
         const password = byId<HTMLInputElement>("gen-output").value;
@@ -144,4 +153,26 @@ export function bindGeneratorActions(): void {
         }
     });
 
+}
+
+function updateShowQrButtonState(): void {
+    const output = byId<HTMLInputElement>("gen-output");
+    const button = byId<HTMLButtonElement>("gen-show-qr");
+    const hasPassword = output.value.length > 0;
+
+    button.disabled = !hasPassword;
+    button.classList.toggle("primary", hasPassword);
+}
+
+export function clearPasswordGenerator(): void {
+    const output = byId<HTMLInputElement>("gen-output");
+    const bar = byId<HTMLElement>("gen-strength-bar");
+    const label = byId<HTMLElement>("gen-strength-label");
+
+    output.value = "";
+    updateShowQrButtonState();
+    bar.style.setProperty("--pct", "0%");
+    bar.style.setProperty("--color", "#666");
+    label.textContent = "";
+    label.style.color = "";
 }

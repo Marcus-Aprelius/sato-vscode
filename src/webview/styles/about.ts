@@ -3,20 +3,32 @@ export const ABOUT_STYLES = `
 
 .about-supports {
     box-sizing: border-box;
-    width: 390px;
-    max-width: calc(100% - 32px);
-    margin: 26px auto 0;
-    padding-right: 20px;
+    width: 100%;
+    max-width: none;
+    margin: 4px 0 0;
+    padding: 0 12px;
     text-align: left;
-    line-height: 1.6;
+    line-height: 1.25;
     color: var(--vscode-descriptionForeground);
-    transform: translateX(-22px);
+    transform: none;
 }
 
 .about-supports-title {margin-bottom: 2px; text-align: left;}
-.about-supports-row {display: grid; grid-template-columns: 58px minmax(0, 1fr); column-gap: 8px; align-items: start; text-align: left;}
-.about-supports strong {color: var(--vscode-foreground); font-weight: 600;}
-.about-supports span {min-width: 0; overflow-wrap: anywhere;}
+.about-supports-row {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    column-gap: 6px;
+    align-items: start;
+    text-align: left;
+}
+.about-supports strong {
+    color: var(--vscode-foreground);
+    font-weight: 600;
+}
+.about-supports span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
 
 .about-tabs {
     display: flex;
@@ -52,8 +64,21 @@ export const ABOUT_STYLES = `
     border-bottom-color: var(--vscode-focusBorder);
 }
 
-.about-modal {width: 480px; height: 425px; max-height: 90vh;}
-.about-modal > .modal-body {flex: 1;}
+.about-modal {
+    position: relative;
+    top: -14px;
+    width: 550px;
+    height: 435px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 32px);
+}
+.about-modal > .modal-body {
+    flex: 1;
+    min-height: 0;
+}
+#supported-formats-content {
+    padding: 2px 8px 0 !important;
+}
 
 .about-version {display: flex; align-items: center; justify-content: center; gap: 8px;}
 .about-version .icon-btn {flex: 0 0 auto; margin-left: 0;}

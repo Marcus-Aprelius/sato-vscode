@@ -1,10 +1,23 @@
 import { escapeHtml } from "./htmlUtils";
 
+import {
+    ARCHIVE_FILE_EXTENSIONS,
+    CRYPTO_FILE_EXTENSIONS,
+    PASSWORD_VAULT_EXTENSIONS,
+    SSH_KEY_FILE_NAMES
+} from "../../fileFormats";
+
 export function renderModals(
     logoSrc: string,
     toolbarLogoSrc: string,
     versionLabel: string
 ): string {
+    const vaultFormats = formatExtensionList(PASSWORD_VAULT_EXTENSIONS);
+    const archiveFormats = formatExtensionList(ARCHIVE_FILE_EXTENSIONS);
+    const cryptoFormats = formatExtensionList(CRYPTO_FILE_EXTENSIONS);
+    const sshFormats = SSH_KEY_FILE_NAMES.map(fileName => escapeHtml(fileName)).join(" ");
+    const backupFormat = escapeHtml(".<EXT>.bak");
+
     return `
 <div class="modal-backdrop" id="modal-backdrop">
     <div class="modal" id="unlock-modal" style="width:360px;">
@@ -13,9 +26,15 @@ export function renderModals(
             <label>
                 Master password
 
-                <div class="unlock-password-field">
-                    <input type="password" id="unlock-password" autocomplete="new-password"/>
-                    <span id="unlock-layout" class="keyboard-layout-indicator">ENG</span>
+                <div class="unlock-password-row">
+                    <div class="unlock-password-field unlock-password-input">
+                        <input type="password" id="unlock-password" autocomplete="current-password"/>
+                        <span id="unlock-layout" class="keyboard-layout-indicator">ENG</span>
+                    </div>
+
+                    <button type="button" class="icon-btn archive-password-toggle" id="unlock-password-toggle" title="Show password" aria-label="Show password" aria-pressed="false">
+                        <span class="codicon codicon-eye" aria-hidden="true"></span>
+                    </button>
                 </div>
             </label>
 
@@ -38,9 +57,16 @@ export function renderModals(
         <div class="modal-body">
             <label>
                 <span id="crypto-unlock-password-label">Container password</span>
-                <div class="unlock-password-field">
-                    <input type="password" id="crypto-unlock-password" autocomplete="new-password"/>
-                    <span id="crypto-unlock-layout" class="keyboard-layout-indicator">ENG</span>
+
+                <div class="crypto-unlock-password-row">
+                    <div class="unlock-password-field crypto-unlock-password-input">
+                        <input type="password" id="crypto-unlock-password" autocomplete="current-password"/>
+                        <span id="crypto-unlock-layout" class="keyboard-layout-indicator">ENG</span>
+                    </div>
+
+                    <button type="button" class="icon-btn archive-password-toggle" id="crypto-unlock-password-toggle" title="Show password" aria-label="Show password" aria-pressed="false">
+                        <span class="codicon codicon-eye" aria-hidden="true"></span>
+                    </button>
                 </div>
             </label>
 
@@ -94,27 +120,52 @@ export function renderModals(
 
     </div>
 
-    <div class="modal" id="archive-password-modal" style="width:420px;">
-        <div class="modal-title">Change Archive Password</div>
-
+    <div class="modal" id="archive-password-modal" style="width:520px;">
+        <div class="modal-title" id="archive-password-title">Change Archive Password</div>
         <div class="modal-body">
-            <label>New password
 
-                <div class="unlock-password-field">
+        <label>New password
+
+            <div class="archive-password-row">
+                <div class="unlock-password-field archive-password-input">
                     <input type="password" id="archive-new-password" autocomplete="new-password"/>
                     <span id="archive-new-password-layout" class="keyboard-layout-indicator">ENG</span>
                 </div>
 
-            </label>
+                <button type="button" class="icon-btn archive-password-toggle" id="archive-new-password-toggle" title="Show password" aria-label="Show password" aria-pressed="false">
+                    <span class="codicon codicon-eye" aria-hidden="true"></span>
+                </button>
 
-            <label>Confirm new password
+                <button type="button" class="btn" id="archive-password-generate" title="Generate a password using the configured password generator length">Generate</button>
+            </div>
+        </label>
 
-                <div class="unlock-password-field">
+        <label>Confirm new password
+
+            <div class="archive-password-row">
+                <div class="unlock-password-field archive-password-input">
                     <input type="password" id="archive-confirm-password" autocomplete="new-password"/>
                     <span id="archive-confirm-password-layout" class="keyboard-layout-indicator">ENG</span>
                 </div>
 
-            </label>
+                <button type="button" class="icon-btn archive-password-toggle" id="archive-confirm-password-toggle" title="Show password" aria-label="Show password" aria-pressed="false">
+                    <span class="codicon codicon-eye" aria-hidden="true"></span>
+                </button>
+
+                <div class="archive-password-action-spacer" aria-hidden="true"></div>
+            </div>
+        </label>
+
+            <div class="archive-password-strength-row" id="archive-password-strength-row">
+
+                <div class="strength" id="archive-password-strength" style="visibility:hidden;">
+                    <div class="strength-bar" id="archive-password-strength-bar"></div>
+                    <span id="archive-password-strength-label"></span>
+                </div>
+
+                <div class="archive-password-toggle-spacer" aria-hidden="true"></div>
+                <div class="archive-password-action-spacer" aria-hidden="true"></div>
+            </div>
 
             <div class="empty" id="archive-password-error" style="display:none;"></div>
         </div>
@@ -127,6 +178,81 @@ export function renderModals(
             </div>
         </div>
 
+    </div>
+
+    <div class="modal" id="private-key-password-modal" style="width:520px;">
+        <div class="modal-title" id="private-key-password-title">Change Private Key Password</div>
+
+        <div class="modal-body">
+            <label id="private-key-current-password-row">
+                Current password
+
+                <div class="archive-password-row">
+                    <div class="unlock-password-field archive-password-input">
+                        <input type="password" id="private-key-current-password" autocomplete="current-password"/>
+                        <span id="private-key-current-password-layout" class="keyboard-layout-indicator">ENG</span>
+                    </div>
+
+                    <button type="button" class="icon-btn archive-password-toggle" id="private-key-current-password-toggle" title="Show password" aria-label="Show password" aria-pressed="false">
+                        <span class="codicon codicon-eye" aria-hidden="true"></span>
+                    </button>
+                    <div class="archive-password-action-spacer" aria-hidden="true"></div>
+                </div>
+            </label>
+
+            <label>
+                New password
+
+                <div class="archive-password-row">
+                    <div class="unlock-password-field archive-password-input">
+                        <input type="password" id="private-key-new-password" autocomplete="new-password"/>
+                        <span id="private-key-new-password-layout" class="keyboard-layout-indicator">ENG</span>
+                    </div>
+
+                    <button type="button" class="icon-btn archive-password-toggle" id="private-key-new-password-toggle" title="Show password" aria-label="Show password" aria-pressed="false">
+                        <span class="codicon codicon-eye" aria-hidden="true"></span>
+                    </button>
+
+                    <button type="button" class="btn" id="private-key-password-generate" title="Generate a password using the configured password generator length">
+                        Generate
+                    </button>
+                </div>
+            </label>
+
+            <label>
+                Confirm new password
+
+                <div class="archive-password-row">
+                    <div class="unlock-password-field archive-password-input">
+                        <input type="password" id="private-key-confirm-password" autocomplete="new-password"/>
+                        <span id="private-key-confirm-password-layout" class="keyboard-layout-indicator">ENG</span>
+                    </div>
+                    <button type="button" class="icon-btn archive-password-toggle" id="private-key-confirm-password-toggle" title="Show password" aria-label="Show password" aria-pressed="false">
+                        <span class="codicon codicon-eye" aria-hidden="true"></span>
+                    </button>
+                    <div class="archive-password-action-spacer" aria-hidden="true"></div>
+                </div>
+            </label>
+
+            <div class="archive-password-strength-row" id="private-key-password-strength-row">
+                <div class="strength" id="private-key-password-strength" style="visibility:hidden;">
+                    <div class="strength-bar" id="private-key-password-strength-bar"></div>
+                    <span id="private-key-password-strength-label"></span>
+                </div>
+                <div class="archive-password-toggle-spacer" aria-hidden="true"></div>
+                <div class="archive-password-action-spacer" aria-hidden="true"></div>
+            </div>
+
+            <div class="empty" id="private-key-password-error" style="display:none;"></div>
+        </div>
+
+        <div class="modal-footer unlock-modal-footer">
+            <div id="private-key-password-capslock-warning" class="capslock-warning" style="display:none;">Caps Lock is ON</div>
+            <div class="unlock-modal-actions">
+                <button type="button" class="btn" id="private-key-password-cancel">Cancel</button>
+                <button type="button" class="btn primary" id="private-key-password-save">Change Password</button>
+            </div>
+        </div>
     </div>
 
     <div class="modal" id="entry-modal">
@@ -179,9 +305,12 @@ export function renderModals(
                 </div>
             </label>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer password-generator-footer">
+            <div class="password-generator-actions">
+                <button type="button" class="btn" id="gen-show-qr" disabled>Show QR</button>
+                <button type="button" class="btn primary" id="gen-copy">Copy</button>
+            </div>
             <button type="button" class="btn" id="gen-close">Close</button>
-            <button type="button" class="btn primary" id="gen-copy">Copy</button>
         </div>
     </div>
 
@@ -269,8 +398,8 @@ export function renderModals(
         </div>
 
         <div class="about-tabs">
-            <button type="button" class="about-tab active" id="about-tab-about">About</button>
-            <button type="button" class="about-tab" id="about-tab-supported-formats">Supported Formats</button>
+        <button type="button" class="about-tab" id="about-tab-supported-formats">Supported Formats</button>
+        <button type="button" class="about-tab active" id="about-tab-about">About</button>
         </div>
 
         <div class="modal-body" id="about-content" style="align-items:center; text-align:center; gap:8px; padding:16px;">
@@ -300,33 +429,14 @@ export function renderModals(
             </div>
         </div>
 
-        <div class="modal-body" id="supported-formats-content" style="display:none; align-items:center; padding:16px;">
-        <img class="about-logo" src="${logoSrc}" alt="SATO logo" />
+        <div class="modal-body" id="supported-formats-content" style="display:none; align-items:stretch; justify-content:flex-start; padding:4px 12px 4px 18px;">
             <div class="about-supports">
-                <div class="about-supports-row">
-                    <strong>Vaults:</strong>
-                    <span>.kdbx .psafe3 .ibak .1pif .bcup</span>
-                </div>
 
-                <div class="about-supports-row">
-                    <strong>Archives:</strong>
-                    <span>.zip</span>
-                </div>
-
-                <div class="about-supports-row">
-                    <strong>SSH:</strong>
-                    <span>id_rsa id_ecdsa id_ed25519</span>
-                </div>
-
-                <div class="about-supports-row">
-                    <strong>Files:</strong>
-
-                    <div class="about-formats-list">
-                        <span>.crt .cer .der .pem .csr .p10 .key .gpg .pgp</span>
-                        <span>.rsa .ppk .pub .pk8 .p12 .pfx .sig .asc .age</span>
-                        <span>.ec  .p8  .p7b .p7c .p7s .p7m .spc .jks .jceks</span>
-                    </div>
-                </div>
+                <div class="about-supports-row"><strong>Vaults:</strong><span>${vaultFormats}</span></div>
+                <div class="about-supports-row"><strong>Archives:</strong><span>${archiveFormats}</span></div>
+                <div class="about-supports-row"><strong>SSH:</strong><span>${sshFormats}</span></div>
+                <div class="about-supports-row"><strong>Crypto:</strong><span>${cryptoFormats}</span></div>
+                <div class="about-supports-row"><strong>Backups:</strong><span>${backupFormat} (read-only)</span></div>
 
             </div>
         </div>
@@ -351,6 +461,7 @@ export function renderModals(
             <button type="button" class="converter-tab active" id="converter-tab-convert" title="Convert the selected file to another supported format" aria-label="Convert the selected file to another supported format">Convert</button>
             <button type="button" class="converter-tab" id="converter-tab-extract" title="Extract available content from the selected file" aria-label="Extract available content from the selected file">Extract</button>
             <button type="button" class="converter-tab" id="converter-tab-base64" title="Encode or decode Base64 text" aria-label="Encode or decode Base64 text">Base64</button>
+            <button type="button" class="converter-tab" id="converter-tab-qr" title="Generate a QR code from text" aria-label="Generate a QR code from text">QR</button>
         </div>
 
         <div class="modal-body converter-modal-body">
@@ -496,8 +607,12 @@ export function renderModals(
                 <section class="base64-section">
                     <div class="base64-section-header">
                         <h3>Output</h3>
-                        <button type="button" class="btn" id="base64-copy">Copy</button>
+                        <div class="base64-section-actions">
+                            <button type="button" class="btn" id="base64-show-qr" title="Show the current output as a QR code" disabled>Show QR</button>
+                            <button type="button" class="btn" id="base64-copy">Copy</button>
+                        </div>
                     </div>
+
                     <textarea id="base64-output" class="base64-textarea" spellcheck="false" placeholder="Result" readonly></textarea>
                     <div class="base64-character-count" id="base64-output-count">0 characters</div>
                 </section>
@@ -506,6 +621,43 @@ export function renderModals(
             <div class="base64-message" id="base64-message">Encoding transforms data but does not encrypt or protect it.</div>
             <div class="base64-error" id="base64-error" style="display:none;"></div>
         </div>
+
+        <div id="converter-qr-content" style="display:none;">
+            <div class="base64-columns">
+                <section class="base64-section">
+                    <div class="base64-section-header">
+                        <h3>Input</h3>
+
+                        <div class="base64-section-actions">
+                            <button type="button" class="btn" id="qr-paste">Paste</button>
+                            <button type="button" class="btn" id="qr-clear">Clear</button>
+                        </div>
+                    </div>
+
+                    <textarea id="qr-input" class="base64-textarea" spellcheck="false" placeholder="Enter text, URL, password, or other data"></textarea>
+                    <div class="base64-character-count" id="qr-input-count">0 characters</div>
+                    <div class="base64-message">QR codes may expose sensitive information to anyone who scans or photographs them.</div>
+                    <div class="base64-error" id="qr-error" style="display:none;"></div>
+                </section>
+
+                <section class="base64-section">
+                    <div class="base64-section-header">
+                        <h3>QR Code</h3>
+
+                        <div class="base64-section-actions">
+                            <button type="button" class="btn" id="qr-copy" disabled>Copy Image</button>
+                            <button type="button" class="btn" id="qr-save" disabled>Save PNG</button>
+                        </div>
+                    </div>
+
+                    <div id="qr-preview" class="qr-preview">
+                        <canvas id="qr-canvas" class="qr-preview-image" aria-label="Generated QR code" style="display:none;"></canvas>
+                        <div class="empty">Enter text to generate a QR code.</div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
     </div>
 
     <div class="modal-footer">
@@ -516,4 +668,10 @@ export function renderModals(
 
 </div>`;
 
+}
+
+function formatExtensionList(
+    extensions: readonly string[]
+): string {
+    return extensions.map(extension => escapeHtml(`.${extension}`)).join(" ");
 }

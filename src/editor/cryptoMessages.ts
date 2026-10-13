@@ -25,6 +25,14 @@ import {
     convertSpc,
     spcOutputFormats,
     isSpcOutputFormat,
+    changePrivateKeyPassword,
+    changeSshKeyPassword,
+    changePpkPassword,
+    changeJksPassword,
+    changePkcs12Password,
+    changeAgePassword,
+    changeGpgPassword,
+    changeLuksPassword,
     type SpcOutputFormat,
     type AvailableOutputFormat,
     type CertificateVault,
@@ -33,6 +41,7 @@ import {
 } from "../certificates";
 
 export interface CryptoMessageRuntime {
+    reload: () => Promise<void>;
     readSettings: () => Settings;
     copyToClipboard: (value: string, message: string, settings: Settings) => Promise<void>;
 }
@@ -74,7 +83,6 @@ export async function handleCryptoMessage(
         }
 
         panel.webview.postMessage({type: "cryptoConversionDirectorySelected", filePath: directoryUri.fsPath});
-
         return true;
     }
 
@@ -239,6 +247,53 @@ export async function handleCryptoMessage(
         return true;
     }
 
+    if (msg.type === "preparePrivateKeyPasswordChange") {
+        const entry = findCryptoEntry(certificate, msg.entryId);
+        const file = certificate.filesByEntryId?.[msg.entryId];
+
+        if (!entry || !file) {
+            vscode.window.showWarningMessage("SATO: private key file is not available.");
+            return true;
+        }
+
+        if (!isPasswordEditablePrivateKey(entry, file.uri.fsPath)) {
+            vscode.window.showWarningMessage("SATO: password management is not available for this file.");
+            return true;
+        }
+
+        const encryption = (entry.values?.Encryption || "").trim().toLowerCase();
+        const summary = entry.values?.Summary || "";
+        const protection = (entry.values?.Protection || "").trim().toLowerCase();
+        const ageFile = entry.values?.Type === "age Encrypted File";
+
+        const encrypted = ageFile || entry.values?.Status === "Locked" ||
+            protection.includes("password") || protection === "passphrase" ||
+            (encryption !== "" && encryption !== "none") ||
+            (/\bencrypted\b/i.test(summary) && !/\bunencrypted\b/i.test(summary));
+
+        const passwordKind = entry.values?.Type === "age Encrypted File" ? "age" : entry.values?.Type === "PKCS#12 Container" ? "pkcs12"
+                : entry.values?.Type === "Java KeyStore" || entry.values?.Type === "Java Cryptography Extension KeyStore" ? "keystore" : "privateKey";
+
+        panel.webview.postMessage({
+            type: "openPrivateKeyPasswordChange",
+            entryId: msg.entryId,
+            mode: encrypted ? "change" : "set",
+            passwordKind
+        });
+
+        return true;
+    }
+
+    if (msg.type === "changePrivateKeyPassword") {
+        await updatePrivateKeyPassword(document, panel, msg.entryId, msg.currentPassword, msg.newPassword, runtime);
+        return true;
+    }
+
+    if (msg.type === "deletePrivateKeyPassword") {
+        await updatePrivateKeyPassword(document, panel, msg.entryId, msg.currentPassword, undefined, runtime);
+        return true;
+    }
+
     return true;
 }
 
@@ -302,9 +357,25 @@ function postCertificateState(
     settings: Settings,
     selectedEntryId: string
 ): void {
-    panel.webview.postMessage({type: "vaultState", state: {tree: certificate.tree, stats: certificate.stats, settings, selectedEntryId}});
+    panel.webview.postMessage({
+        type: "vaultState",
+        state: {
+            tree: certificate.tree,
+            stats: certificate.stats,
+            settings,
+            selectedEntryId,
+            readOnlyVault: true,
+            vaultFormat: "files",
+            archives: certificate.supportedFiles.map(file => ({
+                fileName: file.fileName,
+                filePath: file.filePath,
+                category: file.category,
+                selected: certificate.filesByEntryId?.[selectedEntryId]?.uri.fsPath === file.filePath
+            })),
+            selectedArchivePath: certificate.filesByEntryId?.[selectedEntryId]?.uri.fsPath
+        }
+    });
 }
-
 
 function prepareCryptoConversion(
     certificate: NonNullable<VaultDocument["certificate"]>,
@@ -332,7 +403,6 @@ function prepareCryptoConversion(
 
         if (sourceFormat !== "PEM" && sourceFormat !== "DER") {
             vscode.window.showInformationMessage("SATO: this certificate encoding is not supported for conversion.");
-
             return;
         }
 
@@ -347,7 +417,6 @@ function prepareCryptoConversion(
 
         if (!firstFormat) {
             vscode.window.showInformationMessage("SATO: no output formats are available for this public key.");
-
             return;
         }
 
@@ -368,7 +437,6 @@ function prepareCryptoConversion(
 
         if (!firstFormat) {
             vscode.window.showInformationMessage("SATO: no output formats are available for this RSA key.");
-
             return;
         }
 
@@ -390,7 +458,6 @@ function prepareCryptoConversion(
 
         if (!firstFormat) {
             vscode.window.showInformationMessage("SATO: no output formats are available for this EC key.");
-
             return;
         }
 
@@ -403,7 +470,6 @@ function prepareCryptoConversion(
 
         if (!firstFormat) {
             vscode.window.showInformationMessage("SATO: no output formats are available for this SPC container.");
-
             return;
         }
 
@@ -411,7 +477,6 @@ function prepareCryptoConversion(
 
     } else {
         vscode.window.showInformationMessage("SATO: conversion is not supported for this file type.");
-
         return;
     }
 
@@ -665,4 +730,141 @@ function currentRsaOutputFormat(
     }
 
     return undefined;
+}
+
+async function updatePrivateKeyPassword(
+    document: VaultDocument,
+    panel: vscode.WebviewPanel,
+    entryId: string,
+    currentPassword: string,
+    newPassword: string | undefined,
+    runtime: CryptoMessageRuntime
+): Promise<void> {
+    const certificate = document.certificate;
+    const file = certificate?.filesByEntryId?.[entryId];
+
+    if (!certificate || !file) {
+        return;
+    }
+
+    try {
+        const createBackup = runtime.readSettings().createArchiveBackups;
+        const options = {currentPassword: currentPassword || undefined, newPassword, createBackup};
+        const lowerPath = file.uri.fsPath.toLowerCase();
+        const openPgpPrivateKey = entryIsOpenPgpPrivateKey(certificate, entryId);
+
+        if (lowerPath.endsWith(".luks")) {
+            if (!currentPassword || !newPassword) {
+                throw new Error("Current and new LUKS passwords are required.");
+            }
+
+            await changeLuksPassword(file.uri.fsPath, {currentPassword, newPassword, createBackup});
+        } else if (openPgpPrivateKey) {
+            await changeGpgPassword(
+                file.uri.fsPath,
+                {
+                    currentPassword: currentPassword || undefined,
+                    newPassword: newPassword || undefined,
+                    createBackup
+                }
+            );
+        } else if (lowerPath.endsWith(".age")) {
+            if (!currentPassword || !newPassword) {
+                throw new Error("Current and new age passwords are required.");
+            }
+
+            await changeAgePassword(file.uri.fsPath, {currentPassword, newPassword, createBackup});
+        } else if (lowerPath.endsWith(".p12") || lowerPath.endsWith(".pfx")) {
+            await changePkcs12Password(file.uri.fsPath, options );
+        } else if (lowerPath.endsWith(".jks") || lowerPath.endsWith(".jceks")) {
+            if (!currentPassword || !newPassword) {
+                throw new Error("Current and new KeyStore passwords are required.");
+            }
+
+            await changeJksPassword(file.uri.fsPath, {currentPassword, newPassword, createBackup}
+            );
+        } else if (lowerPath.endsWith(".ppk")) {
+            await changePpkPassword(file.uri.fsPath, options);
+        } else if (isOpenSshPrivateKeyPath(file.uri.fsPath)) {
+            await changeSshKeyPassword(file.uri.fsPath, options);
+        } else {
+            await changePrivateKeyPassword(file.uri.fsPath, options);
+        }
+
+        await runtime.reload();
+        await panel.webview.postMessage({type: "privateKeyPasswordChanged"});
+
+        let message: string;
+        if (lowerPath.endsWith(".luks")) {
+            message = "SATO: LUKS password changed.";
+        } else if (openPgpPrivateKey) {
+            message = newPassword ? currentPassword ? "SATO: OpenPGP private-key password changed." : "SATO: OpenPGP private-key password set." : "SATO: OpenPGP private-key password removed.";
+        } else if (lowerPath.endsWith(".age")) {
+            message = "SATO: age password changed.";
+        } else if (lowerPath.endsWith(".jks") || lowerPath.endsWith(".jceks")) {
+            message = "SATO: KeyStore password changed.";
+        } else if (newPassword) {
+            message = currentPassword ? "SATO: private key password changed." : "SATO: private key password set.";
+        } else {
+            message = "SATO: private key password removed.";
+        }
+
+        vscode.window.showInformationMessage(message);
+
+    } catch (error) {
+        await panel.webview.postMessage({
+            type: "privateKeyPasswordChangeFailed",
+            message: "Failed to update the password: " + describeError(error)
+        });
+    }
+}
+
+function isPasswordEditablePrivateKey(
+    entry: ReturnType<typeof findCryptoEntry>,
+    filePath: string
+): boolean {
+    if (!entry) {
+        return false;
+    }
+
+    if (filePath.toLowerCase().endsWith(".bak")) {
+        return false;
+    }
+
+    const normalizedPath = filePath.replace(/\\/g, "/").toLowerCase();
+    const fileName = normalizedPath.split("/").at(-1) || "";
+    const supportedExtension = [".pem", ".key", ".p8", ".pk8"].some(extension => normalizedPath.endsWith(extension));
+    const supportedOpenSshKey = ["id_rsa", "id_ecdsa", "id_ed25519"].includes(fileName);
+    const privateKeyType = ["Private Key", "RSA Private Key", "EC Private Key"].includes(entry.values?.Type || "");
+    const supportedPpk = normalizedPath.endsWith(".ppk");
+    const supportedPkcs12 = normalizedPath.endsWith(".p12") || normalizedPath.endsWith(".pfx");
+    const supportedAge = normalizedPath.endsWith(".age");
+    const supportedLuks = normalizedPath.endsWith(".luks");
+    const luksContainer = entry.values?.Type === "LUKS Encrypted Container" || entry.values?.Type === "LUKS1 Encrypted Container" || entry.values?.Type === "LUKS2 Encrypted Container";
+    const supportedOpenPgp = normalizedPath.endsWith(".gpg") || normalizedPath.endsWith(".pgp") || normalizedPath.endsWith(".asc");
+    const openPgpPrivateKey = entry.values?.Type === "OpenPGP Private Key";
+    const supportedKeyStore = normalizedPath.endsWith(".jks") || normalizedPath.endsWith(".jceks");
+
+    return (supportedExtension && privateKeyType) ||
+        (supportedOpenSshKey && entry.values?.Type === "OpenSSH Private Key") ||
+        (supportedPpk && entry.values?.Type === "PuTTY Private Key") ||
+        (supportedKeyStore && (entry.values?.Type === "Java KeyStore" || entry.values?.Type === "Java Cryptography Extension KeyStore")) ||
+        (supportedPkcs12 && entry.values?.Type === "PKCS#12 Container") ||
+        (supportedAge && entry.values?.Type === "age Encrypted File" && entry.values?.Protection === "Passphrase") ||
+        (supportedOpenPgp && openPgpPrivateKey) || (supportedLuks && luksContainer);
+}
+
+function entryIsOpenPgpPrivateKey(
+    certificate: NonNullable<VaultDocument["certificate"]>,
+    entryId: string
+): boolean {
+    const entry = findCryptoEntry(certificate, entryId);
+    return (entry?.values?.Type === "OpenPGP Private Key");
+}
+
+function isOpenSshPrivateKeyPath(
+    filePath: string
+): boolean {
+    const fileName = path.basename(filePath).toLowerCase();
+    return (fileName === "id_rsa" || fileName === "id_ecdsa" || fileName === "id_ed25519");
 }

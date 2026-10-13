@@ -59,7 +59,6 @@ export function getSelectedEntry(): ClientEntry | undefined {
 
 export function selectedEntryHasPrivateKey(): boolean {
     const entry = getSelectedEntry();
-
     return !!(entry && entry.readOnly && entry.hasPrivateKey);
 }
 
@@ -70,7 +69,14 @@ export function resetPrivateKeyState(): void {
 
 export function resetCryptoUiState(): void {
     app.privateKeyVisible = false;
-    app.detailsTab = "info";
+
+    if (app.state.vaultFormat === "archive") {
+        if (app.detailsTab !== "info" && app.detailsTab !== "preview") {
+            app.detailsTab = "info";
+        }
+    } else {
+        app.detailsTab = "info";
+    }
 
     app.showEmptyValues = app.settings.showEmptyValuesByDefault;
 }
@@ -95,7 +101,6 @@ export function reindex(): void {
     };
 
     walk(app.state.tree);
-
     syncSelectedGroupWithSelectedEntry();
 }
 

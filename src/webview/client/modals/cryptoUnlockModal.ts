@@ -3,20 +3,13 @@ import { vscode } from "../globals";
 import { entryIndex } from "../state";
 import { closeModal, openModal } from "./modalLifecycle";
 import { modalState, resetCryptoUnlockState } from "./state";
-
-import {
-    detectKeyboardLayoutFromText,
-    setKeyboardLayout,
-    updateCapsLockWarning,
-    updateKeyboardLayoutFromEvent
-} from "./inputHints";
+import { detectKeyboardLayoutFromText, setKeyboardLayout, updateCapsLockWarning, updateKeyboardLayoutFromEvent } from "./inputHints";
 
 export function openCryptoContainerUnlockModal(entryId: string): void {
     modalState.cryptoUnlockEntryId = entryId;
     modalState.openPgpPrivateKeyPath = "";
 
     const entry = entryIndex.get(entryId);
-
     modalState.cryptoUnlockRequiresPrivateKey = entry?.values?.Type === "OpenPGP Encrypted Message";
 
     const title = maybeById<HTMLElement>("crypto-unlock-title");
@@ -42,6 +35,8 @@ export function openCryptoContainerUnlockModal(entryId: string): void {
     if (password) {
         password.value = "";
     }
+
+    setCryptoUnlockPasswordVisibility(false);
 
     if (keyPath) {
         const detectedPath = modalState.cryptoUnlockRequiresPrivateKey ? findOpenPgpPrivateKeyPath() : "";
@@ -83,6 +78,8 @@ export function closeCryptoContainerUnlockModal(): void {
         password.value = "";
     }
 
+    setCryptoUnlockPasswordVisibility(false);
+
     if (keyPath) {
         keyPath.value = "";
     }
@@ -97,7 +94,6 @@ export function closeCryptoContainerUnlockModal(): void {
     }
 
     resetCryptoUnlockState();
-
     closeModal();
 }
 
@@ -166,13 +162,48 @@ export function submitCryptoContainerPassword(): void {
     });
 }
 
+function toggleCryptoUnlockPasswordVisibility(): void {
+    const input = maybeById<HTMLInputElement>("crypto-unlock-password");
+
+    if (!input) {
+        return;
+    }
+
+    setCryptoUnlockPasswordVisibility(input.type === "password");
+    input.focus();
+}
+
+function setCryptoUnlockPasswordVisibility(
+    show: boolean
+): void {
+    const input = maybeById<HTMLInputElement>("crypto-unlock-password");
+    const button = maybeById<HTMLButtonElement>("crypto-unlock-password-toggle");
+
+    if (input) {
+        input.type = show ? "text" : "password";
+    }
+
+    if (!button) {
+        return;
+    }
+
+    const label = show ? "Hide password" : "Show password";
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    button.setAttribute("aria-pressed", String(show));
+    const icon = button.querySelector<HTMLElement>(".codicon");
+
+    if (icon) {
+        icon.className = show ? "codicon codicon-eye-closed" : "codicon codicon-eye";
+    }
+}
+
 function setCryptoKeyboardLayout(layout: string): void {
     setKeyboardLayout("crypto-unlock-layout", layout);
 }
 
 function updateCryptoUnlockInputHints(event: KeyboardEvent): void {
     updateKeyboardLayoutFromEvent(event, "crypto-unlock-password", "crypto-unlock-layout");
-
     updateCapsLockWarning(event, "crypto-unlock-capslock-warning");
 }
 
@@ -203,16 +234,15 @@ function findOpenPgpPrivateKeyPath(): string {
 export function bindCryptoUnlockModalActions(): void {
     maybeById("crypto-unlock-cancel")?.addEventListener("click", closeCryptoContainerUnlockModal);
     maybeById("crypto-unlock-ok")?.addEventListener("click", submitCryptoContainerPassword);
+    maybeById("crypto-unlock-password-toggle")?.addEventListener("click", toggleCryptoUnlockPasswordVisibility);
 
-    maybeById("crypto-unlock-key-browse")?.addEventListener("click",
-        () => {
-            if (!modalState.cryptoUnlockEntryId) {
-                return;
-            }
-
-            vscode.postMessage({type: "selectOpenPgpPrivateKey", entryId: modalState.cryptoUnlockEntryId});
+    maybeById("crypto-unlock-key-browse")?.addEventListener("click", () => {
+        if (!modalState.cryptoUnlockEntryId) {
+            return;
         }
-    );
+
+        vscode.postMessage({type: "selectOpenPgpPrivateKey", entryId: modalState.cryptoUnlockEntryId});
+    });
 
     const cryptoUnlockPassword = maybeById<HTMLInputElement>("crypto-unlock-password");
 

@@ -2,12 +2,7 @@ import type { GroupView, VaultStats } from "./vault";
 import type * as vscode from "vscode";
 import { isWeakPassword } from "./security/passwordStrength";
 
-export type ImportedVaultFormat = 
-    | "kdb"
-    | "1pif"
-    | "opvault"
-    | "agilekeychain"
-    | "bcup";
+export type ImportedVaultFormat = | "kdb" | "1pif" | "opvault" | "agilekeychain" | "bcup";
 
 export interface ImportedVaultEntry {
     id: string;
@@ -161,7 +156,6 @@ export function takeKnownField(
         }
 
         delete fields[key];
-
         return value;
     }
 

@@ -54,10 +54,7 @@ export function renderLocked(
 
     <script nonce="${n}">
         const vscode = acquireVsCodeApi();
-
-        document.getElementById('unlock').addEventListener('click', () => {
-            vscode.postMessage({ type: 'unlock' });
-        });
+        document.getElementById('unlock').addEventListener('click', () => {vscode.postMessage({ type: 'unlock' });});
     </script>
 </body>
 </html>`;

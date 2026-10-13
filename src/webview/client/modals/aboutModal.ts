@@ -10,17 +10,9 @@ export function openAboutTab(
 }
 
 export function bindAboutModalActions(): void {
-    maybeById("about-tab-about")?.addEventListener("click", () =>
-        {setAboutTab("about");}
-    );
-
-    maybeById("about-tab-supported-formats")?.addEventListener("click", () =>
-        {setAboutTab("supportedFormats");}
-    );
-
-    maybeById("about-open-supported-formats")?.addEventListener("click", () =>
-        {setAboutTab("supportedFormats");}
-    );
+    maybeById("about-tab-about")?.addEventListener("click", () => {setAboutTab("about");});
+    maybeById("about-tab-supported-formats")?.addEventListener("click", () => {setAboutTab("supportedFormats");});
+    maybeById("about-open-supported-formats")?.addEventListener("click", () => {setAboutTab("supportedFormats");});
 
     maybeById("about-version-copy")?.addEventListener("click", () => {
         const version = maybeById<HTMLElement>("about-version-value")?.textContent?.trim();

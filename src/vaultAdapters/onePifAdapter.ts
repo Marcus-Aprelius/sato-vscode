@@ -78,13 +78,10 @@ export async function openOnePifVault(
     for (let index = 0; index < records.length; index++) {
         const record = records[index];
         const entry = mapOnePifRecord(record, index);
-
         const groupName = normalizeGroupName(stringValue(record.typeName) || "Items");
-
         const group = ensureGroup(root, groups, groupName);
 
         entry.groupId = group.id;
-
         entries.set(entry.id, entry);
         group.entries.push(createImportedEntryView(entry));
     }
@@ -149,27 +146,10 @@ function mapOnePifRecord(
     collectOnePifFields(secure.fields, customFields);
     collectOnePifSections(secure.sections, customFields);
 
-    const title =
-        stringValue(record.title) ||
-        stringValue(secure.title) ||
-        stringValue(open.title) ||
-        `Item ${index + 1}`;
-
-    const username =
-        stringValue(secure.username) ||
-        stringValue(open.username) ||
-        takeKnownField(customFields, ["username", "user", "login"]);
-
-    const password =
-        stringValue(secure.password) ||
-        takeKnownField(customFields, ["password", "pass", "passwd"]);
-
-    const url =
-        stringValue(record.location) ||
-        stringValue(secure.URL) ||
-        stringValue(secure.url) ||
-        takeKnownField(customFields, ["url", "website", "location"]);
-
+    const title = stringValue(record.title) || stringValue(secure.title) || stringValue(open.title) || `Item ${index + 1}`;
+    const username = stringValue(secure.username) || stringValue(open.username) || takeKnownField(customFields, ["username", "user", "login"]);
+    const password = stringValue(secure.password) || takeKnownField(customFields, ["password", "pass", "passwd"]);
+    const url = stringValue(record.location) || stringValue(secure.URL) || stringValue(secure.url) || takeKnownField(customFields, ["url", "website", "location"]);
     const notes = stringValue(secure.notesPlain) || stringValue(secure.notes);
     const tags = stringArray(open.tags);
 
@@ -214,7 +194,6 @@ function collectOnePifFields(
         }
 
         const key = prefix ? `${prefix}: ${name}` : name;
-
         result[uniqueFieldName(result, key)] = fieldValue;
     }
 }
@@ -302,14 +281,7 @@ function isOnePifRecord(
     }
 
     const record = value as OnePifRecord;
-
-    return !!(
-        record.uuid ||
-        record.title ||
-        record.typeName ||
-        record.secureContents ||
-        record.openContents
-    );
+    return !!(record.uuid || record.title || record.typeName || record.secureContents || record.openContents);
 }
 
 function objectValue(
