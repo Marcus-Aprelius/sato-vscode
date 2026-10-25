@@ -23,19 +23,14 @@ export function activate(context: vscode.ExtensionContext): void {
     const provider = new KdbxEditorProvider(context);
 
     context.subscriptions.push(
-        vscode.window.registerCustomEditorProvider(
-            KdbxEditorProvider.viewType,
-            provider,
+        vscode.window.registerCustomEditorProvider(KdbxEditorProvider.viewType, provider,
             {webviewOptions: { retainContextWhenHidden: true }, supportsMultipleEditorsPerDocument: false}
         )
     );
 
     context.subscriptions.push(
         vscode.commands.registerCommand("sato.openKdbx", async (uri?: vscode.Uri) => {
-            const target = uri ?? (await vscode.window.showOpenDialog({
-                canSelectMany: false,
-                filters: SUPPORTED_VAULT_FILTERS
-            }))?.[0];
+            const target = uri ?? (await vscode.window.showOpenDialog({canSelectMany: false, filters: SUPPORTED_VAULT_FILTERS}))?.[0];
 
             if (!target) {
                 return;
@@ -69,4 +64,3 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {}
-

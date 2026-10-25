@@ -48,9 +48,7 @@ export type MenuItem =
           children: MenuItem[];
           action?: never;
       }
-    | {
-          sep: true;
-      };
+    | { sep: true; };
 
 export interface EntryFormFields {
     title: string;

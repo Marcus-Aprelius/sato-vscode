@@ -47,6 +47,7 @@ export function closeUnlockModal(): void {
     if (password) {
         password.value = "";
     }
+    setUnlockPasswordVisibility(false);
 
     if (error) {
         error.style.display = "none";
@@ -77,6 +78,42 @@ export function setKeyboardLayout(layout: string): void {
     setInputKeyboardLayout("unlock-layout", layout);
 }
 
+function toggleUnlockPasswordVisibility(): void {
+    const input = maybeById<HTMLInputElement>("unlock-password");
+
+    if (!input) {
+        return;
+    }
+
+    setUnlockPasswordVisibility(input.type === "password");
+    input.focus();
+}
+
+function setUnlockPasswordVisibility(
+    show: boolean
+): void {
+    const input = maybeById<HTMLInputElement>("unlock-password");
+    const button = maybeById<HTMLButtonElement>("unlock-password-toggle");
+
+    if (input) {
+        input.type = show ? "text" : "password";
+    }
+
+    if (!button) {
+        return;
+    }
+
+    const label = show ? "Hide password" : "Show password";
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    button.setAttribute("aria-pressed", String(show));
+    const icon = button.querySelector<HTMLElement>(".codicon");
+
+    if (icon) {
+        icon.className = show ? "codicon codicon-eye-closed" : "codicon codicon-eye";
+    }
+}
+
 function updateUnlockInputHints(event: KeyboardEvent): void {
     updateKeyboardLayoutFromEvent(event, "unlock-password", "unlock-layout");
     updateCapsLockWarning(event, "unlock-capslock-warning");
@@ -85,6 +122,7 @@ function updateUnlockInputHints(event: KeyboardEvent): void {
 export function bindUnlockModalActions(): void {
     maybeById("unlock-cancel")?.addEventListener("click", closeUnlockModal);
     maybeById("unlock-ok")?.addEventListener("click", submitUnlockPassword);
+    maybeById("unlock-password-toggle")?.addEventListener("click", toggleUnlockPasswordVisibility);
 
     const unlockPassword = maybeById<HTMLInputElement>("unlock-password");
 
@@ -111,9 +149,7 @@ export function bindUnlockModalActions(): void {
             }
         });
 
-        unlockPassword.addEventListener("focus", () => {
-            setKeyboardLayout(detectKeyboardLayoutFromText(unlockPassword.value) || "ENG");
-        });
+        unlockPassword.addEventListener("focus", () => {setKeyboardLayout(detectKeyboardLayoutFromText(unlockPassword.value) || "ENG");});
     }
 }
    

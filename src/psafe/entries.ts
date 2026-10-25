@@ -89,7 +89,6 @@ export function createPsafeEntry(
     }
 
     vault.databaseRecords.push(record);
-
     rebuildPsafeVault(vault);
 }
 
@@ -128,7 +127,6 @@ export function deletePsafeEntry(
     }
 
     vault.databaseRecords.splice(index, 1);
-
     rebuildPsafeVault(vault);
 }
 
@@ -164,6 +162,5 @@ export function duplicatePsafeEntry(
     }
 
     vault.databaseRecords.push(copy);
-
     rebuildPsafeVault(vault);
 }

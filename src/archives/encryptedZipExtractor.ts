@@ -1,14 +1,14 @@
 import * as fs from "fs";
 import * as path from "path";
+import { openAsBlob } from "fs";
 
 import { resolveSafeExtractionPath } from "./security";
-import { Uint8ArrayReader, Uint8ArrayWriter, ZipReader } from "@zip.js/zip.js";
+import { BlobReader, Uint8ArrayWriter, ZipReader } from "@zip.js/zip.js";
 import { applyExtractionMetadata, readExtractionMetadata } from "./extractionMetadata";
+import { ARCHIVE_LIMITS, checkActualBytes, checkCompressionRatio, checkEntrySize } from "./limits";
 
 import type { FileEntry } from "@zip.js/zip.js";
 import type { ZipExtractionResult } from "./zipExtractor";
-
-const MAX_ENCRYPTED_ENTRY_SIZE = 256 * 1024 * 1024;
 
 export async function extractEncryptedZipArchive(
     archivePath: string,
@@ -20,10 +20,11 @@ export async function extractEncryptedZipArchive(
         throw new Error("Archive password is required.");
     }
 
-    const archiveBytes = await fs.promises.readFile(archivePath);
-    const zipReader = new ZipReader(new Uint8ArrayReader(archiveBytes));
+    const archiveBlob = await openAsBlob(archivePath);
+    const zipReader = new ZipReader(new BlobReader(archiveBlob));
     const extractedFiles: string[] = [];
     const skippedEntries: string[] = [];
+    const extractionProgress = {totalBytes: 0};
     const extractionMetadata = await readExtractionMetadata(destinationDirectory);
 
     try {
@@ -34,6 +35,7 @@ export async function extractEncryptedZipArchive(
         for (const entry of entries) {
             if (selectedPaths && !selectedPaths.has(entry.filename)) {
                 skippedEntries.push(entry.filename);
+
                 continue;
             }
 
@@ -46,9 +48,8 @@ export async function extractEncryptedZipArchive(
                 continue;
             }
 
-            if (entry.uncompressedSize > MAX_ENCRYPTED_ENTRY_SIZE) {
-                throw new Error(`Archive entry is too large: ` + `${entry.filename}`);
-            }
+            checkEntrySize(entry.filename, entry.uncompressedSize);
+            checkCompressionRatio(entry.filename, entry.compressedSize, entry.uncompressedSize);
 
             if (await pathExists(destinationPath)) {
                 throw new Error(`Destination file already exists: ` + destinationPath);
@@ -56,7 +57,7 @@ export async function extractEncryptedZipArchive(
 
             await fs.promises.mkdir(path.dirname(destinationPath), {recursive: true});
             await applyExtractionMetadata(path.dirname(destinationPath), extractionMetadata, true);
-            await extractEncryptedEntry(entry, destinationPath, password);
+            await extractEncryptedEntry(entry, destinationPath, password, extractionProgress);
             await applyExtractionMetadata(destinationPath, extractionMetadata, false);
 
             extractedFiles.push(destinationPath);
@@ -76,10 +77,14 @@ export async function extractEncryptedZipArchive(
 async function extractEncryptedEntry(
     entry: FileEntry,
     destinationPath: string,
-    password: string
+    password: string,
+    extractionProgress: {totalBytes: number;}
 ): Promise<void> {
     try {
         const bytes = await entry.getData(new Uint8ArrayWriter(), {password, checkAuthenticationCode: true, checkCrc32: true});
+        checkActualBytes(entry.filename, bytes.length, Math.min(entry.uncompressedSize + 64 * 1024, ARCHIVE_LIMITS.maxEntrySize));
+        extractionProgress.totalBytes += bytes.length;
+        checkActualBytes("archive total", extractionProgress.totalBytes, ARCHIVE_LIMITS.maxTotalUncompressedSize);
         await fs.promises.writeFile(destinationPath, bytes, {flag: "wx", mode: 0o600});
 
     } catch (error) {

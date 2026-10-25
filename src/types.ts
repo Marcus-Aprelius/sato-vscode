@@ -9,6 +9,7 @@ import type { ImportedVault } from "./importedVault";
 import type { CertificateVault } from "./certificates";
 
 export interface VaultDocument extends vscode.CustomDocument {
+    activeUri?: vscode.Uri;
     db?: kdbxweb.Kdbx;
     psafe?: PsafeVault;
     archive?: ArchiveVault;
@@ -30,6 +31,9 @@ export type FromWebview =
     | { type: "selectOpenPgpPrivateKey"; entryId: string; }
     | { type: "unlockCryptoContainer"; entryId: string; password: string; privateKeyPath?: string; }
     | { type: "lockCryptoContainer"; entryId: string; }
+    | { type: "preparePrivateKeyPasswordChange"; entryId: string; }
+    | { type: "changePrivateKeyPassword"; entryId: string; currentPassword: string; newPassword: string; }
+    | { type: "deletePrivateKeyPassword"; entryId: string; currentPassword: string; }
     | { type: "selectCryptoConversionSource"; }
     | { type: "prepareCryptoConversion"; entryId: string; initialTab?: "convert" | "extract";}
     | { type: "selectCryptoConversionDirectory"; initialPath: string; }
@@ -37,13 +41,14 @@ export type FromWebview =
         | "PEM" | "DER" | "RFC4716" | "PKCS8" | "RSA_PKCS1_PEM" | "RSA_PKCS1_DER"
         | "RSA_PKCS8_PEM" | "RSA_PKCS8_DER" | "RSA_SPKI_PEM" | "RSA_SPKI_DER"
         | "RSA_PUBLIC_PKCS1_PEM" | "RSA_PUBLIC_PKCS1_DER"| "EC_SEC1_PEM" | "EC_SEC1_DER"
-        | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER"
-        | "SPC_CMS_PEM" | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
+        | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER" | "SPC_CMS_PEM"
+        | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
                outputFilePath: string; outputFileName: string; }
     | { type: "revealSecret"; entryId: string; field: string; }
     | { type: "revealPrivateKey"; entryId?: string; }
     | { type: "copySecret"; entryId: string; field: string; }
     | { type: "copyText"; text: string; }
+    | { type: "saveQrCode"; pngBase64: string; }
     | { type: "openUrl"; url: string; }
     | { type: "getEntryDetail"; entryId: string; }
     | { type: "createEntry"; groupId: string; fields: EntryFields; }
@@ -55,6 +60,7 @@ export type FromWebview =
     | { type: "deleteGroup"; groupId: string; }
     | { type: "updateSettings"; settings: Settings; }
     | { type: "selectArchive"; filePath: string; }
+    | { type: "openSupportedFile"; filePath: string; }
     | { type: "prepareArchiveUnlock"; }
     | { type: "unlockArchive"; password: string; }
     | { type: "lockArchive"; }

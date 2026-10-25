@@ -1,8 +1,9 @@
 import { vscode } from "../globals";
 import { openDropdown } from "../contextMenu";
 import { app, getSelectedEntry,isCryptoFileView, isReadOnlyVault } from "../state";
-import {openBase64Converter, openEmptyCryptoConverter, openModal } from "../modals";
-import {isCryptoContainer, isCryptoContainerUnlocked, isOpenPgpMessage } from "../crypto/containerTypes";
+import { openBase64Converter, openEmptyCryptoConverter, openModal, openQrCodeGenerator } from "../modals";
+import {isCryptoContainer, isCryptoContainerUnlocked, isOpenPgpMessage, isVeraCryptContainer } from "../crypto/containerTypes";
+import { clearPasswordGenerator } from "../generator";
 
 import type { GroupView } from "../../../vault";
 import type { MenuItem } from "../types";
@@ -15,7 +16,7 @@ export function openToolsMenu(
     const archiveEncrypted = archive && hasEncryptedArchiveEntries();
     const readOnly = isReadOnlyVault();
     const entry = getSelectedEntry();
-    const cryptoContainer = isCryptoContainer(entry);
+    const cryptoContainer = isCryptoContainer(entry) && !isVeraCryptContainer(entry);
     const cryptoContainerUnlocked = isCryptoContainerUnlocked(entry);
     const openPgpMessage = isOpenPgpMessage(entry);
     const databaseActionUnavailable = crypto || readOnly;
@@ -44,9 +45,7 @@ export function openToolsMenu(
                     return;
                 }
 
-                vscode.postMessage({
-                    type: "lock"
-                });
+                vscode.postMessage({type: "lock"});
             }
         },
 
@@ -73,7 +72,6 @@ export function openToolsMenu(
 
                 if (cryptoContainerUnlocked) {
                     vscode.postMessage({type: "lockCryptoContainer", entryId: entry.id});
-
                     return;
                 }
 
@@ -84,8 +82,8 @@ export function openToolsMenu(
         { sep: true },
 
         {
-            label: "Converter",
-            title: "Open crypto file converter",
+            label: "Certificates Converter",
+            title: "Open certificate, crypto file & Key converter",
             disabled: !crypto,
 
             action: () => {
@@ -98,10 +96,15 @@ export function openToolsMenu(
         },
 
         {
-            label: "Base64 Encode / Decode",
-            title: "Encode or decode Base64, " + "Base32, Base32hex, and Hex text",
-
+            label: "Base64 Converter",
+            title: "Encode or decode Base64, Base32, Base32hex, and Hex text",
             action: () => { openBase64Converter();}
+        },
+
+        {
+            label: "QR Code Converter",
+            title: "Create a QR code from text, URL, password, or other data",
+            action: () => {openQrCodeGenerator();}
         },
 
         { sep: true },
@@ -116,6 +119,7 @@ export function openToolsMenu(
                     return;
                 }
 
+                clearPasswordGenerator();
                 openModal("gen-modal");
             }
         }

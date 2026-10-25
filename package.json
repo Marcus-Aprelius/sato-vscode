@@ -3,7 +3,7 @@
   "displayName": "SATO Secrets",
   "description": "Browse password vaults and crypto files directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
@@ -15,7 +15,7 @@
     "url": "https://github.com/Marcus-Aprelius/sato-vscode.git"
   },
   "engines": {
-    "vscode": "^1.100.0"
+    "vscode": "^1.120.0"
   },
   "categories": [
     "Other"
@@ -28,19 +28,17 @@
     "1pif",
     "buttercup",
     "bcup",
-    "secrets",
-    "password-manager",
-    "vault",
     "archive",
     "zip",
-    "zip-archive",
-    "password-protected-zip",
+    "rar",
+    "tar",
+    "bz",
+    "gz",
     "archive-manager",
     "certificate",
     "crt",
     "crypto",
-    "cer",
-    "der",
+    "pki",
     "csr",
     "p10",
     "private-key",
@@ -49,14 +47,13 @@
     "ec",
     "p12",
     "pfx",
-    "p7b",
-    "p7c",
     "cms",
     "pem",
-    "der",
+    "x509",
     "pkcs",
     "p7s",
     "p7m",
+    "qr-code",
     "p8",
     "pk8",
     "ppk",
@@ -68,12 +65,12 @@
     "pgp",
     "ssh"
   ],
-  "main": "./dist/extension.js",
+  "main": "./dist-bundle/extension.js",
   "contributes": {
     "customEditors": [
       {
         "viewType": "sato.kdbxViewer",
-        "displayName": "SATO Vault Viewer",
+        "displayName": "SATO Secrets",
         "selector": [
           {
             "filenamePattern": "*.kdbx"
@@ -127,6 +124,60 @@
             "filenamePattern": "*.pfx"
           },
           {
+              "filenamePattern": "*.p12.bak"
+          },
+          {
+              "filenamePattern": "*.pfx.bak"
+          },
+          {
+              "filenamePattern": "*.pem.bak"
+          },
+          {
+              "filenamePattern": "*.key.bak"
+          },
+          {
+              "filenamePattern": "*.p8.bak"
+          },
+          {
+              "filenamePattern": "*.pk8.bak"
+          },
+          {
+              "filenamePattern": "*.ppk.bak"
+          },
+          {
+              "filenamePattern": "*.age.bak"
+          },
+          {
+              "filenamePattern": "*.jks.bak"
+          },
+          {
+              "filenamePattern": "*.jceks.bak"
+          },
+          {
+              "filenamePattern": "*.gpg.bak"
+          },
+          {
+              "filenamePattern": "*.pgp.bak"
+          },
+          {
+              "filenamePattern": "*.asc.bak"
+          },
+          {
+              "filenamePattern": "**/id_rsa.bak"
+          },
+          {
+              "filenamePattern": "**/id_ecdsa.bak"
+          },
+          {
+              "filenamePattern": "**/id_ed25519.bak"
+          },
+          {
+              "filenamePattern": "*.zipx.bak"
+          },
+          {
+              "filenamePattern": "*.7z.bak"
+          },
+          {
             "filenamePattern": "*.p7b"
           },
           {
@@ -154,10 +205,34 @@
             "filenamePattern": "*.age"
           },
           {
+            "filenamePattern": "*.luks"
+          },
+          {
+            "filenamePattern": "*.luks.bak"
+          },
+          {
+            "filenamePattern": "*.hc"
+          },
+          {
+            "filenamePattern": "*.tc"
+          },
+          {
+            "filenamePattern": "*.hc.bak"
+          },
+          {
+            "filenamePattern": "*.tc.bak"
+          },
+          {
             "filenamePattern": "*.jks"
           },
           {
             "filenamePattern": "*.jceks"
+          },
+          {
+            "filenamePattern": "*.bks"
+          },
+          {
+            "filenamePattern": "*.bks.bak"
           },
           {
             "filenamePattern": "*.gpg"
@@ -185,6 +260,183 @@
           },
           {
             "filenamePattern": "*.zip.bak"
+          },
+          {
+            "filenamePattern": "*.zipx"
+          },
+          {
+            "filenamePattern": "*.7z"
+          },
+          {
+            "filenamePattern": "*.rar"
+          },
+          {
+            "filenamePattern": "*.dmg"
+          },
+          {
+            "filenamePattern": "*.deb"
+          },
+          {
+            "filenamePattern": "*.rpm"
+          },
+          {
+            "filenamePattern": "*.cab"
+          },
+          {
+            "filenamePattern": "*.cpio"
+          },
+          {
+            "filenamePattern": "*.ar"
+          },
+          {
+            "filenamePattern": "*.a"
+          },
+          {
+            "filenamePattern": "*.lib"
+          },
+          {
+            "filenamePattern": "*.alz"
+          },
+          {
+            "filenamePattern": "*.egg"
+          },
+          {
+            "filenamePattern": "*.aia"
+          },
+          {
+            "filenamePattern": "*.appxbundle"
+          },
+          {
+            "filenamePattern": "*.asice"
+          },
+          {
+            "filenamePattern": "*.ear"
+          },
+          {
+            "filenamePattern": "*.epub"
+          },
+          {
+            "filenamePattern": "*.ipa"
+          },
+          {
+            "filenamePattern": "*.jar"
+          },
+          {
+            "filenamePattern": "*.mcaddon"
+          },
+          {
+            "filenamePattern": "*.mcpack"
+          },
+          {
+            "filenamePattern": "*.mcproject"
+          },
+          {
+            "filenamePattern": "*.mctemplate"
+          },
+          {
+            "filenamePattern": "*.mcworld"
+          },
+          {
+            "filenamePattern": "*.mrpack"
+          },
+          {
+            "filenamePattern": "*.nupkg"
+          },
+          {
+            "filenamePattern": "*.sb2"
+          },
+          {
+            "filenamePattern": "*.sb3"
+          },
+          {
+            "filenamePattern": "*.vsix"
+          },
+          {
+            "filenamePattern": "*.war"
+          },
+          {
+            "filenamePattern": "*.whl"
+          },
+          {
+            "filenamePattern": "*.xlsx"
+          },
+          {
+            "filenamePattern": "*.xpi"
+          },
+          {
+            "filenamePattern": "*.pbix"
+          },
+          {
+            "filenamePattern": "*.pbit"
+          },
+          {
+            "filenamePattern": "*.tar"
+          },
+          {
+            "filenamePattern": "*.tar.gz"
+          },
+          {
+            "filenamePattern": "*.tgz"
+          },
+          {
+            "filenamePattern": "*.tar.bz2"
+          },
+          {
+            "filenamePattern": "*.tbz2"
+          },
+          {
+            "filenamePattern": "*.tar.xz"
+          },
+          {
+            "filenamePattern": "*.txz"
+          },
+          {
+            "filenamePattern": "*.gz"
+          },
+          {
+            "filenamePattern": "*.bz2"
+          },
+          {
+            "filenamePattern": "*.xz"
+          },
+          {
+            "filenamePattern": "*.tar.zst"
+          },
+          {
+            "filenamePattern": "*.tzst"
+          },
+          {
+            "filenamePattern": "*.tar.z"
+          },
+          {
+            "filenamePattern": "*.taz"
+          },
+          {
+            "filenamePattern": "*.zst"
+          },
+          {
+            "filenamePattern": "*.lzma"
+          },
+          {
+            "filenamePattern": "*.z"
+          },
+          {
+            "filenamePattern": "*.lzh"
+          },
+          {
+            "filenamePattern": "*.lha"
+          },
+          {
+            "filenamePattern": "*.arj"
+          },
+          {
+            "filenamePattern": "*.xar"
+          },
+          {
+            "filenamePattern": "*.chm"
+          },
+          {
+            "filenamePattern": "*.chw"
           }
         ],
         "priority": "default"
@@ -237,9 +489,9 @@
           "description": "Ask for confirmation before deleting entries or folders."
         },
         "sato.createArchiveBackups": {
-            "type": "boolean",
-            "default": false,
-            "description": "Create a .zip.bak backup before modifying a ZIP archive."
+          "type": "boolean",
+          "default": true,
+          "description": "Create a .zip.bak backup before modifying a ZIP archive."
         },
         "sato.showPasswordsByDefault": {
           "type": "boolean",
@@ -255,6 +507,25 @@
           "type": "boolean",
           "default": true,
           "description": "Show the vault statistics bar at the bottom of the editor."
+        },
+        "sato.fileCategoryFilters": {
+          "type": "array",
+          "default": [
+            "all"
+          ],
+          "items": {
+            "type": "string",
+            "enum": [
+              "all",
+              "vaults",
+              "archives",
+              "ssh",
+              "crypto"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "File categories displayed in the first SATO column."
         },
         "sato.theme": {
           "type": "string",
@@ -281,15 +552,19 @@
     "build-info": "node scripts/write-build-info.cjs",
     "build:webview": "node esbuild.webview.cjs",
     "watch": "npm run build-info && concurrently \"node esbuild.webview.cjs --watch\" \"tsc -p . --watch\"",
-    "vscode:prepublish": "npm run build",
-    "package": "npx @vscode/vsce package --out files/"
+    "vscode:prepublish": "npm run build && npm run build:extension-bundle:production",
+    "package": "npx @vscode/vsce package --out files/",
+    "build:extension-bundle": "node esbuild.extension.cjs",
+    "build:extension-bundle:production": "node esbuild.extension.cjs --production",
+    "watch:extension-bundle": "node esbuild.extension.cjs --watch"
   },
   "devDependencies": {
-    "@types/node": "^22.20.3",
-    "@types/vscode": "^1.100.0",
+    "@types/node": "^22.20.5",
+    "@types/qrcode": "^1.5.6",
+    "@types/vscode": "^1.120.0",
     "@types/yauzl": "^3.4.0",
     "@vscode/vsce": "^4.0.0",
-    "concurrently": "^10.0.5",
+    "concurrently": "^10.0.6",
     "esbuild": "^0.28.2",
     "typescript": "^7.0.2"
   },
@@ -299,12 +574,12 @@
     "buttercup": "^7.7.1",
     "hash-wasm": "^4.12.0",
     "kdbxweb": "^2.1.1",
-    "node-fetch": "^3.3.2",
     "password-safe": "^0.0.3",
+    "qrcode": "^1.5.4",
     "yauzl": "^3.4.0"
   },
   "overrides": {
-    "@xmldom/xmldom": "0.8.14",
+    "@xmldom/xmldom": "0.8.15",
     "uuid": "11.1.1"
   }
 }

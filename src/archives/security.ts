@@ -21,6 +21,18 @@ export function inspectArchiveSecurity(
     let totalUncompressedSize = 0;
 
     for (const entry of entries) {
+        if (!Number.isSafeInteger(entry.uncompressedSize) || entry.uncompressedSize < 0) {
+            warnings.push(`${entry.path}: invalid uncompressed size.`);
+
+            continue;
+        }
+
+        if (entry.compressedSize !== undefined && (!Number.isSafeInteger(entry.compressedSize) || entry.compressedSize < 0)) {
+            warnings.push(`${entry.path}: invalid compressed size.`);
+
+            continue;
+        }
+
         const pathError = validateArchiveEntryPath(entry.path);
 
         if (pathError) {
@@ -36,6 +48,12 @@ export function inspectArchiveSecurity(
         }
 
         totalUncompressedSize += entry.uncompressedSize;
+
+        if (!Number.isSafeInteger(totalUncompressedSize)) {
+            warnings.push("The total uncompressed size exceeds " + "the JavaScript safe integer range.");
+
+            break;
+        }
 
         if (entry.compressedSize !== undefined && entry.compressedSize > 0) {
             const compressionRatio = entry.uncompressedSize / entry.compressedSize;

@@ -18,7 +18,6 @@ export function closestElement(target: EventTarget | null, selector: string): El
     }
 
     const element = target instanceof Element ? target : target instanceof Node ? target.parentElement : null;
-
     return element && typeof element.closest === "function" ? element.closest(selector) : null;
 }
 
@@ -52,7 +51,6 @@ export function createCopyIconButton(title = "Copy"): HTMLButtonElement {
 
     const icon = document.createElement("span");
     icon.className = "codicon codicon-copy";
-
     button.appendChild(icon);
 
     return button;

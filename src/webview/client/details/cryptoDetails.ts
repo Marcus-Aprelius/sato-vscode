@@ -4,15 +4,14 @@ import { vscode } from "../globals";
 import { renderDetails } from "./index";
 import { renderStatus } from "../status";
 import { relativeDateTooltip } from "../dateFormat";
-import { updateMainActionButton } from "../buttons";
 import { createButton, createCopyIconButton } from "../dom";
 import { getPrivateKeyValue, renderPrivateKeyBlock} from "./privateKey";
 import { app, archivePreviewCache, archivePreviewLoading } from "../state";
 import { bitsToBytesTooltip, bytesToKilobytesTooltip } from "../sizeFormat";
 import { DAY_MILLISECONDS, daysUnitLabel, parseDateTimestamp } from "../dateFormat";
 import { countCryptoEmptyValues, emptyValuesButtonText, emptyValuesButtonTitle } from "./emptyValues";
-import { isCryptoContainer, isCryptoContainerUnlocked, isOpenPgpMessage } from "../crypto/containerTypes";
-
+import { isCryptoContainer, isCryptoContainerUnlocked, isOpenPgpMessage, isVeraCryptContainer } from "../crypto/containerTypes";
+import { hasArchivePreviewTab } from "./archivePreviewSupport";
 
 export function renderCryptoDetails(
     container: HTMLElement,
@@ -64,7 +63,9 @@ export function renderCryptoDetails(
 
     actions.appendChild(toggleEmpty);
 
-    if (isCryptoContainer(entry)) {
+    const passwordlessPkcs12 =entry.values?.Type === "PKCS#12 Container" && (entry.values?.Protection || "").trim().toLowerCase() === "none";
+
+    if (isCryptoContainer(entry) && !isVeraCryptContainer(entry) && !passwordlessPkcs12) {
         const containerUnlocked = isCryptoContainerUnlocked(entry);
         const openPgp = isOpenPgpMessage(entry);
         const ageFile = entry.values?.Type === "age Encrypted File";
@@ -223,22 +224,20 @@ function renderCryptoDetailsTabs(
 
     const infoTab = createButton(app.detailsTab === "info" ? "details-tab active" : "details-tab", "Info");
     infoTab.addEventListener("click", () => {app.detailsTab = "info"; renderDetails();});
-
     tabs.appendChild(infoTab);
-
-    if (app.state.vaultFormat === "archive") {
-        const previewTab = createButton(app.detailsTab === "preview" ? "details-tab active" : "details-tab", "Preview");
-        previewTab.addEventListener("click", () => {app.detailsTab = "preview"; renderDetails();});
-        tabs.appendChild(previewTab);
-    }
 
     if (entry.values?.Details) {
         const detailsTab = createButton(app.detailsTab === "details" ? "details-tab active" : "details-tab", "Details");
-
         detailsTab.addEventListener("click", () => {app.detailsTab = "details"; renderDetails();});
         tabs.appendChild(detailsTab);
     }
 
+    if (app.state.vaultFormat === "archive" && hasArchivePreviewTab(entry)) {
+        const previewTab = createButton(app.detailsTab === "preview" ? "details-tab active" : "details-tab", "Preview");
+        previewTab.addEventListener("click", () => {app.detailsTab = "preview"; renderDetails();});
+        tabs.appendChild(previewTab);
+    }
+    
     if (entry.hasPrivateKey) {
         const privateKeyTab = createButton(app.detailsTab === "privateKey" ? "details-tab active" : "details-tab", "Private Key");
         privateKeyTab.addEventListener("click", () => {openPrivateKeyTab(entry);});
@@ -407,7 +406,16 @@ function parseDetailsFields(
                 continue;
             }
 
+            const previousField = fields.at(-1);
+
+            if (previousField) {
+                previousField.value += `\n${line}`;
+                current = previousField;
+                continue;
+            }
+
             fields.push({label: section || "Details", value: line});
+            current = fields.at(-1);
             continue;
         }
 
@@ -463,7 +471,6 @@ function openPrivateKeyTab(
     app.privateKeyVisible = true;
     renderDetails();
     renderStatus();
-    updateMainActionButton();
 }
 
 function renderArchivePreviewTab(

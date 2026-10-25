@@ -2,12 +2,6 @@
 import { maybeById } from "./dom";
 import { isCryptoFileView, isReadOnlyVault } from "./state";
 
-export function setLockButtonState(_locked: boolean): void {
-}
-
-export function updateMainActionButton(): void {
-}
-
 export function updateToolbarForMode(): void {
     const entryButton = maybeById<HTMLButtonElement>("btn-entry");
     const folderButton = maybeById<HTMLButtonElement>("btn-folder");
@@ -37,8 +31,4 @@ export function updateToolbarForMode(): void {
 
     entryButton.title = "Entry";
     folderButton.title = "Folder";
-}
-
-export function getLockButtonMode(): string {
-    return "none";
 }

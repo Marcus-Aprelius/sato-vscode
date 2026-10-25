@@ -28,6 +28,7 @@ export function bindSettingsActions(): void {
 
     byId("s-save").addEventListener("click", () => {
         const next = {
+            ...app.settings,
             autoLockTimeout: Math.max(0, Math.min(240, parseInt(byId<HTMLInputElement>("s-autolock").value, 10) || 0)),
             clipboardClearTimeout: Math.max(0, Math.min(600, parseInt(byId<HTMLInputElement>("s-clipclear").value, 10) || 0)),
             passwordGeneratorLength: Math.max(4, Math.min(128, parseInt(byId<HTMLInputElement>("s-genlen").value, 10) || 20)),
@@ -47,12 +48,8 @@ export function bindSettingsActions(): void {
     byId("settings-tab-general").addEventListener("click", () => {setSettingsTab("general");});
     byId("settings-tab-password-generator").addEventListener("click",() => {setSettingsTab("passwordGenerator");});
 
-    byId<HTMLSelectElement>("s-theme").addEventListener(
-        "change",
-        (event) => {
-            const select = event.target as HTMLSelectElement;
-            applyTheme(select.value as | "vscode" | "dark" | "gray" | "light");
-        }
+    byId<HTMLSelectElement>("s-theme").addEventListener("change",
+        (event) => { const select = event.target as HTMLSelectElement; applyTheme(select.value as | "vscode" | "dark" | "gray" | "light");}
     );
 }
 

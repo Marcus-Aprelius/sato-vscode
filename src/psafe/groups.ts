@@ -1,11 +1,7 @@
 import type { PsafeVault } from "./types";
-import { rebuildPsafeVault } from "./tree";
 
-import {
-    callRecordSetter,
-    groupIdToPsafeGroupPath,
-    readRecordField
-} from "./records";
+import { rebuildPsafeVault } from "./tree";
+import {callRecordSetter, groupIdToPsafeGroupPath, readRecordField } from "./records";
 
 
 export function createPsafeGroup(
@@ -23,7 +19,6 @@ export function createPsafeGroup(
     const groupPath = parentPath ? `${parentPath}.${cleanName}` : cleanName;
 
     vault.emptyGroups.add(groupPath);
-
     rebuildPsafeVault(vault);
 }
 
@@ -49,13 +44,11 @@ export function renamePsafeGroup(
 
         if (emptyGroupPath === oldPath) {
             nextEmptyGroups.add(newPath);
-
             continue;
         }
 
         if (emptyGroupPath.startsWith(oldPath + ".")) {
             nextEmptyGroups.add(newPath + emptyGroupPath.slice(oldPath.length));
-
             continue;
         }
 
@@ -69,7 +62,6 @@ export function renamePsafeGroup(
 
         if (group === oldPath) {
             callRecordSetter(record, "setGroup", newPath );
-
             continue;
         }
 
@@ -91,13 +83,10 @@ export function deletePsafeGroup(
         return;
     }
 
-    vault.databaseRecords =
-        vault.databaseRecords.filter(
-            (record) => {
-                const group = readRecordField(record, ["getGroup", "getGroupName"], "");
-                return (group !== groupPath && !group.startsWith(groupPath + "."));
-            }
-        );
+    vault.databaseRecords = vault.databaseRecords.filter((record) => {
+        const group = readRecordField(record, ["getGroup", "getGroupName"], "");
+        return (group !== groupPath && !group.startsWith(groupPath + "."));
+    });
 
     const nextEmptyGroups = new Set<string>();
 
@@ -110,6 +99,5 @@ export function deletePsafeGroup(
     }
 
     vault.emptyGroups = nextEmptyGroups;
-
     rebuildPsafeVault(vault);
 }

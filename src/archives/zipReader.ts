@@ -3,23 +3,21 @@ import * as path from "path";
 import * as yauzl from "yauzl";
 
 import { inspectArchiveSecurity } from "./security";
+import { requireZipSignature } from "./zipSignature";
 
-import type {
-    ArchiveEntry,
-    ArchiveEntryType,
-    ArchiveInspection,
-    ArchiveSecurityLimits
-} from "./types";
+import type { ArchiveEntry, ArchiveEntryType, ArchiveInspection, ArchiveSecurityLimits } from "./types";
 
 export async function inspectZipArchive(
     filePath: string,
     limits?: ArchiveSecurityLimits
 ): Promise<ArchiveInspection> {
+    await requireZipSignature(filePath);
     const zipFile = await openZipFile(filePath);
     const entries: ArchiveEntry[] = [];
 
     try {
         await readZipEntries(zipFile, entries);
+
     } finally {
         zipFile.close();
     }
@@ -43,30 +41,27 @@ export async function inspectZipArchive(
 function openZipFile(
     filePath: string
 ): Promise<yauzl.ZipFile> {
-    return new Promise((resolve, reject) => {
-        yauzl.open(
-            filePath,
-            {
-                lazyEntries: true,
-                autoClose: false,
-                decodeStrings: true,
-                validateEntrySizes: true,
-                strictFileNames: false
-            },
-            (error, zipFile) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-
-                if (!zipFile) {
-                    reject(new Error("Failed to open the ZIP archive."));
-                    return;
-                }
-
-                resolve(zipFile);
+    return new Promise((resolve, reject) => { yauzl.open(filePath,
+        {
+            lazyEntries: true,
+            autoClose: false,
+            decodeStrings: true,
+            validateEntrySizes: true,
+            strictFileNames: false
+        },
+        (error, zipFile) => {
+            if (error) {
+                reject(error);
+                return;
             }
-        );
+
+            if (!zipFile) {
+                reject(new Error("Failed to open the ZIP archive."));
+                return;
+            }
+
+            resolve(zipFile);
+        });
     });
 }
 
@@ -104,13 +99,8 @@ function readZipEntries(
             zipFile.readEntry();
         };
 
-        const onEnd = (): void => {
-            finish();
-        };
-
-        const onError = (error: Error): void => {
-            finish(error);
-        };
+        const onEnd = (): void => {finish();};
+        const onError = (error: Error): void => {finish(error);};
 
         zipFile.on("entry", onEntry);
         zipFile.once("end", onEnd);

@@ -20,7 +20,6 @@ export async function unlockKdbxVault(
     password: string
 ): Promise<void> {
     const credentials = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString(password));
-
     const db = await kdbxweb.Kdbx.load(toArrayBuffer(bytes), credentials);
 
     document.db = db;
@@ -51,7 +50,6 @@ export async function handleKdbxMessage(
             }
 
             await runtime.copyToClipboard(value, `SATO: copied ${msg.field}`, settings);
-
             return;
         }
 
@@ -61,7 +59,6 @@ export async function handleKdbxMessage(
             }
 
             await runtime.copyToClipboard(msg.text, "SATO: password copied", settings);
-
             return;
         }
 
@@ -73,7 +70,6 @@ export async function handleKdbxMessage(
             }
 
             panel.webview.postMessage({type: "secretRevealed", entryId: msg.entryId, field: msg.field, value});
-
             return;
         }
 
@@ -89,9 +85,7 @@ export async function handleKdbxMessage(
 
         case "getDbInfo": {
             const info = await collectKdbxDbInfo(document, db);
-
             panel.webview.postMessage({type: "dbInfo", info});
-
             return;
         }
 
@@ -104,7 +98,6 @@ export async function handleKdbxMessage(
 
             const entry = db.createEntry(group);
             applyEntryFields(entry, msg.fields);
-
             await runtime.persist(document, panel, `Created “${msg.fields.title}”`);
 
             return;
@@ -118,9 +111,7 @@ export async function handleKdbxMessage(
             }
 
             applyEntryFields(found.entry, msg.fields);
-
             await runtime.persist(document, panel, `Updated “${msg.fields.title}”`);
-
             return;
         }
 
@@ -134,11 +125,7 @@ export async function handleKdbxMessage(
             const title = readEntryField(db, msg.entryId, "Title") || "(untitled)";
 
             if (settings.confirmBeforeDelete) {
-                const answer = await vscode.window.showWarningMessage(
-                    `Delete entry “${title}”?`,
-                    { modal: true },
-                    "Delete"
-                );
+                const answer = await vscode.window.showWarningMessage(`Delete entry “${title}”?`, { modal: true }, "Delete");
 
                 if (answer !== "Delete") {
                     return;
@@ -146,7 +133,6 @@ export async function handleKdbxMessage(
             }
 
             db.remove(found.entry);
-
             await runtime.persist(document, panel, `Deleted “${title}”`);
 
             return;
@@ -160,7 +146,6 @@ export async function handleKdbxMessage(
             }
 
             await runtime.persist(document, panel, "Entry duplicated");
-
             return;
         }
 
@@ -182,7 +167,6 @@ export async function handleKdbxMessage(
             }
 
             db.createGroup(parent, name.trim());
-
             await runtime.persist(document, panel, `Created folder “${name.trim()}”`);
 
             return;
@@ -215,7 +199,6 @@ export async function handleKdbxMessage(
             group.times.update();
 
             await runtime.persist(document, panel, `Renamed folder to “${name.trim()}”`);
-
             return;
         }
 
@@ -234,11 +217,7 @@ export async function handleKdbxMessage(
             const label = group.name ?? "(unnamed)";
 
             if (settings.confirmBeforeDelete) {
-                const answer = await vscode.window.showWarningMessage(
-                    `Delete folder “${label}” and all its contents?`,
-                    { modal: true },
-                    "Delete"
-                );
+                const answer = await vscode.window.showWarningMessage(`Delete folder “${label}” and all its contents?`, { modal: true }, "Delete");
 
                 if (answer !== "Delete") {
                     return;
@@ -246,7 +225,6 @@ export async function handleKdbxMessage(
             }
 
             db.remove(group);
-
             await runtime.persist(document, panel, `Deleted folder “${label}”`);
 
             return;
@@ -279,9 +257,7 @@ export async function collectKdbxDbInfo(
         versionMinor?: number;
     } | undefined;
 
-    const version = header?.versionMajor !== undefined
-        ? `${header.versionMajor}.${header.versionMinor ?? 0}`
-        : "unknown";
+    const version = header?.versionMajor !== undefined ? `${header.versionMajor}.${header.versionMinor ?? 0}` : "unknown";
 
     const meta = db.meta as unknown as {
         name?: string;

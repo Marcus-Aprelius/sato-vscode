@@ -43,7 +43,6 @@ export function renderStatus(): void {
 
         if (suffix) {
             const suffixElement = document.createElement("strong");
-
             suffixElement.className = "validity-days" + (suffixClassName ? ` ${suffixClassName}` : "");
             suffixElement.textContent = suffix;
             element.appendChild(suffixElement);
@@ -84,19 +83,24 @@ export function renderStatus(): void {
 }
 
 function renderArchiveStatus(
-    item: (
-        label: string,
-        value: string | number,
-        className?: string,
-        suffix?: string,
-        suffixClassName?: string,
-        title?: string
-    ) => void
+    item: (label: string, value: string | number, className?: string, suffix?: string, suffixClassName?: string, title?: string) => void
 ): void {
     const summary = collectArchiveStatus(app.state.tree);
+    const selectedArchive = app.state.archives?.find(archive => archive.filePath === app.state.selectedArchivePath);
+    const formatLabel = selectedArchive?.formatLabel || "ZIP";
+    const editable = selectedArchive?.editable === true;
 
-    item("Format", "ZIP");
-    item("Mode", "Editable");
+    item("Format", formatLabel);
+    const containerLabel = archiveContainerLabel(formatLabel);
+
+    if (containerLabel) {
+        item("Container", containerLabel);
+    }
+
+    item("Mode", editable ? "Editable" : "Read-only");
+    if (selectedArchive?.backup) {
+        item("Backup", "Yes");
+    }
     item("Files", summary.files);
     item("Folders", summary.folders);
     item("Packed", formatCompactBytes(summary.packed), "", "", "", `${summary.packed} bytes`);
@@ -113,13 +117,7 @@ function renderArchiveStatus(
 }
 
 function renderCryptoStatus(
-    item: (
-        label: string,
-        value: string | number,
-        className?: string,
-        suffix?: string,
-        suffixClassName?: string
-    ) => void
+    item: (label: string, value: string | number, className?: string, suffix?: string, suffixClassName?: string) => void
 ): void {
     const entry = app.selectedEntryId ? entryIndex.get(app.selectedEntryId) : undefined;
     const values = entry?.values || {};
@@ -149,7 +147,6 @@ function renderCryptoStatus(
     if (values["Valid to"]) {
         const validity = formatCertificateValidity( values["Valid to"]);
         const validityClass = validity.expired ? "err" : validity.days <= 30 ? "warn" : "success";
-
         item("Valid to", validity.date, "", validity.message, validityClass);
     }
 
@@ -247,10 +244,7 @@ function collectArchiveStatus(
     let unpacked = 0;
     let encrypted = false;
 
-    const walk = (
-        group: typeof app.state.tree,
-        isRoot: boolean
-    ): void => {
+    const walk = (group: typeof app.state.tree, isRoot: boolean): void => {
         if (!isRoot) {
             folders++;
         }
@@ -271,7 +265,6 @@ function collectArchiveStatus(
     };
 
     walk(root, true);
-
     return {files, folders, packed, unpacked, encrypted};
 }
 
@@ -289,7 +282,6 @@ function parseByteValue(
     }
 
     const parsed = Number(match[0].replace(/,/g, ""));
-
     return Number.isFinite(parsed) ? parsed : 0;
 }
 
@@ -309,4 +301,27 @@ function formatCompactBytes(
     }
 
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+function archiveContainerLabel(
+    formatLabel: string
+): string {
+    if (formatLabel === "TAR.GZ" || formatLabel === "TAR.BZ2" ||
+        formatLabel === "TAR.XZ" || formatLabel === "TAR.ZST" ||
+        formatLabel === "TAR.Z") {
+        return "TAR";
+    }
+
+    if (formatLabel === "DMG Disk Image") {
+        return "DMG Disk Image";
+    }
+
+    const standaloneFormats = new Set(["ZIP", "ZIPX", "7-Zip", "RAR",
+        "ALZip", "EGG", "TAR", "GZip", "BZip2", "XZ", "Zstandard", "LZMA", "Unix Compress",
+        "LZH Archive", "LHA Archive", "ARJ Archive", "XAR Archive", "Compiled HTML Help",
+        "Compiled Help Index", "CAB Archive", "CPIO Archive", "AR Archive", "Static Library",
+        "DEB Package", "RPM Package"
+    ]);
+
+    return standaloneFormats.has(formatLabel) ? "" : "ZIP";
 }

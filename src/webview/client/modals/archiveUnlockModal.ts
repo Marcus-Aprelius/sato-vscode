@@ -44,9 +44,7 @@ export function bindArchiveUnlockModalActions(): void {
 
     const password = byId<HTMLInputElement>(PASSWORD_INPUT_ID);
 
-    const updateInputHints = (
-        event: KeyboardEvent
-    ): void => {
+    const updateInputHints = (event: KeyboardEvent): void => {
         updateKeyboardLayoutFromEvent(event, PASSWORD_INPUT_ID, LAYOUT_INDICATOR_ID);
         updateCapsLockWarning(event, CAPS_LOCK_WARNING_ID);
     };

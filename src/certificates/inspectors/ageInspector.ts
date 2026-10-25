@@ -23,9 +23,7 @@ export function inspectAge(
             Status: "Locked",
             Protection: recipientType,
             ...fileMetadata(bytes, filePath),
-            Summary: recipientType === "Passphrase"
-                ? "Passphrase-encrypted age file detected."
-                : "Recipient-encrypted age file detected. An identity file may be required."
+            Summary: recipientType === "Passphrase" ? "Passphrase-encrypted age file detected." : "Recipient-encrypted age file detected. An identity file may be required."
         }
     };
 }
@@ -62,7 +60,7 @@ export function inspectAgeUnlocked(
                 Status: "Unlock failed",
                 Protection: "Passphrase",
                 ...fileMetadata(bytes, filePath),
-                Summary: "Failed to decrypt age file. The passphrase may be incorrect or the age command may be unavailable."
+                Summary: "Failed to decrypt age file. The password may be incorrect."
             }
         };
     }
@@ -93,21 +91,36 @@ function decryptAgeWithPassphrase(
 
     try {
         temporaryDirectory = createTemporaryDirectory("sato-age-");
-
         const inputPath = path.join(temporaryDirectory, "encrypted.age");
+        const outputPath = path.join(temporaryDirectory, "decrypted-content");
         fs.writeFileSync(inputPath, Buffer.from(bytes), {mode: 0o600});
+        const command = ["umask 077;", "age", "--decrypt", "--output", shellQuote(outputPath), shellQuote(inputPath)].join(" ");
 
         const result = spawnSync(
-            "age",
-            ["--decrypt", inputPath ],
-            {env: {...process.env, AGE_PASSPHRASE: password }, encoding: null, maxBuffer: 32 * 1024 * 1024, timeout: 30000, windowsHide: true}
+            "script",
+            ["-qfec", command, "/dev/null"],
+            {
+                input: `${password}\n`,
+                stdio: ["pipe", "ignore", "ignore"],
+                timeout: 30000,
+                windowsHide: true,
+                env: {...process.env}
+            }
         );
 
-        if (result.error || result.status !== 0 || !result.stdout) {
+        const outputExists = fs.existsSync(outputPath);
+
+        if (result.error || result.status !== 0 || !outputExists) {
             return undefined;
         }
 
-        return new Uint8Array(result.stdout);
+        const stat = fs.statSync(outputPath);
+
+        if (!stat.isFile()) {
+            return undefined;
+        }
+
+        return new Uint8Array(fs.readFileSync(outputPath));
 
     } catch {
         return undefined;
@@ -117,11 +130,17 @@ function decryptAgeWithPassphrase(
     }
 }
 
+function shellQuote(
+    value: string
+): string {
+    return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+
 function detectAgeEncoding(
     bytes: Uint8Array
 ): "ASCII Armor" | "Binary" {
     const prefix = Buffer.from(bytes).subarray(0, Math.min(bytes.length, 128)).toString("ascii");
-
     return prefix.includes("-----BEGIN AGE ENCRYPTED FILE-----") ? "ASCII Armor" : "Binary";
 }
 
@@ -129,25 +148,19 @@ function detectRecipientType(
     bytes: Uint8Array
 ): "Passphrase" | "Identity" {
     const text = ageHeaderText(bytes);
-
     return (text.includes("-> scrypt ") || text.includes("\n-> scrypt\n")) ? "Passphrase" : "Identity";
 }
 
 function ageHeaderText(
     bytes: Uint8Array
 ): string {
-    const prefix = Buffer.from(bytes)
-        .subarray(0, Math.min(bytes.length, 16384))
-        .toString("utf8");
+    const prefix = Buffer.from(bytes).subarray(0, Math.min(bytes.length, 16384)).toString("utf8");
 
     if (!prefix.includes("-----BEGIN AGE ENCRYPTED FILE-----")) {
         return prefix;
     }
 
-    const armoredBody = prefix
-        .replace("-----BEGIN AGE ENCRYPTED FILE-----", "")
-        .replace(/-----END AGE ENCRYPTED FILE-----[\s\S]*/,"")
-        .replace(/\s+/g, "");
+    const armoredBody = prefix.replace("-----BEGIN AGE ENCRYPTED FILE-----", "").replace(/-----END AGE ENCRYPTED FILE-----[\s\S]*/,"").replace(/\s+/g, "");
 
     try {
         return Buffer.from(armoredBody, "base64").toString("utf8");

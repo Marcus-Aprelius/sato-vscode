@@ -1,6 +1,6 @@
 import type * as vscode from "vscode";
 
-import { CRYPTO_FILE_EXTENSIONS, SSH_PRIVATE_KEY_FILE_NAMES } from "../fileFormats";
+import { CRYPTO_FILE_EXTENSIONS, SSH_KEY_FILE_NAMES, normalizeBackupFileName } from "../fileFormats";
 
 export function isCertificateLikeUri(
     uri: vscode.Uri
@@ -11,20 +11,20 @@ export function isCertificateLikeUri(
 export function isCertificateLikeFileName(
     fileName: string
 ): boolean {
-    const normalizedName = fileName.toLowerCase();
+    const normalizedName = normalizeBackupFileName(fileName.toLowerCase());
 
     return (
         CRYPTO_FILE_EXTENSIONS.some((extension) => normalizedName.endsWith(`.${extension}`)) ||
-        SSH_PRIVATE_KEY_FILE_NAMES.some((supportedName) => normalizedName === supportedName)
+        SSH_KEY_FILE_NAMES.some((supportedName) => normalizedName === supportedName)
     );
 }
 
 export function isSshPrivateKeyFilePath(
     filePath: string
 ): boolean {
-    const fileName = filePath.replace(/\\/g, "/").split("/").pop()?.toLowerCase() || "";
+    const fileName = normalizeBackupFileName(filePath.replace(/\\/g, "/").split("/").pop() ?.toLowerCase() || "");
 
-    return SSH_PRIVATE_KEY_FILE_NAMES.some((supportedName) => fileName === supportedName);
+    return !fileName.endsWith(".pub") && SSH_KEY_FILE_NAMES.some((supportedName) => fileName === supportedName);
 }
 
 export function fileNameOf(

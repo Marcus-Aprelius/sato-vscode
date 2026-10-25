@@ -1,13 +1,22 @@
 import * as vscode from "vscode";
+
+import { spawnSync } from "child_process";
+
 import { describeError } from "../utils/errors";
 import {
-    changeZipPassword,
-    editZipArchive,
-    extractEncryptedZipArchive,
-    extractZipArchive,
-    previewZipEntry,
-    testEncryptedZipPassword
+    changeArchivePassword,
+    editArchive,
+    extractArchive,
+    isArchivePasswordEditable,
+    isEditableArchiveFormat,
+    previewArchiveEntry,
+    archiveContainerLabel,
+    testPasswordForArchive
 } from "../archives";
+import { isSatoBackupFileName } from "../fileFormats";
+import { archiveExtractionFolderName } from "../shared/archiveFileName";
+
+import { refreshSelectedArchive } from "./archiveFiles";
 
 import type { Settings } from "../webview";
 import type { FromWebview, VaultDocument } from "../types";
@@ -41,92 +50,74 @@ export async function handleArchiveMessage(
 
             case "prepareArchiveUnlock":
                 await prepareArchiveUnlock(document, panel);
-
                 return true;
 
             case "unlockArchive":
-                await unlockArchive(document, panel, msg.password);
-
+                await unlockArchive(document, panel, msg.password, readSettings);
                 return true;
 
             case "lockArchive":
                 await lockArchive(document, panel);
-
                 return true;
 
             case "prepareArchivePasswordSet":
                 await prepareArchivePasswordSet(document, panel);
-
                 return true;
 
             case "prepareArchivePasswordChange":
                 await prepareArchivePasswordChange(document, panel);
-
                 return true;
 
             case "changeArchivePassword":
-                await changeArchivePassword(document, panel, msg.password, reload, readSettings);
-
+                await changeSelectedArchivePassword(document, panel, msg.password, reload, readSettings);
                 return true;
 
             case "deleteArchivePassword":
                 await deleteArchivePassword(document, panel, reload, readSettings);
-
                 return true;
 
         case "selectArchive":
             await selectArchive(document, panel, msg.filePath, readSettings);
-
             return true;
 
         case "previewArchiveEntry":
-            await previewArchiveEntry(document, panel, msg.entryId);
-
+            await previewSelectedArchiveEntry(document, panel, msg.entryId);
             return true;
 
         case "copyArchiveInternalPath":
             await copyArchivePath(document, msg.groupId);
-
             return true;
 
         case "extractArchiveEntry":
             await extractArchiveEntry(document, msg.entryId);
-
             return true;
 
         case "extractArchiveFolder":
             await extractArchiveFolder(document, msg.groupId);
-
             return true;
 
         case "extractArchiveAll":
             await extractArchiveAll(document);
-
             return true;
 
         case "extractArchiveToFolder":
             await extractArchiveToFolder(document);
-
             return true;
 
         case "addArchiveFile":
             await addArchiveFile(document, msg.groupId, reload, readSettings);
-
             return true;
 
         case "createArchiveFolder":
             await createArchiveFolder(document, msg.groupId, reload, readSettings);
-
             return true;
 
         case "deleteArchiveEntry":
             await deleteArchiveEntry(document, msg.entryId, reload, readSettings);
-
             return true;
 
         case "deleteArchiveFolder":
             await deleteArchiveFolder(document, msg.groupId, reload, readSettings);
-
             return true;
 
         default:
@@ -150,7 +141,6 @@ async function selectArchive(
 
     if (!selectedArchive) {
         vscode.window.showErrorMessage("SATO: selected archive was not found.");
-
         return;
     }
 
@@ -165,23 +155,32 @@ async function selectArchive(
     archiveVault.selectedEntryId = selectedArchive.selectedEntryId;
     archiveVault.password = selectedArchive.password;
 
-    const archiveList = archiveVault.archives.map(
-        archive => ({
-            fileName: archive.fileName,
-            filePath: archive.filePath,
-            entryCount: archive.inspection.entryCount,
-            encrypted: archive.inspection.encrypted,
-            selected: sameFilePath(archive.filePath, selectedArchive.filePath)
-        })
-    );
+    const settings = readSettings();
+    const archivesByPath = new Map(archiveVault.archives.map(archive => [normalizeFilePath(archive.filePath), archive]));
+
+    const archiveList = archiveVault.supportedFiles.map(file => {
+        const archive = file.category === "archives" ? archivesByPath.get(normalizeFilePath(file.filePath)) : undefined;
+
+        return {
+            fileName: file.fileName,
+            filePath: file.filePath,
+            category: file.category,
+            entryCount: archive?.inspection.entryCount,
+            encrypted: archive?.inspection.encrypted,
+            formatLabel: file.category === "archives" ? archiveContainerLabel(file.filePath) : undefined,
+            editable: file.category === "archives" ? isEditableArchiveFormat(file.filePath) : undefined,
+            passwordEditable: file.category === "archives" ? isArchivePasswordEditable(file.filePath) : undefined,
+            backup: file.category === "archives" ? isSatoBackupFileName(file.fileName) : undefined,
+            selected: sameFilePath(file.filePath, selectedArchive.filePath)
+        };
+    });
 
     await panel.webview.postMessage({
         type: "vaultState",
-
         state: {
             tree: archiveVault.tree,
             stats: archiveVault.stats,
-            settings: readSettings(),
+            settings,
             selectedEntryId: archiveVault.selectedEntryId || null,
             readOnlyVault: true,
             vaultFormat: "archive",
@@ -193,6 +192,52 @@ async function selectArchive(
     if (selectedArchive.inspection.encrypted && !selectedArchive.password) {
         setTimeout(() => {void panel.webview.postMessage({type: "openArchiveUnlock"});}, 100);
     }
+}
+
+async function postArchiveState(
+    document: VaultDocument,
+    panel: vscode.WebviewPanel,
+    settings: Settings
+): Promise<void> {
+    const archiveVault = document.archive;
+
+    if (!archiveVault) {
+        return;
+    }
+
+    const archivesByPath = new Map(archiveVault.archives.map(archive => [normalizeFilePath(archive.filePath), archive]));
+
+    const archiveList = archiveVault.supportedFiles.map(file => {
+        const archive = file.category === "archives" ? archivesByPath.get(normalizeFilePath(file.filePath)) : undefined;
+
+        return {
+            fileName: file.fileName,
+            filePath: file.filePath,
+            category: file.category,
+            entryCount: archive?.inspection.entryCount,
+            encrypted: archive?.inspection.encrypted,
+            formatLabel: file.category === "archives" ? archiveContainerLabel(file.filePath) : undefined,
+            editable: file.category === "archives" ? isEditableArchiveFormat(file.filePath) : undefined,
+            passwordEditable: file.category === "archives" ? isArchivePasswordEditable(file.filePath) : undefined,
+            backup: file.category === "archives" ? isSatoBackupFileName(file.fileName) : undefined,
+            selected: sameFilePath(file.filePath, archiveVault.selectedArchivePath
+            )
+        };
+    });
+
+    await panel.webview.postMessage({
+        type: "vaultState",
+        state: {
+            tree: archiveVault.tree,
+            stats: archiveVault.stats,
+            settings,
+            selectedEntryId: archiveVault.selectedEntryId || null,
+            readOnlyVault: true,
+            vaultFormat: "archive",
+            archives: archiveList,
+            selectedArchivePath: archiveVault.selectedArchivePath
+        }
+    });
 }
 
 async function prepareArchiveUnlock(
@@ -207,7 +252,6 @@ async function prepareArchiveUnlock(
 
     if (!archive.inspection.encrypted) {
         vscode.window.showInformationMessage("SATO: the archive is not password-protected.");
-
         return;
     }
 
@@ -217,7 +261,8 @@ async function prepareArchiveUnlock(
 async function unlockArchive(
     document: VaultDocument,
     panel: vscode.WebviewPanel,
-    password: string
+    password: string,
+    readSettings: () => Settings
 ): Promise<void> {
     const archive = document.archive;
 
@@ -227,7 +272,6 @@ async function unlockArchive(
 
     if (!password) {
         panel.webview.postMessage({type: "archiveUnlockFailed", message: "Enter the archive password."});
-
         return;
     }
 
@@ -238,16 +282,23 @@ async function unlockArchive(
             return;
         }
 
-        const valid = await testEncryptedZipPassword(archiveFilePath, password);
+        const valid = await testPasswordForArchive(archiveFilePath, archive.inspection.format, password);
 
         if (!valid) {
             panel.webview.postMessage({type: "archiveUnlockFailed", message: "Wrong archive password."});
-
             return;
         }
 
         archive.password = password;
         syncSelectedArchivePassword(document);
+        const refreshed = await refreshSelectedArchive(document, password);
+
+        if (!refreshed || !document.archive) {
+            return;
+        }
+
+        syncSelectedArchivePassword(document);
+        await postArchiveState(document, panel, readSettings());
         await panel.webview.postMessage({type: "archiveUnlocked"});
         vscode.window.setStatusBarMessage("SATO: archive unlocked", 2000);
 
@@ -281,13 +332,17 @@ async function prepareArchivePasswordSet(
     if (!archive) {
         return;
     }
-
-    if (archive.inspection.encrypted) {vscode.window.showInformationMessage("SATO: the archive is already password-protected.");
-
+  
+    if (!isArchivePasswordEditable(archive.selectedArchivePath)) {
+        vscode.window.showWarningMessage("SATO: password management is available only for ZIP, ZIPX, and 7-Zip archives.");
         return;
     }
 
-    await panel.webview.postMessage({type: "openArchivePasswordChange"});
+    if (archive.inspection.encrypted) {vscode.window.showInformationMessage("SATO: the archive is already password-protected.");
+        return;
+    }
+
+    await panel.webview.postMessage({type: "openArchivePasswordChange", mode: "set"});
 }
 
 async function prepareArchivePasswordChange(
@@ -296,22 +351,29 @@ async function prepareArchivePasswordChange(
 ): Promise<void> {
     const archive = document.archive;
 
-    if (!archive?.inspection.encrypted) {
-        vscode.window.showInformationMessage("SATO: the archive is not password-protected.");
+    if (!archive) {
+        return;
+    }
 
+    if (!isArchivePasswordEditable(archive.selectedArchivePath)) {
+        vscode.window.showWarningMessage("SATO: password management is available only for ZIP, ZIPX, and 7-Zip archives.");
+        return;
+    }
+
+    if (!archive.inspection.encrypted) {
+        vscode.window.showInformationMessage("SATO: the archive is not password-protected.");
         return;
     }
 
     if (!archive.password) {
         vscode.window.showWarningMessage("SATO: unlock the archive before changing its password.");
-
         return;
     }
 
-    await panel.webview.postMessage({type: "openArchivePasswordChange"});
+    await panel.webview.postMessage({type: "openArchivePasswordChange", mode: "change"});
 }
 
-async function changeArchivePassword(
+async function changeSelectedArchivePassword(
     document: VaultDocument,
     panel: vscode.WebviewPanel,
     newPassword: string,
@@ -326,28 +388,31 @@ async function changeArchivePassword(
 
     const archiveFilePath = archive.selectedArchivePath;
 
+    if (!isArchivePasswordEditable(archiveFilePath)) {
+        await panel.webview.postMessage({type: "archivePasswordChangeFailed", message: "Password management is not supported for this archive."});
+        return;
+    }
+
     if (archive.inspection.encrypted && !archive.password) {
         await panel.webview.postMessage({type: "archivePasswordChangeFailed", message: "Unlock the archive before changing its password."});
-
         return;
     }
 
     if (!newPassword) {
         await panel.webview.postMessage({type: "archivePasswordChangeFailed", message: "Enter a new archive password."});
-
         return;
     }
 
     const currentPassword = archive.password || "";
 
     try {
-        await changeZipPassword(archiveFilePath, { currentPassword, newPassword, createBackup: readSettings().createArchiveBackups});
-
+        await await changeArchivePassword(archiveFilePath, archive.inspection.format, { currentPassword, newPassword, createBackup: readSettings().createArchiveBackups});
         await reload();
 
         if (document.archive) {
             document.archive.password = newPassword;
         }
+
         syncSelectedArchivePassword(document);
         await panel.webview.postMessage({type: "archivePasswordChanged"});
         vscode.window.showInformationMessage("SATO: archive password changed.");
@@ -365,27 +430,38 @@ async function deleteArchivePassword(
 ): Promise<void> {
     const archive = document.archive;
 
-    if (!archive?.password) {
-        vscode.window.showWarningMessage("SATO: unlock the archive before removing its password.");
-
+    if (!archive) {
         return;
     }
 
-    const archiveFilePath = archive.selectedArchivePath;
+    if (!isArchivePasswordEditable(archive.selectedArchivePath)) {
+        vscode.window.showWarningMessage("SATO: password management is available only for ZIP, ZIPX, and 7-Zip archives.");
+        return;
+    }
+
+    if (!archive.password) {
+        vscode.window.showWarningMessage("SATO: unlock the archive before removing its password.");
+        return;
+    }
+
     const answer = await vscode.window.showWarningMessage("Remove password protection from this archive?", {modal: true}, "Remove Password");
 
     if (answer !== "Remove Password") {
         return;
     }
 
-    const currentPassword = archive.password || "";
+    const currentPassword = archive.password;
+    const archiveFilePath = archive.selectedArchivePath;
 
     try {
-        await changeZipPassword(archiveFilePath, {currentPassword, newPassword: undefined, createBackup: readSettings().createArchiveBackups});
+        await changeArchivePassword(archiveFilePath, archive.inspection.format, {currentPassword, newPassword: undefined, createBackup: readSettings().createArchiveBackups});
+        archive.password = undefined;
+
+        syncSelectedArchivePassword(document);
         await reload();
 
         if (document.archive) {
-           document.archive.password = undefined;
+            document.archive.password = undefined;
             syncSelectedArchivePassword(document);
         }
 
@@ -397,7 +473,7 @@ async function deleteArchivePassword(
     }
 }
 
-async function previewArchiveEntry(
+async function previewSelectedArchiveEntry(
     document: VaultDocument,
     panel: vscode.WebviewPanel,
     entryId: string
@@ -433,7 +509,7 @@ async function previewArchiveEntry(
         return;
     }
 
-    const result = await previewZipEntry(archive.selectedArchivePath, entry.path, archive.password);
+    const result = await previewArchiveEntry(archive.selectedArchivePath, archive.inspection, entry.path, archive.password);
     await panel.webview.postMessage({type: "archivePreview", entryId, ...result});
 }
 
@@ -452,7 +528,6 @@ async function extractArchiveEntry(
 
     if (!entry || entry.type !== "file") {
         vscode.window.showErrorMessage("SATO: archive file entry was not found.");
-
         return;
     }
 
@@ -488,7 +563,6 @@ async function extractArchiveFolder(
 
     if (selectedPaths.size === 0) {
         vscode.window.showInformationMessage("SATO: the selected archive folder is empty.");
-
         return;
     }
 
@@ -532,8 +606,9 @@ async function extractArchiveToFolder(
 async function selectExtractionDirectory(
     title: string
 ): Promise<string | undefined> {
-    const selected = await vscode.window.showOpenDialog({title, canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: "Extract Here"});
-
+    const selected = await vscode.window.showOpenDialog({
+        title, canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: "Extract Here"
+    });
     return selected?.[0]?.fsPath;
 }
 
@@ -556,10 +631,7 @@ async function runExtraction(
             return;
         }
 
-        const result = archive.inspection.encrypted
-                ? await extractEncryptedZipArchive(archiveFilePath, destinationDirectory, archive.password || "", selectedPaths)
-                : await extractZipArchive(archiveFilePath, destinationDirectory, selectedPaths);
-
+        const result = await extractArchive(archiveFilePath, archive.inspection, destinationDirectory, archive.password, selectedPaths);
         const extractedCount = result.extractedFiles.length;
         vscode.window.showInformationMessage(extractedCount === 1 ? "SATO: 1 file extracted." : `SATO: ${extractedCount} files extracted.`);
 
@@ -578,7 +650,6 @@ function archiveEntryIndex(
     }
 
     const index = Number.parseInt(entryId.slice(prefix.length), 10);
-
     return Number.isInteger(index) ? index : -1;
 }
 
@@ -651,7 +722,10 @@ async function showArchiveInfo(
     const totalCompressedSize = inspection.entries.reduce((total, entry) => total + (entry.compressedSize ?? 0), 0);
     const compressionRatio = totalCompressedSize > 0 ? inspection.totalUncompressedSize / totalCompressedSize : undefined;
 
+    const packageRows = inspection.format === "deb" ? readDebPackageInfo(inspection.filePath) : [];
+
     const rows: [string, string][] = [
+        ...packageRows,
         ["File name", inspection.fileName],
         ["Format", archiveFormatLabel(inspection.format)],
         ["Status", inspection.encrypted ? "Encrypted" : "Not encrypted"],
@@ -667,11 +741,79 @@ async function showArchiveInfo(
         ["File path", inspection.filePath]
     ].filter((row): row is [string, string] => row[1] !== "");
 
-    const sent = await panel.webview.postMessage({type: "dbInfo", info: {title: "Archive Info", rows}});
+    const sent = await panel.webview.postMessage({type: "dbInfo", info: {title: inspection.format === "deb" ? "DEB Package Info" : "Archive Info", rows}});
 
     if (!sent) {
         console.error("SATO: failed to send Archive Info to the webview.");
     }
+}
+
+function readDebPackageInfo(
+    filePath: string
+): [string, string][] {
+    const result = spawnSync(
+        "dpkg-deb",
+        ["--field", filePath],
+        {encoding: "utf8", timeout: 30000, maxBuffer: 4 * 1024 * 1024, windowsHide: true}
+    );
+
+    if (result.error || result.status !== 0) {
+        return [];
+    }
+
+    const fields = parseDebControlFields(String(result.stdout || ""));
+    const installedSize = fields.get("Installed-Size");
+
+    return [
+        ["Package", fields.get("Package") || ""],
+        ["Version", fields.get("Version") || ""],
+        ["Architecture", fields.get("Architecture") || ""],
+        ["Maintainer", fields.get("Maintainer") || ""],
+        [ "Installed size", installedSize ? `${installedSize} KB` : ""],
+        ["Depends", fields.get("Depends") || ""],
+        ["Pre-Depends", fields.get("Pre-Depends") || ""],
+        ["Recommends", fields.get("Recommends") || ""],
+        ["Suggests", fields.get("Suggests") || ""],
+        ["Provides", fields.get("Provides") || ""],
+        ["Conflicts", fields.get("Conflicts") || ""],
+        ["Breaks", fields.get("Breaks") || ""],
+        ["Replaces", fields.get("Replaces") || ""],
+        ["Section", fields.get("Section") || ""],
+        ["Priority", fields.get("Priority") || ""],
+        ["Homepage", fields.get("Homepage") || ""],
+        ["Description", fields.get("Description") || ""]
+    ].filter(
+        (row): row is [string, string] => row[1] !== ""
+    );
+}
+
+function parseDebControlFields(
+    output: string
+): Map<string, string> {
+    const fields = new Map<string, string>();
+    let currentField = "";
+
+    for (const rawLine of output.replace(/\r/g, "").split("\n")) {
+        const fieldMatch = rawLine.match(/^([^:\s]+):\s*(.*)$/);
+
+        if (fieldMatch?.[1] !== undefined) {
+            currentField = fieldMatch[1];
+            fields.set(currentField, fieldMatch[2] || "");
+
+            continue;
+        }
+
+        if (!currentField || !rawLine.startsWith(" ")) {
+            continue;
+        }
+
+        const previousValue = fields.get(currentField) || "";
+        const continuation = rawLine.slice(1);
+
+        fields.set(currentField, previousValue ? `${previousValue}\n${continuation}` : continuation);
+    }
+
+    return fields;
 }
 
 async function copyArchivePath(
@@ -851,7 +993,6 @@ async function deleteArchiveEntry(
 
     if (!entry || entry.type !== "file") {
         vscode.window.showErrorMessage("SATO: archive file entry was not found.");
-
         return;
     }
 
@@ -878,7 +1019,6 @@ async function deleteArchiveFolder(
 
     if (!folderPath) {
         vscode.window.showErrorMessage("SATO: the archive root cannot be deleted.");
-
         return;
     }
 
@@ -900,9 +1040,13 @@ function canEditArchive(
         return false;
     }
 
-    if (archive.inspection.encrypted) {
-        vscode.window.showWarningMessage("SATO: editing password-protected ZIP archives " + "will be added in the next step.");
+    if (!isEditableArchiveFormat(archive.selectedArchivePath)) {
+        vscode.window.showWarningMessage("SATO: this archive format is read-only.");
+        return false;
+    }
 
+    if (archive.inspection.encrypted && !archive.password) {
+        vscode.window.showWarningMessage("SATO: unlock the archive before editing it.");
         return false;
     }
 
@@ -911,7 +1055,7 @@ function canEditArchive(
 
 async function runArchiveEdit(
     document: VaultDocument,
-    operation: Parameters<typeof editZipArchive>[1],
+    operation: Parameters<typeof editArchive>[2],
     reload: () => Promise<void>,
     createBackup: boolean
 ): Promise<void> {
@@ -922,7 +1066,13 @@ async function runArchiveEdit(
             return;
         }
 
-        await editZipArchive(archiveFilePath, operation, {createBackup});
+        const archive = document.archive;
+
+        if (!archive) {
+            return;
+        }
+
+        await editArchive(archiveFilePath, archive.inspection.format, operation, {password: archive.password, createBackup});
         await reload();
 
         vscode.window.showInformationMessage("SATO: archive updated successfully.");
@@ -936,22 +1086,6 @@ function pathBaseName(
     filePath: string
 ): string {
     return filePath.replace(/\\/g, "/").split("/").filter(Boolean).at(-1) || "";
-}
-
-function archiveExtractionFolderName(
-    archiveName: string
-): string {
-    const lowerName = archiveName.toLowerCase();
-
-    if (lowerName.endsWith(".zip.bak")) {
-        return archiveName.slice(0, -8);
-    }
-
-    if (lowerName.endsWith(".zip")) {
-        return archiveName.slice(0, -4);
-    }
-
-    return archiveName;
 }
 
 function pathDirectoryName(
@@ -968,7 +1102,6 @@ function joinFilePath(
     child: string
 ): string {
     const separator = process.platform === "win32" ? "\\" : "/";
-
     return directory.endsWith("/") || directory.endsWith("\\") ? `${directory}${child}` : `${directory}${separator}${child}`;
 }
 
@@ -976,15 +1109,20 @@ function sameFilePath(
     left: string,
     right: string
 ): boolean {
-    const normalize = (
-        value: string
-    ): string => {
+    const normalize = (value: string): string => {
         const normalized = value.replace(/\\/g, "/");
 
         return process.platform === "win32" ? normalized.toLowerCase() : normalized;
     };
 
     return normalize(left) === normalize(right);
+}
+
+function normalizeFilePath(
+    filePath: string
+): string {
+    const normalized = filePath.replace(/\\/g, "/");
+    return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }
 
 function selectedArchivePath(

@@ -10,8 +10,7 @@ import { bindInboundMessages } from "./messages";
 import { bindGeneratorActions } from "./generator";
 import { bindDocumentEvents } from "./documentEvents";
 import { setupGroupsPaneContextMenu } from "./contextMenu";
-import { updateMainActionButton, updateToolbarForMode } from "./buttons";
-
+import { updateToolbarForMode } from "./buttons";
 
 export function initializeClient(): void {
     applyTheme(app.settings.theme || "vscode");
@@ -30,5 +29,4 @@ export function initializeClient(): void {
 
     renderAll();
     updateToolbarForMode();
-    updateMainActionButton();
 }

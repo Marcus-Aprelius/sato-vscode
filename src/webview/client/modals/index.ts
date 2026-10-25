@@ -2,28 +2,16 @@ import { byId, maybeById } from "../dom";
 import { closeModal, openModal } from "./modalLifecycle";
 import { bindAboutModalActions, openAboutTab } from "./aboutModal";
 import { bindEntryModalActions, fillEntryModal, openEntryModal } from "./entryModal";
+import { bindArchivePasswordModalActions, closeArchivePasswordModal, openArchivePasswordModal, showArchivePasswordError } from "./archivePasswordModal";
+import { bindArchiveUnlockModalActions, closeArchiveUnlockModal, openArchiveUnlockModal, showArchiveUnlockError } from "./archiveUnlockModal";
+import { bindUnlockModalActions, closeUnlockModal, openUnlockModal, setKeyboardLayout, submitUnlockPassword } from "./unlockModal";
 
 import {
-    bindArchivePasswordModalActions,
-    closeArchivePasswordModal,
-    openArchivePasswordModal,
-    showArchivePasswordError
-} from "./archivePasswordModal";
-
-import {
-    bindArchiveUnlockModalActions,
-    closeArchiveUnlockModal,
-    openArchiveUnlockModal,
-    showArchiveUnlockError
-} from "./archiveUnlockModal";
-
-import {
-    bindUnlockModalActions,
-    closeUnlockModal,
-    openUnlockModal,
-    setKeyboardLayout,
-    submitUnlockPassword
-} from "./unlockModal";
+    bindPrivateKeyPasswordModalActions,
+    closePrivateKeyPasswordModal,
+    openPrivateKeyPasswordModal,
+    showPrivateKeyPasswordError
+} from "./privateKeyPasswordModal";
 
 import {
     bindCryptoUnlockModalActions,
@@ -38,10 +26,15 @@ import {
     bindConverterModalActions,
     openBase64Converter,
     openCryptoConverter,
-    openEmptyCryptoConverter
+    openEmptyCryptoConverter,
+    openQrCodeGenerator,
+    openQrCodeGeneratorWithValue
 } from "./converterModal";
 
 export {
+    closePrivateKeyPasswordModal,
+    openPrivateKeyPasswordModal,
+    showPrivateKeyPasswordError,
     closeModal,
     openModal,
     closeUnlockModal,
@@ -60,6 +53,8 @@ export {
     openEntryModal,
     openAboutTab,
     openBase64Converter,
+    openQrCodeGenerator,
+    openQrCodeGeneratorWithValue,
     openCryptoConverter,
     closeArchivePasswordModal,
     openArchivePasswordModal,
@@ -81,6 +76,7 @@ export function bindModalActions(): void {
     bindConverterModalActions();
     bindArchiveUnlockModalActions();
     bindArchivePasswordModalActions();
+    bindPrivateKeyPasswordModalActions();
 
     maybeById("dbinfo-close")?.addEventListener("click", closeModal);
     maybeById("dbinfo-header-close")?.addEventListener("click", closeModal);

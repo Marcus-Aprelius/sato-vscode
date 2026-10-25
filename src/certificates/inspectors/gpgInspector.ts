@@ -8,9 +8,7 @@ export function inspectGpg(
     bytes: Uint8Array,
     filePath: string
 ): CryptoInspection {
-    const output = runWithTempFile(bytes, fileNameForGpg(filePath), "gpg",
-        (tmpFile) => ["--batch", "--no-tty", "--list-packets", tmpFile ]
-    );
+    const output = runWithTempFile(bytes, fileNameForGpg(filePath), "gpg", (tmpFile) => ["--batch", "--no-tty", "--list-packets", tmpFile]);
 
     const details = output.text.trim();
 
@@ -92,11 +90,13 @@ function buildGpgInspection(
     const encrypted = isEncrypted(details);
     const signed = hasSignature(details);
     const type = detectGpgType(details);
+    const protection = type === "OpenPGP Private Key" ? detectPrivateKeyProtection(bytes, filePath): undefined;
 
     return {
         values: {
             Type: type,
             Status: encrypted ? "Encrypted" : "Readable",
+            ...(protection ? {Protection: protection} : {}),
             Encrypted: encrypted ? "Yes" : "No",
             Signed: signed ? "Yes" : "No",
             "Packet types": packetTypes.join(", "),
@@ -119,10 +119,8 @@ function detectGpgType(details: string): string {
         return "OpenPGP Public Key";
     }
 
-    if (/:symkey enc packet:/i.test(details) ||
-        /:pubkey enc packet:/i.test(details) ||
-        /:encrypted data packet:/i.test(details) ||
-        /:aead encrypted packet:/i.test(details)) {
+    if (/:symkey enc packet:/i.test(details) || /:pubkey enc packet:/i.test(details) ||
+        /:encrypted data packet:/i.test(details) || /:aead encrypted packet:/i.test(details)) {
         return "OpenPGP Encrypted Message";
     }
 
@@ -153,7 +151,6 @@ function hasSignature(details: string): boolean {
 function collectPacketTypes(details: string): string[] {
     const values: string[] = [];
     const pattern = /^:([^:\r\n]+ packet):/gim;
-
     let match: RegExpExecArray | null;
 
     while ((match = pattern.exec(details)) !== null) {
@@ -172,7 +169,6 @@ function collectValues(
     pattern: RegExp
 ): string[] {
     const values: string[] = [];
-
     let match: RegExpExecArray | null;
 
     while ((match = pattern.exec(details)) !== null) {
@@ -203,7 +199,6 @@ function buildSummary(
     }
 
     const suffix = flags.length ? ` (${flags.join(", ")})` : "";
-
     return `${type}${suffix}. Packet types: ${packetCount}.`;
 }
 
@@ -218,6 +213,18 @@ function fileNameForGpg(filePath: string): string {
 
 function isOpenPgpEncryptedFile(filePath: string): boolean {
     const lowerPath = filePath.toLowerCase();
-
     return (lowerPath.endsWith(".gpg") || lowerPath.endsWith(".pgp"));
+}
+
+function detectPrivateKeyProtection(
+    bytes: Uint8Array,
+    filePath: string
+): "Password encrypted" | "None" {
+    const output = runWithTempFile(bytes, fileNameForGpg(filePath), "gpg", tmpFile =>
+        ["--batch", "--no-tty", "--list-packets", "--show-session-key", tmpFile]
+    );
+
+    const details = output.text.toLowerCase();
+
+    return (details.includes("iter+salt s2k") || details.includes("s2k protect") || details.includes("protected")) ? "Password encrypted" : "None";
 }

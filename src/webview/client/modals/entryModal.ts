@@ -5,11 +5,7 @@ import { generateWithDefaults, updateEntryStrength } from "../generator";
 
 import type { EntryFormFields } from "../types";
 
-import {
-    app,
-    entryIndex,
-    isReadOnlyVault
-} from "../state";
+import { app, entryIndex, isReadOnlyVault } from "../state";
 
 export function openEntryModal(entryId: string | null, groupId?: string): void {
     if (app.vaultLocked || isReadOnlyVault()) {
@@ -50,7 +46,6 @@ export function fillEntryModal(detail: EntryFormFields): void {
     byId<HTMLInputElement>("ef-password").value = detail.password;
     byId<HTMLInputElement>("ef-url").value = detail.url;
     byId<HTMLTextAreaElement>("ef-notes").value = detail.notes;
-
     updateEntryStrength();
     byId<HTMLInputElement>("ef-title").focus();
 }

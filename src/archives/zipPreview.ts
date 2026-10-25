@@ -1,9 +1,10 @@
-import * as fs from "fs";
 import * as yauzl from "yauzl";
-
-import { Uint8ArrayReader, Uint8ArrayWriter, ZipReader } from "@zip.js/zip.js";
+import { openAsBlob } from "fs";
+import { BlobReader, Uint8ArrayWriter, ZipReader } from "@zip.js/zip.js";
 
 import type { Entry, FileEntry } from "@zip.js/zip.js";
+
+import { ARCHIVE_LIMITS, checkActualBytes, checkCompressionRatio, checkEntrySize } from "./limits";
 
 export interface ArchivePreviewResult {
     kind: | "text" | "image" | "unsupported" | "error";
@@ -11,8 +12,6 @@ export interface ArchivePreviewResult {
     mimeType?: string;
     message?: string;
 }
-
-const MAX_PREVIEW_SIZE = 1024 * 1024;
 
 const TEXT_EXTENSIONS =
     new Set([
@@ -94,7 +93,7 @@ export async function previewZipEntry(
     try {
         const bytes = password ? await readEncryptedZipEntry(archivePath, entryPath, password) : await readPlainZipEntry(archivePath, entryPath);
 
-        if (bytes.length > MAX_PREVIEW_SIZE) {
+        if (bytes.length > ARCHIVE_LIMITS.maxPreviewSize) {
             return {
                 kind: "unsupported",
                 message: "Preview is limited to files " + "smaller than 1 MB."
@@ -162,8 +161,13 @@ function readPlainZipEntry(
 
                             found = true;
 
-                            if (entry.uncompressedSize > MAX_PREVIEW_SIZE) {
-                                reject(new Error("Preview is limited to files smaller than 1 MB."));
+                            try {
+                                checkEntrySize(entry.fileName, entry.uncompressedSize, ARCHIVE_LIMITS.maxPreviewSize);
+                                checkCompressionRatio(entry.fileName, entry.compressedSize, entry.uncompressedSize);
+
+                            } catch (error) {
+                                zipFile.close();
+                                reject(error);
 
                                 return;
                             }
@@ -181,11 +185,13 @@ function readPlainZipEntry(
 
                                     stream.on("data", chunk => {
                                         const buffer = Buffer.from(chunk);
-
                                         size += buffer.length;
 
-                                        if (size > MAX_PREVIEW_SIZE) {
-                                            stream.destroy(new Error("Preview is limited to files smaller than 1 MB."));
+                                        try {
+                                            checkActualBytes(entry.fileName,size, ARCHIVE_LIMITS.maxPreviewSize);
+
+                                        } catch (error) {
+                                            stream.destroy(error instanceof Error ? error : new Error(String(error)));
 
                                             return;
                                         }
@@ -199,13 +205,11 @@ function readPlainZipEntry(
                         }
                     );
 
-                    zipFile.once(
-                        "end", () => {
-                            if (!found) {
-                                reject(new Error("Archive entry was not found."));
-                            }
+                    zipFile.once("end", () => {
+                        if (!found) {
+                            reject(new Error("Archive entry was not found."));
                         }
-                    );
+                    });
 
                     zipFile.once("error", reject);
                     zipFile.readEntry();
@@ -220,9 +224,9 @@ async function readEncryptedZipEntry(
     entryPath: string,
     password: string
 ): Promise<Uint8Array> {
-    const archiveBytes = await fs.promises.readFile( archivePath);
 
-    const reader = new ZipReader(new Uint8ArrayReader(archiveBytes));
+    const archiveBlob = await openAsBlob(archivePath);
+    const reader = new ZipReader(new BlobReader(archiveBlob));
 
     try {
         const entries = await reader.getEntries();
@@ -232,11 +236,13 @@ async function readEncryptedZipEntry(
             throw new Error("Archive entry was not found.");
         }
 
-        if (entry.uncompressedSize > MAX_PREVIEW_SIZE) {
-            throw new Error("Preview is limited to files " + "smaller than 1 MB.");
-        }
+        checkEntrySize(entry.filename, entry.uncompressedSize, ARCHIVE_LIMITS.maxPreviewSize);
+        checkCompressionRatio(entry.filename, entry.compressedSize, entry.uncompressedSize);
 
-        return entry.getData(new Uint8ArrayWriter(), { password, checkAuthenticationCode: true, checkCrc32: true});
+        const data = await entry.getData(new Uint8ArrayWriter(), { password, checkAuthenticationCode: true, checkCrc32: true });
+        checkActualBytes(entry.filename, data.length, ARCHIVE_LIMITS.maxPreviewSize);
+
+        return data;
 
     } finally {
         await reader.close();

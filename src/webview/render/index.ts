@@ -1,4 +1,4 @@
-export type { AppTheme, ArchiveListItem, Settings } from "./types";
+export type { AppTheme, ArchiveListItem, FileCategoryFilter, Settings, SupportedFileListItem } from "./types";
 
 export { renderError } from "./errorTemplate";
 export { renderVault } from "./vaultTemplate";

@@ -44,17 +44,13 @@ async function saveAndRefreshPsafe(
 
     try {
         const bytes = savePsafeVaultToBytes(psafe);
-
         await vscode.workspace.fs.writeFile(document.uri, bytes);
-
         panel.webview.postMessage({type: "vaultState", state: {tree: psafe.tree, stats: psafe.stats, settings:runtime.readSettings()}});
-
         vscode.window.setStatusBarMessage(message, 2500);
+
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
-
         console.error("SATO: failed to save Password Safe vault:", err);
-
         vscode.window.showErrorMessage(`SATO: failed to save Password Safe vault - ${errorMessage}`);
     }
 }
@@ -109,7 +105,6 @@ export async function handlePsafeMessage(
             }
 
             await runtime.copyToClipboard(value, `SATO: copied ${msg.field}`, settings);
-
             return;
         }
 
@@ -119,7 +114,6 @@ export async function handlePsafeMessage(
             }
 
             await runtime.copyToClipboard(msg.text, "SATO: copied text", settings);
-
             return;
         }
 
@@ -131,7 +125,6 @@ export async function handlePsafeMessage(
             }
 
             panel.webview.postMessage({type: "secretRevealed", entryId: msg.entryId, field: msg.field, value});
-
             return;
         }
 
@@ -168,7 +161,6 @@ export async function handlePsafeMessage(
 
         case "createEntry": {
             createPsafeEntry(psafe, msg.groupId, msg.fields);
-
             await saveAndRefreshPsafe(document, panel, runtime, `SATO: Created “${msg.fields.title}”`);
 
             return;
@@ -176,7 +168,6 @@ export async function handlePsafeMessage(
 
         case "updateEntry": {
             updatePsafeEntry(psafe, msg.entryId, msg.fields);
-
             await saveAndRefreshPsafe(document, panel, runtime, `SATO: Updated “${msg.fields.title}”`);
 
             return;
@@ -194,7 +185,6 @@ export async function handlePsafeMessage(
             }
 
             deletePsafeEntry(psafe, msg.entryId);
-
             await saveAndRefreshPsafe(document, panel, runtime, `SATO: Deleted “${title}”`);
 
             return;
@@ -202,7 +192,6 @@ export async function handlePsafeMessage(
 
         case "duplicateEntry": {
             duplicatePsafeEntry(psafe, msg.entryId);
-
             await saveAndRefreshPsafe(document, panel, runtime, "SATO: Entry duplicated");
 
             return;
@@ -220,12 +209,7 @@ export async function handlePsafeMessage(
             }
 
             createPsafeGroup(psafe, msg.parentId, name);
-
-            panel.webview.postMessage({
-                type: "vaultState",
-                state: {tree: psafe.tree, stats: psafe.stats, settings}
-            });
-
+            panel.webview.postMessage({type: "vaultState", state: {tree: psafe.tree, stats: psafe.stats, settings}});
             vscode.window.setStatusBarMessage(`SATO: Created folder “${name.trim()}”`, 2500);
             vscode.window.showInformationMessage("SATO: empty .psafe3 folder is shown in this session. Add an entry inside it to persist it in the vault.");
 
@@ -252,7 +236,6 @@ export async function handlePsafeMessage(
             }
 
             renamePsafeGroup(psafe, msg.groupId, name);
-
             await saveAndRefreshPsafe(document, panel, runtime, `SATO: Renamed folder to “${name.trim()}”`);
 
             return;
@@ -279,7 +262,6 @@ export async function handlePsafeMessage(
             }
 
             deletePsafeGroup(psafe, msg.groupId);
-
             await saveAndRefreshPsafe(document, panel, runtime, `SATO: Deleted folder “${groupPath}”`);
 
             return;

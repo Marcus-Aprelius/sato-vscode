@@ -1,13 +1,17 @@
 import { isExpiredCertificate } from "./format";
 import { isSshPrivateKeyFilePath } from "./fileTypes";
-import { inspectAge } from "./inspectors/ageInspector";
+import { normalizeBackupFileName } from "../fileFormats";
+import { inspectAge, inspectAgeUnlocked } from "./inspectors/ageInspector";
 import { inspectPpk, inspectPpkUnlocked } from "./inspectors/ppkInspector";
 import { inspectGpg, inspectGpgUnlocked } from "./inspectors/gpgInspector";
 import { inspectJks, inspectJksUnlocked } from "./inspectors/jksInspector";
+import { inspectBks, inspectBksUnlocked } from "./inspectors/bksInspector";
+import { inspectLuks, inspectLuksUnlocked } from "./inspectors/luksInspector";
 import { inspectPkcs8, inspectPkcs8Unlocked } from "./inspectors/pkcs8Inspector";
 import { inspectPkcs12, inspectPkcs12Unlocked } from "./inspectors/pkcs12Inspector";
 import { inspectPrivateKey, inspectPrivateKeyUnlocked } from "./inspectors/privateKeyInspector";
 import { inspectSshPrivateKey, inspectSshPrivateKeyUnlocked } from "./inspectors/sshKeyInspector";
+
 
 import type { GroupView } from "../vault";
 
@@ -31,28 +35,28 @@ export function unlockCryptoContainer(
     }
 
     const filePath = file.uri.fsPath;
-    const lowerPath = filePath.toLowerCase();
+    const lowerPath = normalizeBackupFilePath(filePath);
 
     let inspected: CryptoInspection;
 
     if (lowerPath.endsWith(".p12") || lowerPath.endsWith(".pfx")) {
         inspected = inspectPkcs12Unlocked(file.bytes, filePath, password);
-
     } else if (lowerPath.endsWith(".p8") || lowerPath.endsWith(".pk8")) {
         inspected = inspectPkcs8Unlocked(file.bytes, filePath, password);
-
     } else if (lowerPath.endsWith(".ppk")) {
         inspected = inspectPpkUnlocked(fileText(file), file.bytes, filePath, password);
-
     } else if (isSshPrivateKeyFilePath(filePath)) {
         inspected = inspectSshPrivateKeyUnlocked(fileText(file), file.bytes, filePath, password);
-
     } else if (lowerPath.endsWith(".pem") || lowerPath.endsWith(".key")) {
         inspected = inspectPrivateKeyUnlocked(fileText(file), file.bytes, filePath, password);
-
     } else if (lowerPath.endsWith(".jks") || lowerPath.endsWith(".jceks")) {
         inspected = inspectJksUnlocked(file.bytes, filePath, password);
-
+    } else if (lowerPath.endsWith(".bks")) {
+        inspected = inspectBksUnlocked(file.bytes, filePath, password);
+    } else if (lowerPath.endsWith(".age")) {
+        inspected = inspectAgeUnlocked(file.bytes, filePath, password);
+    } else if (lowerPath.endsWith(".luks")) {
+        inspected = inspectLuksUnlocked(file.bytes, filePath, password);
     } else if (lowerPath.endsWith(".gpg") || lowerPath.endsWith(".pgp") || lowerPath.endsWith(".asc")) {
         if (!privateKeyFile) {
             return {ok: false, message: "OpenPGP private key file is required."};
@@ -101,28 +105,28 @@ export function lockCryptoContainer(
     }
 
     const filePath = file.uri.fsPath;
-    const lowerPath = filePath.toLowerCase();
+    const lowerPath = normalizeBackupFilePath(filePath);
 
     let inspected: CryptoInspection;
 
     if (lowerPath.endsWith(".p12") || lowerPath.endsWith(".pfx") ) {
         inspected = inspectPkcs12(file.bytes, filePath);
-
     } else if (lowerPath.endsWith(".p8") || lowerPath.endsWith(".pk8")) {
         inspected = inspectPkcs8(file.bytes, filePath);
-
     } else if (lowerPath.endsWith(".ppk")) {
         inspected = inspectPpk(fileText(file), file.bytes, filePath);
-
     } else if (isSshPrivateKeyFilePath(filePath)) {
         inspected = inspectSshPrivateKey(fileText(file), file.bytes, filePath);
-
     } else if (lowerPath.endsWith(".pem") || lowerPath.endsWith(".key")) {
         inspected = inspectPrivateKey(fileText(file), file.bytes, filePath);
-
     } else if (lowerPath.endsWith(".jks") || lowerPath.endsWith(".jceks")) {
         inspected = inspectJks(file.bytes, filePath);
-
+    } else if (lowerPath.endsWith(".bks")) {
+        inspected = inspectBks(file.bytes, filePath);
+    } else if (lowerPath.endsWith(".age")) {
+        inspected = inspectAge(file.bytes, filePath);
+    } else if (lowerPath.endsWith(".luks")) {
+        inspected = inspectLuks(file.bytes, filePath);
     } else if (lowerPath.endsWith(".gpg") || lowerPath.endsWith(".pgp") || lowerPath.endsWith(".asc")) {
         inspected = inspectGpg(file.bytes, filePath);
 
@@ -185,4 +189,15 @@ function fileText(
     file: CryptoFileInput
 ): string {
     return Buffer.from(file.bytes).toString("utf8");
+}
+
+function normalizeBackupFilePath(
+    filePath: string
+): string {
+    const normalizedPath = filePath.replace(/\\/g, "/");
+    const separatorIndex = normalizedPath.lastIndexOf("/");
+    const directory = separatorIndex >= 0 ? normalizedPath.slice(0, separatorIndex + 1) : "";
+    const fileName = separatorIndex >= 0 ? normalizedPath.slice(separatorIndex + 1) : normalizedPath;
+
+    return (directory + normalizeBackupFileName(fileName)).toLowerCase();
 }

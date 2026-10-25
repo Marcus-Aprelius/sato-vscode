@@ -117,10 +117,7 @@ body.sato-theme-light {
 }
 
 html,
-body {
-    height: 100%;
-    margin: 0;
-}
+body {height: 100%; margin: 0;}
 
 body {
     font-family: var(--vscode-font-family);
@@ -129,11 +126,7 @@ body {
     font-size: var(--vscode-font-size, 13px);
 }
 
-.app {
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    height: 100vh;
-}
+.app {display: grid; grid-template-rows: auto 1fr auto; height: 100vh;}
 
 .btn {
     background: var(--vscode-button-secondaryBackground);
@@ -147,23 +140,10 @@ body {
     white-space: nowrap;
 }
 
-.btn:hover {
-    background: var(--vscode-button-secondaryHoverBackground);
-}
-
-.btn.primary {
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-}
-
-.btn.primary:hover {
-    background: var(--vscode-button-hoverBackground);
-}
-
-.btn.danger {
-    background: var(--vscode-errorForeground);
-    color: var(--vscode-editor-background);
-}
+.btn:hover {background: var(--vscode-button-secondaryHoverBackground);}
+.btn.primary {background: var(--vscode-button-background); color: var(--vscode-button-foreground);}
+.btn.primary:hover {background: var(--vscode-button-hoverBackground);}
+.btn.danger {background: var(--vscode-errorForeground); color: var(--vscode-editor-background);}
 
 .btn:disabled,
 .btn:disabled:hover,
@@ -210,17 +190,7 @@ body {
     cursor: pointer;
 }
 
-.icon-btn:hover {
-    background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground)
-    );
-}
-
-.icon-btn .codicon {
-    font-size: 20px;
-}
-
-.empty {
-    color: var(--vscode-descriptionForeground);
-    padding: 12px;
-}
+.icon-btn:hover {background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));}
+.icon-btn .codicon {font-size: 20px;}
+.empty {color: var(--vscode-descriptionForeground); padding: 12px;}
 `;

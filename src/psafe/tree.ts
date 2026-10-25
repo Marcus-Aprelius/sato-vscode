@@ -11,7 +11,6 @@ export function rebuildPsafeVault(
 
     for (let index = 0; index < vault.databaseRecords.length; index++) {
         const entry = createPsafeEntryFromRecord(vault.databaseRecords[index], index);
-
         entries.set(entry.id, entry);
     }
 

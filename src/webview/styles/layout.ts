@@ -22,7 +22,6 @@ body.resizing * {cursor: col-resize !important; user-select: none !important;}
 .pane-title {
     padding: 6px 10px;
     font-size: 0.85em;
-    text-transform: uppercase;
     color: var(--vscode-descriptionForeground);
     border-bottom: 1px solid var(--vscode-panel-border);
     background: var(--vscode-sideBarSectionHeader-background, transparent);
@@ -48,7 +47,13 @@ body.resizing * {cursor: col-resize !important; user-select: none !important;}
 .entry-row:hover {background: var(--vscode-list-hoverBackground);}
 .entry-row.active {background: var(--vscode-list-activeSelectionBackground);color: var(--vscode-list-activeSelectionForeground);}
 
-.archive-tree-children {position: relative;}
+.entry-list {overflow-x: auto; overflow-y: auto; scrollbar-gutter: stable;}
+.archive-tree-group,
+.archive-tree-children {position: relative; width: max-content; min-width: 100%;}
+.archive-folder-row,
+.archive-file-row {box-sizing: border-box; width: max-content; min-width: 100%;}
+.archive-folder-row .entry-title,
+.archive-file-row .entry-title {flex: 0 0 auto; overflow: visible; text-overflow: clip; white-space: nowrap;}
 
 .archive-tree-children::before {
     content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 1px;

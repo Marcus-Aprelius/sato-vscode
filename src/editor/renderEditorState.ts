@@ -1,5 +1,8 @@
 import * as vscode from "vscode";
+
 import { APP_VERSION, GIT_COMMIT } from "../buildInfo";
+import { archiveContainerLabel, isArchivePasswordEditable, isEditableArchiveFormat } from "../archives";
+import { isSatoBackupFileName } from "../fileFormats";
 import { renderVault, type Settings } from "../webview";
 
 import type { VaultDocument } from "../types";
@@ -10,7 +13,6 @@ import {
     type GroupView,
     type VaultStats
 } from "../vault";
-
 
 export interface EditorRenderContext {
     extensionUri: vscode.Uri;
@@ -71,23 +73,29 @@ export function renderEditorState(
     initialLoad: boolean
 ): void {
     const settings = context.readSettings();
-
     const resources = createResourceUris(context.extensionUri);
 
     if (document.archive) {
         const archive = document.archive;
-
         const selectedEntryId = archive.selectedEntryId || null;
+        const archiveByPath = new Map(archive.archives.map(item => [normalizeFilePath(item.filePath), item]));
 
-        const archiveList = archive.archives.map(
-            item => ({
+        const supportedFileList = archive.supportedFiles.map(item => {
+            const archiveItem = item.category === "archives" ? archiveByPath.get(normalizeFilePath(item.filePath)) : undefined;
+
+            return {
                 fileName: item.fileName,
                 filePath: item.filePath,
-                entryCount: item.inspection.entryCount,
-                encrypted: item.inspection.encrypted,
-                selected: item.filePath === archive.selectedArchivePath
-            })
-        );
+                category: item.category,
+                selected: normalizeFilePath(item.filePath) === normalizeFilePath(archive.selectedArchivePath),
+                entryCount: archiveItem ?.inspection.entryCount,
+                encrypted: archiveItem ?.inspection.encrypted,
+                formatLabel: item.category === "archives" ? archiveContainerLabel(item.filePath) : undefined,
+                editable: item.category === "archives" ? isEditableArchiveFormat(item.filePath) : undefined,
+                passwordEditable: item.category === "archives" ? isArchivePasswordEditable(item.filePath) : undefined,
+                backup: item.category === "archives" ? isSatoBackupFileName(item.fileName) : undefined
+            };
+        });
 
         if (initialLoad) {
             panel.webview.html = renderVault(
@@ -105,7 +113,7 @@ export function renderEditorState(
                 selectedEntryId,
                 true,
                 "archive",
-                archiveList,
+                supportedFileList,
                 archive.selectedArchivePath
             );
         } else {
@@ -118,7 +126,7 @@ export function renderEditorState(
                     selectedEntryId,
                     readOnlyVault: true,
                     vaultFormat: "archive",
-                    archives: archiveList,
+                    archives: supportedFileList,
                     selectedArchivePath: archive.selectedArchivePath
                 }
             });
@@ -129,11 +137,19 @@ export function renderEditorState(
 
     if (document.certificate) {
         const certificate = document.certificate;
+        const activeUri = document.activeUri ?? document.uri;
+
+        const supportedFileList = certificate.supportedFiles.map(file => ({
+            fileName: file.fileName,
+            filePath: file.filePath,
+            category: file.category,
+            selected: normalizeFilePath(file.filePath) === normalizeFilePath(activeUri.fsPath)
+        }));
 
         if (initialLoad) {
             panel.webview.html = renderVault(
                 panel.webview,
-                document.uri,
+                activeUri,
                 certificate.tree,
                 certificate.stats,
                 settings,
@@ -143,12 +159,25 @@ export function renderEditorState(
                 resources.webviewClientUri,
                 APP_VERSION,
                 GIT_COMMIT,
-                certificate.selectedEntryId
+                certificate.selectedEntryId,
+                true,
+                "files",
+                supportedFileList,
+                activeUri.fsPath
             );
         } else {
             panel.webview.postMessage({
                 type: "vaultState",
-                state: {tree: certificate.tree, stats: certificate.stats, settings, selectedEntryId: certificate.selectedEntryId}
+                state: {
+                    tree: certificate.tree,
+                    stats: certificate.stats,
+                    settings,
+                    selectedEntryId: certificate.selectedEntryId,
+                    readOnlyVault: true,
+                    vaultFormat: "files",
+                    archives: supportedFileList,
+                    selectedArchivePath: activeUri.fsPath
+                }
             });
         }
 
@@ -237,15 +266,10 @@ export function renderEditorState(
         return;
     }
 
-    panel.webview.postMessage({
-        type: "vaultState",
-        state: {tree, stats, settings}
-    });
+    panel.webview.postMessage({type: "vaultState", state: {tree, stats, settings}});
 }
 
-function createResourceUris(
-    extensionUri: vscode.Uri
-): {
+function createResourceUris(extensionUri: vscode.Uri): {
     logoUri: vscode.Uri;
     toolbarLogoUri: vscode.Uri;
     codiconsCssUri: vscode.Uri;
@@ -257,4 +281,12 @@ function createResourceUris(
         codiconsCssUri: vscode.Uri.joinPath(extensionUri, "assets", "codicons", "codicon.css"),
         webviewClientUri: vscode.Uri.joinPath(extensionUri, "dist", "webviewClient.js")
     };
+}
+
+function normalizeFilePath(
+    filePath: string
+): string {
+    const normalized = filePath.replace(/\\/g, "/");
+
+    return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }

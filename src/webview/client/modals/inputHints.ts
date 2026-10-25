@@ -22,9 +22,7 @@ export function setKeyboardLayout(
     elementId: string,
     layout: string
 ): void {
-    const element = maybeById<HTMLElement>(
-        elementId
-    );
+    const element = maybeById<HTMLElement>(elementId);
 
     if (!element) {
         return;
@@ -44,13 +42,11 @@ export function updateKeyboardLayoutFromEvent(
 
     if (/^[A-Za-z]$/.test(key)) {
         setKeyboardLayout(indicatorId,"ENG");
-
         return;
     }
 
     if (/^[А-Яа-яЁёІіЇїЄєҐґ]$/.test(key)) {
         setKeyboardLayout(indicatorId,"РУС");
-
         return;
     }
 
@@ -78,6 +74,5 @@ export function updateCapsLockWarning(
     }
 
     const isOn = typeof event.getModifierState === "function" ? event.getModifierState("CapsLock") : false;
-
     warning.style.display = isOn ? "" : "none";
 }

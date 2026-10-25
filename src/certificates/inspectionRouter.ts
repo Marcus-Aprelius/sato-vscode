@@ -3,9 +3,12 @@ import { inspectAge } from "./inspectors/ageInspector";
 import { inspectCms } from "./inspectors/cmsInspector";
 import { inspectGpg } from "./inspectors/gpgInspector";
 import { inspectJks } from "./inspectors/jksInspector";
+import { inspectBks } from "./inspectors/bksInspector";
 import { inspectPpk } from "./inspectors/ppkInspector";
 import { inspectDer } from "./inspectors/derInspector";
-
+import { inspectLuks } from "./inspectors/luksInspector";
+import { inspectVeraCrypt } from "./inspectors/veracryptInspector";
+import { normalizeBackupFileName } from "../fileFormats";
 import { inspectPkcs7 } from "./inspectors/pkcs7Inspector";
 import { inspectPkcs8 } from "./inspectors/pkcs8Inspector";
 import { inspectEcKey } from "./inspectors/ecKeyInspector";
@@ -22,7 +25,11 @@ export function inspectCryptoFile(
     bytes: Uint8Array,
     filePath: string
 ): CryptoInspection {
-    const lowerPath = filePath.toLowerCase();
+    const normalizedPath = filePath.replace(/\\/g, "/");
+    const lastSlashIndex = normalizedPath.lastIndexOf("/");
+    const directoryPath = lastSlashIndex >= 0 ? normalizedPath.slice(0, lastSlashIndex + 1) : "";
+    const fileName = lastSlashIndex >= 0 ? normalizedPath.slice(lastSlashIndex + 1) : normalizedPath;
+    const lowerPath = directoryPath + normalizeBackupFileName(fileName);
 
     if (lowerPath.endsWith(".pfx") || lowerPath.endsWith(".p12")) {
         return inspectPkcs12(bytes, filePath);
@@ -52,6 +59,14 @@ export function inspectCryptoFile(
         return inspectAge(bytes, filePath);
     }
 
+    if (lowerPath.endsWith(".luks")) {
+        return inspectLuks(bytes, filePath);
+    }
+
+    if (lowerPath.endsWith(".hc") || lowerPath.endsWith(".tc")) {
+        return inspectVeraCrypt(bytes, filePath);
+    }
+
     if (isSshPrivateKeyFilePath(filePath)) {
         return inspectSshPrivateKey(text, bytes, filePath);
     }
@@ -70,6 +85,10 @@ export function inspectCryptoFile(
 
     if (lowerPath.endsWith(".jks") || lowerPath.endsWith(".jceks")) {
         return inspectJks(bytes, filePath );
+    }
+
+    if (lowerPath.endsWith(".bks")) {
+        return inspectBks(bytes, filePath);
     }
 
     if (lowerPath.endsWith(".gpg") || lowerPath.endsWith(".pgp") || lowerPath.endsWith(".asc") || lowerPath.endsWith(".sig")) {

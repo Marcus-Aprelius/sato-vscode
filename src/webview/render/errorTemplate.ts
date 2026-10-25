@@ -18,15 +18,10 @@ export function renderError(
             img-src ${webview.cspSource} https:;
             style-src ${webview.cspSource} 'unsafe-inline';
             font-src ${webview.cspSource};
-            script-src 'nonce-${n}';
-        ">
-    <title>SATO Vault</title>
+            script-src 'nonce-${n}';">
+    <title>SATO Secrets</title>
     <style nonce="${n}">
-        body {
-            font-family: var(--vscode-font-family);
-            padding: 16px;
-            color: var(--vscode-errorForeground);
-        }
+        body {font-family: var(--vscode-font-family); padding: 16px; color: var(--vscode-errorForeground);}
     </style>
 </head>
 <body>

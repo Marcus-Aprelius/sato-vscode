@@ -1,5 +1,6 @@
 import { runWithTempFile } from "../cli";
-import type { CryptoInspection } from "../types";
+import { containerMetadata } from "../fileMetadata";
+import { normalizeBackupFileName } from "../../fileFormats";
 
 import {
     collectOpenSslValues,
@@ -8,7 +9,8 @@ import {
     normalizeSignatureAlgorithm,
     uniqueValues
 } from "../format";
-import {containerMetadata} from "../fileMetadata";
+
+import type { CryptoInspection } from "../types";
 
 export function inspectJks(
     bytes: Uint8Array,
@@ -29,8 +31,8 @@ export function inspectJksUnlocked(
     filePath: string,
     password: string
 ): CryptoInspection {
-    const output = runWithTempFile(bytes, "keystore.jks", "keytool",
-        (tmpFile) => ["-list", "-v", "-storetype", keyStoreType(filePath), "-keystore", tmpFile, "-storepass", password]
+    const output = runWithTempFile(bytes, "keystore.jks", "keytool", (tmpFile) =>
+        ["-list", "-v", "-storetype", keyStoreType(filePath), "-keystore", tmpFile, "-storepass", password]
     );
 
     if (!output.ok) {
@@ -51,22 +53,13 @@ export function inspectJksUnlocked(
     const validFrom = uniqueValues(collectOpenSslValues(text, /Valid from:\s*([^\r\n]+)/gi));
     const sha1Fingerprints = uniqueValues(collectOpenSslValues(text, /SHA1:\s*([^\r\n]+)/gi));
     const sha256Fingerprints = uniqueValues(collectOpenSslValues(text, /SHA256:\s*([^\r\n]+)/gi));
-
-    const signatureAlgorithms = uniqueValues(
-        collectOpenSslValues(text, /Signature algorithm name:\s*([^\r\n]+)/gi).map(normalizeSignatureAlgorithm)
-    );
-
-    const publicKeyAlgorithms = uniqueValues(
-        collectOpenSslValues(text, /Subject Public Key Algorithm:\s*([^\r\n]+)/gi).map(normalizeAlgorithm)
-    );
-
+    const signatureAlgorithms = uniqueValues(collectOpenSslValues(text, /Signature algorithm name:\s*([^\r\n]+)/gi).map(normalizeSignatureAlgorithm));
+    const publicKeyAlgorithms = uniqueValues(collectOpenSslValues(text, /Subject Public Key Algorithm:\s*([^\r\n]+)/gi).map(normalizeAlgorithm));
     const certificateTypes = uniqueValues(collectOpenSslValues(text, /Certificate type:\s*([^\r\n]+)/gi));
 
     return {
         values: {
-            Type: keyStoreType(filePath) === "JCEKS"
-                ? "Java Cryptography Extension KeyStore"
-                : "Java KeyStore",
+            Type: keyStoreType(filePath) === "JCEKS" ? "Java Cryptography Extension KeyStore" : "Java KeyStore",
             Status: "Unlocked",
             "Keystore type": extractOpenSslValue(text, /Keystore type:\s*([^\r\n]+)/i),
             Provider: extractOpenSslValue(text, /Keystore provider:\s*([^\r\n]+)/i),
@@ -82,14 +75,17 @@ export function inspectJksUnlocked(
             "Fingerprint SHA-256": sha256Fingerprints.join("\n"),
             ...containerMetadata(bytes, filePath ),
             Details: text.trim(),
-            Summary:
-                aliases.length > 0
-                    ? `Java KeyStore unlocked. Aliases: ${aliases.length}.`
-                    : "Java KeyStore unlocked."
+            Summary: aliases.length > 0 ? `Java KeyStore unlocked. Aliases: ${aliases.length}.` : "Java KeyStore unlocked."
         }
     };
 }
 
-function keyStoreType(filePath: string): string {
-    return filePath.toLowerCase().endsWith(".jceks") ? "JCEKS" : "JKS";
+function keyStoreType(
+    filePath: string
+): "JKS" | "JCEKS" {
+    const normalizedPath = filePath.replace(/\\/g, "/");
+    const fileName = normalizedPath.split("/").at(-1) || "";
+    const originalFileName = normalizeBackupFileName(fileName);
+    return originalFileName.endsWith(".jceks") ? "JCEKS" : "JKS";
+
 }

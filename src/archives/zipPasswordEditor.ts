@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { Uint8ArrayReader, Uint8ArrayWriter, ZipReader, ZipWriter } from "@zip.js/zip.js";
+import { preserveFileMetadata } from "./archiveFileMetadata";
 
 export interface ZipPasswordChangeOptions {
     currentPassword: string;
@@ -163,17 +164,4 @@ async function replaceArchiveFile(
 
         throw error;
     }
-}
-
-async function preserveFileMetadata(
-    filePath: string,
-    originalStat: fs.Stats
-): Promise<void> {
-    await fs.promises.chmod(filePath, originalStat.mode & 0o7777);
-
-    if (process.platform !== "win32") {
-        await fs.promises.chown(filePath, originalStat.uid, originalStat.gid);
-    }
-
-    await fs.promises.utimes(filePath, originalStat.atime, originalStat.mtime);
 }

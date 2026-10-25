@@ -1,6 +1,11 @@
 import type { GroupView, VaultStats } from "../vault";
+import { ARCHIVE_LIMITS } from "./limits";
 
-export type ArchiveFormat = | "zip" | "7z" | "tar" | "tar-gzip" | "tar-bzip2" | "tar-xz" | "gzip" | "bzip2" | "xz";
+export type ArchiveFormat = | "zip" | "zipx" | "7z" | "rar" | "alz" | "xz"
+    | "egg" | "dmg" | "deb" | "rpm" | "cab" | "cpio" | "ar" | "tar" | "lzma"
+    | "tar-gzip" | "tar-bzip2" | "tar-xz" | "gzip" | "bzip2" | "zstd" | "lzh"
+    | "tar-zstd" | "compress" | "tar-compress" | "arj" | "xar" | "chm";
+
 export type ArchiveEntryType = | "file" | "directory" | "symlink" | "hardlink" | "other";
 
 export interface ArchiveEntry {
@@ -15,6 +20,7 @@ export interface ArchiveEntry {
     compressionRatio?: number;
     crc32?: string;
 }
+
 export interface ArchiveInspection {
     fileName: string;
     filePath: string;
@@ -25,6 +31,7 @@ export interface ArchiveInspection {
     totalUncompressedSize: number;
     entries: ArchiveEntry[];
     warnings: string[];
+    details?: string;
 }
 
 export interface ArchiveFile {
@@ -37,14 +44,17 @@ export interface ArchiveFile {
     password?: string;
 }
 
+export interface SupportedDirectoryFile {
+    fileName: string;
+    filePath: string;
+    category: | "vaults" | "archives" | "ssh" | "crypto";
+}
+
 export interface ArchiveVault {
     archives: ArchiveFile[];
+    supportedFiles: SupportedDirectoryFile[];
     selectedArchivePath: string;
 
-    /*
-     * Compatibility fields for the currently selected archive.
-     * They will be removed after the UI migration is complete.
-     */
     tree: GroupView;
     stats: VaultStats;
     inspection: ArchiveInspection;
@@ -59,9 +69,10 @@ export interface ArchiveSecurityLimits {
     maxCompressionRatio: number;
 }
 
-export const DEFAULT_ARCHIVE_SECURITY_LIMITS: ArchiveSecurityLimits = {
-    maxEntries: 10000,
-    maxEntrySize: 1024 * 1024 * 1024,
-    maxTotalUncompressedSize: 4 * 1024 * 1024 * 1024,
-    maxCompressionRatio: 1000
+export const DEFAULT_ARCHIVE_SECURITY_LIMITS:
+ArchiveSecurityLimits = {
+    maxEntries: ARCHIVE_LIMITS.maxEntries,
+    maxEntrySize: ARCHIVE_LIMITS.maxEntrySize,
+    maxTotalUncompressedSize: ARCHIVE_LIMITS.maxTotalUncompressedSize,
+    maxCompressionRatio: ARCHIVE_LIMITS.maxCompressionRatio
 };

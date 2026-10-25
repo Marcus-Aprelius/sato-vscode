@@ -4,7 +4,6 @@ export function parseDateTimestamp(
     value: string
 ): number | undefined {
     const timestamp = Date.parse(value);
-
     return Number.isNaN(timestamp) ? undefined : timestamp;
 }
 

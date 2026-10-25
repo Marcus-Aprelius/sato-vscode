@@ -16,6 +16,5 @@ export function bindSearch(): void {
         const value = target.value.trim();
 
         window.clearTimeout(searchTimer);
-
         searchTimer = window.setTimeout(() => {app.searchQuery = value; renderEntries(); }, 150);});
 }
