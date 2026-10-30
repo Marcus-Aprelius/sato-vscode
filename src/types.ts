@@ -38,11 +38,10 @@ export type FromWebview =
     | { type: "prepareCryptoConversion"; entryId: string; initialTab?: "convert" | "extract";}
     | { type: "selectCryptoConversionDirectory"; initialPath: string; }
     | { type: "convertCryptoFile"; entryId: string; outputFormat:
-        | "PEM" | "DER" | "RFC4716" | "PKCS8" | "RSA_PKCS1_PEM" | "RSA_PKCS1_DER"
-        | "RSA_PKCS8_PEM" | "RSA_PKCS8_DER" | "RSA_SPKI_PEM" | "RSA_SPKI_DER"
-        | "RSA_PUBLIC_PKCS1_PEM" | "RSA_PUBLIC_PKCS1_DER"| "EC_SEC1_PEM" | "EC_SEC1_DER"
-        | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER" | "SPC_CMS_PEM"
-        | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
+        | "PEM" | "DER" | "RFC4716" | "PKCS8" | "RSA_PKCS1_PEM" | "RSA_PKCS1_DER" | "RSA_PKCS8_PEM" | "RSA_PKCS8_DER"
+        | "RSA_SPKI_PEM" | "RSA_SPKI_DER" | "RSA_PUBLIC_PKCS1_PEM" | "RSA_PUBLIC_PKCS1_DER"| "EC_SEC1_PEM" | "EC_SEC1_DER"
+        | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER" | "SPC_CMS_PEM"| "SPC_CERTIFICATES_PEM"
+        | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B" | "VCARD_3" | "VCARD_4" | "VCARD_TXT" | "VCARD_YAML" | "VCARD_JSON";
                outputFilePath: string; outputFileName: string; }
     | { type: "revealSecret"; entryId: string; field: string; }
     | { type: "revealPrivateKey"; entryId?: string; }
@@ -73,12 +72,19 @@ export type FromWebview =
     | { type: "extractArchiveFolder"; groupId: string; }
     | { type: "extractArchiveAll"; }
     | { type: "extractArchiveToFolder"; }
+    | { type: "validateVsixPackage"; }
+    | { type: "installVsixPackage"; }
     | { type: "createArchiveFolder"; groupId: string; }
     | { type: "deleteArchiveFolder"; groupId: string; }
     | { type: "addArchiveFile"; groupId: string; }
     | { type: "deleteArchiveEntry"; entryId: string; }
     | { type: "copyArchiveInternalPath"; groupId: string; }
-    | { type: "getDbInfo"; entryId?: string | null; };
+    | { type: "showDecodedVcardInfo"; }
+    | { type: "convertVcard"; version: "3.0" | "4.0"; }
+    | { type: "getDbInfo"; entryId?: string | null; }
+    | { type: "openYamlJsonFile"; }
+    | { type: "saveYamlJsonFile"; content: string; format: "yaml" | "json"; sourceFilePath: string; }
+    | { type: "openQrTextFile"; };
 
 export interface ActiveEditor {
     document: VaultDocument;

@@ -68,6 +68,15 @@ body.resizing * {cursor: col-resize !important; user-select: none !important;}
 .entry-title {flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
 .entry-sub {color: var(--vscode-descriptionForeground); font-size: 0.85em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
 
+.vcard-entry-row {margin-bottom: 2px; padding-top: 5px; padding-bottom: 5px;}
+.vcard-entry-row .entry-title {line-height: 1.25;}
+.vcard-entry-row .entry-sub {margin-top: 2px; line-height: 1.2;}
+.vcard-entry-row:nth-child(odd) {background: var(--vscode-list-inactiveSelectionBackground);}
+.vcard-entry-row:nth-child(even) {background: var(--vscode-sideBar-background);}
+.vcard-entry-row:hover {background: var(--vscode-list-hoverBackground);}
+.vcard-entry-row.active {background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground);}
+.vcard-entry-row.active .entry-sub {color: var(--vscode-list-activeSelectionForeground);}
+
 .badge {font-size: 0.75em; padding: 1px 5px; border-radius: 8px;}
 .badge.expired {background: var(--vscode-errorForeground); color: var(--vscode-editor-background);}
 .badge.weak {background: var(--vscode-editorWarning-foreground, #d19a66); color: var(--vscode-editor-background);}

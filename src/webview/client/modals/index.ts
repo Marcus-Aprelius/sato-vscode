@@ -28,7 +28,10 @@ import {
     openCryptoConverter,
     openEmptyCryptoConverter,
     openQrCodeGenerator,
-    openQrCodeGeneratorWithValue
+    openQrCodeGeneratorWithValue,
+    openYamlJsonConverter,
+    setQrTextFileContent,
+    setYamlJsonFileContent
 } from "./converterModal";
 
 export {
@@ -55,6 +58,9 @@ export {
     openBase64Converter,
     openQrCodeGenerator,
     openQrCodeGeneratorWithValue,
+    openYamlJsonConverter,
+    setQrTextFileContent,
+    setYamlJsonFileContent,
     openCryptoConverter,
     closeArchivePasswordModal,
     openArchivePasswordModal,

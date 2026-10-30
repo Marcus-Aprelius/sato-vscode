@@ -1,7 +1,14 @@
 import * as vscode from "vscode";
 
 import type { Settings } from "../webview";
-import type { AppTheme, FileCategoryFilter } from "../webview/render/types";
+import type {
+    AppTheme,
+    Base64DefaultFormat,
+    Base64DefaultOperation,
+    FileCategoryFilter,
+    YamlJsonDefaultOperation,
+    YamlJsonIndentation
+} from "../webview/render/types";
 
 const FILE_CATEGORY_FILTERS: ReadonlyArray<FileCategoryFilter> = ["vaults", "archives", "ssh", "crypto" ];
 
@@ -17,6 +24,10 @@ export function readSettings(): Settings {
         showEmptyValuesByDefault: cfg.get<boolean>("showEmptyValuesByDefault", true),
         showStatusBar: cfg.get<boolean>("showStatusBar", true),
         createArchiveBackups: cfg.get<boolean>("createArchiveBackups", true),
+        base64DefaultOperation: readBase64DefaultOperation(cfg),
+        base64DefaultFormat: readBase64DefaultFormat(cfg),
+        yamlJsonDefaultOperation: readYamlJsonDefaultOperation(cfg),
+        yamlJsonIndentation: readYamlJsonIndentation(cfg),
         fileCategoryFilters: readFileCategoryFilters(cfg),
         theme: readTheme(cfg)
     };
@@ -37,6 +48,10 @@ export async function updateSettings(
     await cfg.update("createArchiveBackups", settings.createArchiveBackups, vscode.ConfigurationTarget.Global);
     await cfg.update("fileCategoryFilters", normalizeFileCategoryFilters(settings.fileCategoryFilters), vscode.ConfigurationTarget.Global);
     await cfg.update("theme", settings.theme, vscode.ConfigurationTarget.Global);
+    await cfg.update("base64DefaultOperation", settings.base64DefaultOperation, vscode.ConfigurationTarget.Global);
+    await cfg.update("base64DefaultFormat", settings.base64DefaultFormat, vscode.ConfigurationTarget.Global);
+    await cfg.update("yamlJsonDefaultOperation", settings.yamlJsonDefaultOperation, vscode.ConfigurationTarget.Global);
+    await cfg.update("yamlJsonIndentation", settings.yamlJsonIndentation, vscode.ConfigurationTarget.Global);
 }
 
 function readFileCategoryFilters(
@@ -90,4 +105,48 @@ function readTheme(
         default:
             return "vscode";
     }
+}
+
+function readBase64DefaultFormat(
+    cfg: vscode.WorkspaceConfiguration
+): Base64DefaultFormat {
+    const value = cfg.get<string>("base64DefaultFormat", "base64url");
+
+    switch (value) {
+        case "base64":
+        case "base32":
+        case "base32hex":
+        case "hex":
+            return value;
+
+        default:
+            return "base64url";
+    }
+}
+
+function readYamlJsonIndentation(
+    cfg: vscode.WorkspaceConfiguration
+): YamlJsonIndentation {
+    const value = cfg.get<string>("yamlJsonIndentation", "spaces-2");
+
+    switch (value) {
+        case "spaces-4":
+        case "tabs":
+            return value;
+
+        default:
+            return "spaces-2";
+    }
+}
+
+function readBase64DefaultOperation(
+    cfg: vscode.WorkspaceConfiguration
+): Base64DefaultOperation {
+    return cfg.get<string>("base64DefaultOperation", "encode") === "decode" ? "decode" : "encode";
+}
+
+function readYamlJsonDefaultOperation(
+    cfg: vscode.WorkspaceConfiguration
+): YamlJsonDefaultOperation {
+    return cfg.get<string>("yamlJsonDefaultOperation", "yaml-to-json") === "json-to-yaml" ? "json-to-yaml" : "yaml-to-json";
 }

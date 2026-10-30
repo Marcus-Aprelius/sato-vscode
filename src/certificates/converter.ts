@@ -11,11 +11,18 @@ export type CertificateOutputFormat = | "PEM" | "DER";
 export type OpenSshPublicKeyOutputFormat = | "RFC4716" | "PKCS8" | "PEM";
 export type EcKeyOutputFormat = | "EC_SEC1_PEM" | "EC_SEC1_DER" | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER";
 export type SpcOutputFormat = | "SPC_CMS_PEM" | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
-export type CryptoOutputFormat = | CertificateOutputFormat | OpenSshPublicKeyOutputFormat | RsaKeyOutputFormat | EcKeyOutputFormat | SpcOutputFormat;
+export type VcardOutputFormat = | "VCARD_3" | "VCARD_4" | "VCARD_TXT" | "VCARD_YAML" | "VCARD_JSON";
+export type CryptoOutputFormat =
+    | CertificateOutputFormat
+    | OpenSshPublicKeyOutputFormat
+    | RsaKeyOutputFormat
+    | EcKeyOutputFormat
+    | SpcOutputFormat
+    | VcardOutputFormat;
 
-export interface CryptoConversionResult {
+    export interface CryptoConversionResult {
     bytes: Uint8Array;
-    extension: | ".pem" | ".der" | ".pub" | ".rsa" | ".ec" | ".p7b";
+    extension: | ".pem" | ".der" | ".pub" | ".rsa" | ".ec" | ".p7b" | ".vcf" | ".txt" | ".yaml" | ".json";
 }
 
 export interface SpcConversionFile {

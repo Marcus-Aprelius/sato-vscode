@@ -327,6 +327,7 @@ export function renderModals(
         <div class="settings-tabs">
             <button type="button" class="settings-tab active" id="settings-tab-general">General</button>
             <button type="button" class="settings-tab" id="settings-tab-password-generator">Password Generator</button>
+            <button type="button" class="settings-tab" id="settings-tab-converter">Converter</button>
         </div>
 
         <div class="modal-body settings-tab-content" id="settings-content-general">
@@ -363,6 +364,49 @@ export function renderModals(
             <label class="settings-number-row">
                 <span>Password generator length</span>
                 <input type="number" id="s-genlen" min="4" max="128" step="1"/>
+            </label>
+        </div>
+
+        <div class="modal-body settings-tab-content" id="settings-content-converter" style="display:none;">
+            <h3>Base64</h3>
+
+            <label class="settings-number-row">
+                <span>Operation</span>
+                <select id="s-base64-default-operation">
+                    <option value="encode">Encode</option>
+                    <option value="decode">Decode</option>
+                </select>
+            </label>
+
+            <label class="settings-number-row">
+                <span>Default format</span>
+                <select id="s-base64-default-format">
+                    <option value="base64url">Base64URL</option>
+                    <option value="base64">Base64</option>
+                    <option value="base32">Base32</option>
+                    <option value="base32hex">Base32Hex</option>
+                    <option value="hex">Hex</option>
+                </select>
+            </label>
+
+            <div class="settings-section-separator" aria-hidden="true"></div>
+            <h3>YAML / JSON</h3>
+
+            <label class="settings-number-row">
+                <span>Default operation</span>
+                <select id="s-yaml-json-default-operation">
+                    <option value="yaml-to-json">YAML → JSON</option>
+                    <option value="json-to-yaml">JSON → YAML</option>
+                </select>
+            </label>
+
+            <label class="settings-number-row">
+                <span>JSON output indentation</span>
+                <select id="s-yaml-json-indentation">
+                    <option value="spaces-2">Use 2 spaces</option>
+                    <option value="spaces-4">Use 4 spaces</option>
+                    <option value="tabs">Use tabs</option>
+                </select>
             </label>
         </div>
 
@@ -462,6 +506,7 @@ export function renderModals(
             <button type="button" class="converter-tab" id="converter-tab-extract" title="Extract available content from the selected file" aria-label="Extract available content from the selected file">Extract</button>
             <button type="button" class="converter-tab" id="converter-tab-base64" title="Encode or decode Base64 text" aria-label="Encode or decode Base64 text">Base64</button>
             <button type="button" class="converter-tab" id="converter-tab-qr" title="Generate a QR code from text" aria-label="Generate a QR code from text">QR</button>
+            <button type="button" class="converter-tab" id="converter-tab-yaml-json" title="Convert between YAML and JSON" aria-label="Convert between YAML and JSON">YAML↔JSON</button>
         </div>
 
         <div class="modal-body converter-modal-body">
@@ -629,6 +674,7 @@ export function renderModals(
                         <h3>Input</h3>
 
                         <div class="base64-section-actions">
+                            <button type="button" class="btn" id="qr-upload" title="Open a text file">Upload</button>
                             <button type="button" class="btn" id="qr-paste">Paste</button>
                             <button type="button" class="btn" id="qr-clear">Clear</button>
                         </div>
@@ -658,6 +704,57 @@ export function renderModals(
             </div>
         </div>
 
+        <div id="converter-yaml-json-content" style="display:none;">
+            <div class="base64-toolbar">
+                <label class="base64-option">
+                    Operation
+
+                    <select id="yaml-json-operation">
+                        <option value="yaml-to-json" selected>YAML → JSON</option>
+
+                        <option value="json-to-yaml">
+                            JSON → YAML
+                        </option>
+                    </select>
+                </label>
+
+                <button type="button" class="btn primary" id="yaml-json-live-mode" title="Disable automatic YAML and JSON conversion" aria-label="Disable automatic YAML and JSON conversion" aria-pressed="true">Live Mode: ON</button>
+                <button type="button" class="btn" id="yaml-json-swap" title="Swap input and output" aria-label="Swap input and output">⇄</button>
+            </div>
+
+            <div class="base64-columns">
+                <section class="base64-section">
+                    <div class="base64-section-header">
+                        <h3 id="yaml-json-input-title">YAML Input</h3>
+
+                        <div class="base64-section-actions">
+                            <button type="button" class="btn" id="yaml-json-upload" title="Open a YAML or JSON file">Upload</button>
+                            <button type="button" class="btn" id="yaml-json-paste">Paste</button>
+                            <button type="button" class="btn" id="yaml-json-clear">Clear</button>
+                        </div>
+                    </div>
+                    <textarea id="yaml-json-input" class="base64-textarea" spellcheck="false" placeholder="Enter YAML data"></textarea>
+                    <div class="base64-character-count" id="yaml-json-input-count">0 characters</div>
+                </section>
+
+                <section class="base64-section">
+                    <div class="base64-section-header">
+                        <h3 id="yaml-json-output-title">JSON Output</h3>
+
+                        <div class="base64-section-actions">
+                            <button type="button" class="btn" id="yaml-json-download" title="Save the converted result" disabled>Download</button>
+                            <button type="button" class="btn" id="yaml-json-copy" disabled>Copy</button>
+                        </div>
+                    </div>
+
+                    <textarea id="yaml-json-output" class="base64-textarea" spellcheck="false" placeholder="Result" readonly></textarea>
+                    <div class="base64-character-count" id="yaml-json-output-count">0 characters</div>
+                </section>
+            </div>
+
+            <div class="base64-message">YAML and JSON conversion runs locally. Input data is not sent anywhere.</div>
+            <div class="base64-error" id="yaml-json-error" style="display:none;"></div>
+        </div>
     </div>
 
     <div class="modal-footer">

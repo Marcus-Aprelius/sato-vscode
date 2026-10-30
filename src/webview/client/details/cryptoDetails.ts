@@ -12,75 +12,80 @@ import { DAY_MILLISECONDS, daysUnitLabel, parseDateTimestamp } from "../dateForm
 import { countCryptoEmptyValues, emptyValuesButtonText, emptyValuesButtonTitle } from "./emptyValues";
 import { isCryptoContainer, isCryptoContainerUnlocked, isOpenPgpMessage, isVeraCryptContainer } from "../crypto/containerTypes";
 import { hasArchivePreviewTab } from "./archivePreviewSupport";
+import { openQrCodeGeneratorWithValue } from "../modals";
 
 export function renderCryptoDetails(
     container: HTMLElement,
     entry: ClientEntry
 ): void {
-    const emptyValuesCount = countCryptoEmptyValues(entry);
+    const vcardContact =
+        entry.values?.Type === "vCard Contact";
 
     renderCryptoDetailsTabs(container, entry);
 
     if (app.detailsTab === "preview") {
-        renderArchivePreviewTab(container, entry);
+        if (vcardContact) {
+            renderVcardPreviewTab(container, entry);
+        } else {
+            renderArchivePreviewTab(container, entry);
+        }
 
         return;
     }
 
     if (app.detailsTab === "privateKey") {
         renderPrivateKeyTab(container, entry);
-
         return;
     }
 
     if (app.detailsTab === "details") {
         renderDetailsTab(container, entry);
-
         return;
     }
 
     const actions = document.createElement("div");
     actions.className = "actions";
 
-    const toggleEmpty = createButton(app.showEmptyValues
-        ? "btn primary crypto-toggle-empty-btn"
-        : "btn danger crypto-toggle-empty-btn",
-        emptyValuesButtonText(app.showEmptyValues, emptyValuesCount)
-    );
+    if (!vcardContact) {
+        const emptyValuesCount = countCryptoEmptyValues(entry);
 
-    toggleEmpty.disabled = emptyValuesCount === 0;
-    toggleEmpty.title = emptyValuesButtonTitle(app.showEmptyValues, emptyValuesCount);
+        const toggleEmpty = createButton(app.showEmptyValues
+            ? "btn primary crypto-toggle-empty-btn"
+            : "btn danger crypto-toggle-empty-btn", emptyValuesButtonText(app.showEmptyValues, emptyValuesCount)
+        );
 
-    toggleEmpty.addEventListener("click", () => {
-        if (emptyValuesCount === 0) {
-            return;
-        }
+        toggleEmpty.disabled = emptyValuesCount === 0;
+        toggleEmpty.title = emptyValuesButtonTitle(app.showEmptyValues, emptyValuesCount);
 
-        app.showEmptyValues = !app.showEmptyValues;
-        renderDetails();
-        renderStatus();
-    });
+        toggleEmpty.addEventListener("click", () => {
+            if (emptyValuesCount === 0) {
+                return;
+            }
 
-    actions.appendChild(toggleEmpty);
+            app.showEmptyValues = !app.showEmptyValues;
+            renderDetails();
+            renderStatus();
+        });
 
-    const passwordlessPkcs12 =entry.values?.Type === "PKCS#12 Container" && (entry.values?.Protection || "").trim().toLowerCase() === "none";
+        actions.appendChild(toggleEmpty);
+    }
+
+    const passwordlessPkcs12 = entry.values?.Type === "PKCS#12 Container" && (entry.values?.Protection || "").trim().toLowerCase() === "none";
 
     if (isCryptoContainer(entry) && !isVeraCryptContainer(entry) && !passwordlessPkcs12) {
         const containerUnlocked = isCryptoContainerUnlocked(entry);
         const openPgp = isOpenPgpMessage(entry);
         const ageFile = entry.values?.Type === "age Encrypted File";
 
-        const containerButton = createButton(
-            containerUnlocked ? "btn danger crypto-container-lock-btn" : "btn primary crypto-container-lock-btn",
-            openPgp ? (containerUnlocked ? "Hide Decrypted Content" : "Decrypt Message") : ageFile
-                ? (containerUnlocked ? "Hide Decrypted Content" : "Decrypt File")
-                : (containerUnlocked ? "Lock Container" : "Unlock Container")
+        const containerButton = createButton(containerUnlocked
+                ? "btn danger crypto-container-lock-btn" : "btn primary crypto-container-lock-btn", openPgp
+                    ? (containerUnlocked ? "Hide Decrypted Content" : "Decrypt Message") : ageFile
+                        ? (containerUnlocked? "Hide Decrypted Content" : "Decrypt File") : (containerUnlocked ? "Lock Container" : "Unlock Container")
         );
 
         containerButton.addEventListener("click", () => {
             if (containerUnlocked) {
-                vscode.postMessage({type: "lockCryptoContainer", entryId: entry.id});
-
+                vscode.postMessage({type: "lockCryptoContainer",entryId: entry.id});
                 return;
             }
 
@@ -90,9 +95,11 @@ export function renderCryptoDetails(
         actions.appendChild(containerButton);
     }
 
-    container.appendChild(actions);
-    renderCryptoValuesTable(container, entry);
+    if (actions.childElementCount > 0) {
+        container.appendChild(actions);
+    }
 
+    renderCryptoValuesTable(container, entry);
 }
 
 function renderCryptoValuesTable(
@@ -177,6 +184,13 @@ function renderCryptoValuesTable(
         }
 
         value.appendChild(span);
+        const qrValue = vcardQrValue(entry, field, text);
+
+        if (qrValue) {
+            const qrButton = createVcardQrButton(field, qrValue);
+            value.appendChild(qrButton);
+        }
+
         const copy = createCopyIconButton("Copy");
         copy.disabled = !text;
 
@@ -196,6 +210,43 @@ function renderCryptoValuesTable(
     }
 
     container.appendChild(table);
+}
+
+function vcardQrValue(
+    entry: ClientEntry,
+    field: string,
+    value: string
+): string {
+    if (entry.values?.Type !== "vCard Contact" || !value) {
+        return "";
+    }
+
+    if (field === "Given name") {
+        return value.trim();
+    }
+
+    if (field === "Phone") {
+        const firstPhone = value.split(/\r?\n/, 1)[0].trim();
+        return firstPhone.replace(/\s+\([^()]+\)\s*$/, "").replace(/^tel:/i, "").trim();
+    }
+
+    return "";
+}
+
+function createVcardQrButton(
+    field: string,
+    value: string
+): HTMLButtonElement {
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.className = "icon-btn";
+    button.textContent = "QR";
+    button.title = `Show ${field.toLowerCase()} as QR code`;
+    button.setAttribute("aria-label", button.title);
+    button.addEventListener("click", () => {openQrCodeGeneratorWithValue(value);});
+
+    return button;
 }
 
 function formatDaysFromNow(
@@ -225,6 +276,17 @@ function renderCryptoDetailsTabs(
     const infoTab = createButton(app.detailsTab === "info" ? "details-tab active" : "details-tab", "Info");
     infoTab.addEventListener("click", () => {app.detailsTab = "info"; renderDetails();});
     tabs.appendChild(infoTab);
+
+    if (entry.values?.Type === "vCard Contact") {
+        const previewTab = createButton(app.detailsTab === "preview" ? "details-tab active" : "details-tab", "Preview");
+
+        previewTab.addEventListener("click", () => {
+            app.detailsTab = "preview";
+            renderDetails();
+        });
+
+        tabs.appendChild(previewTab);
+    }
 
     if (entry.values?.Details) {
         const detailsTab = createButton(app.detailsTab === "details" ? "details-tab active" : "details-tab", "Details");
@@ -319,7 +381,9 @@ function renderDetailsTab(
     });
 
     actions.appendChild(toggleEmpty);
-    container.appendChild(actions);
+    if (actions.childElementCount > 0) {
+        container.appendChild(actions);
+    }
 
     const table = document.createElement("table");
 
@@ -471,6 +535,45 @@ function openPrivateKeyTab(
     app.privateKeyVisible = true;
     renderDetails();
     renderStatus();
+}
+
+function renderVcardPreviewTab(
+    container: HTMLElement,
+    entry: ClientEntry
+): void {
+    const preview = document.createElement("pre");
+    preview.className = "archive-preview archive-preview-text";
+
+    const lines: string[] = [];
+    const values = entry.values || {};
+
+    addVcardPreviewField(lines, "", values["Formatted name"] || entry.title);
+    addVcardPreviewField(lines, "Phone", values.Phone);
+    addVcardPreviewField(lines, "Given name", values["Given name"]);
+    addVcardPreviewField(lines, "Family name", values["Family name"]);
+    addVcardPreviewField(lines, "Email", values.Email);
+    addVcardPreviewField(lines, "Organization", values.Organization);
+    addVcardPreviewField(lines, "Title", values.Title);
+    addVcardPreviewField(lines, "Address", values.Address);
+    addVcardPreviewField(lines, "Note", values.Note);
+    addVcardPreviewField(lines, "Version", values.Version);
+
+    preview.textContent = lines.length > 0 ? lines.join("\n\n") : "No contact information is available.";
+    container.appendChild(preview);
+}
+
+function addVcardPreviewField(
+    lines: string[],
+    label: string,
+    value: string | undefined
+): void {
+    const normalizedValue = value?.trim();
+
+    if (!normalizedValue) {
+        return;
+    }
+
+    lines.push(label ? `${label}\n${normalizedValue}` : normalizedValue);
 }
 
 function renderArchivePreviewTab(

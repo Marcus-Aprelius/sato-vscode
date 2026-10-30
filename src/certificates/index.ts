@@ -62,7 +62,8 @@ export type {
     RsaKeyOutputFormat,
     SpcConversionFile,
     SpcConversionResult,
-    SpcOutputFormat
+    SpcOutputFormat,
+    VcardOutputFormat
 } from "./converter";
 
 export function buildCertificateVault(

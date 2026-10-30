@@ -3,7 +3,7 @@ export const PASSWORD_VAULT_EXTENSIONS = ["kdbx", "psafe3", "ibak", "1pif", "bcu
 export const CRYPTO_FILE_EXTENSIONS = [
     "crt", "cer", "der", "pem", "csr", "p10", "key", "rsa", "luks","pub",
     "pfx", "p12", "p7b", "p7c", "p7s", "p7m", "spc", "jceks", "pk8", "ppk",
-    "age", "jks", "p8", "gpg", "pgp", "asc", "sig", "ec", "hc", "tc", "bks"
+    "age", "jks", "p8", "gpg", "pgp", "asc", "sig", "ec", "hc", "tc", "bks", "vcf"
 ] as const;
 
 export const ARCHIVE_FILE_EXTENSIONS = [

@@ -1,7 +1,7 @@
 import { vscode } from "../globals";
 import { openDropdown } from "../contextMenu";
 import { app, getSelectedEntry,isCryptoFileView, isReadOnlyVault } from "../state";
-import { openBase64Converter, openEmptyCryptoConverter, openModal, openQrCodeGenerator } from "../modals";
+import { openBase64Converter, openEmptyCryptoConverter, openModal, openQrCodeGenerator, openYamlJsonConverter } from "../modals";
 import {isCryptoContainer, isCryptoContainerUnlocked, isOpenPgpMessage, isVeraCryptContainer } from "../crypto/containerTypes";
 import { clearPasswordGenerator } from "../generator";
 
@@ -105,6 +105,12 @@ export function openToolsMenu(
             label: "QR Code Converter",
             title: "Create a QR code from text, URL, password, or other data",
             action: () => {openQrCodeGenerator();}
+        },
+
+        {
+            label: "YAML ↔ JSON Converter",
+            title: "Convert between YAML and JSON",
+            action: () => {openYamlJsonConverter();}
         },
 
         { sep: true },

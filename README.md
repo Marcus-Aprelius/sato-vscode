@@ -3,6 +3,7 @@
 # SATO - Secure Access Task Operator for VS Code
 
 Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), supported archives, ZIP-based application containers and common [crypto files](#supported-formats) directly inside VS Code `v1.120.0+` with a single UI.
+Additionally, SATO provides a collection of useful converters and generators that are always close at hand, especially when working on a machine without an internet connection.
 
 > **⚠️ Status:** In development!⚠️ Use in production environments at your own risk!⚠️
 
@@ -57,6 +58,7 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), supported ar
 ![PPK](https://img.shields.io/badge/.ppk-✓-8A2BE2)
 ![AGE](https://img.shields.io/badge/.age-✓-8A2BE2)
 ![LUKS](https://img.shields.io/badge/.luks-✓-8A2BE2)
+![VCF](https://img.shields.io/badge/.vcf-✓-8A2BE2)
 
 <!-- Archives and disk images -->
 ![ZIP](https://img.shields.io/badge/.zip-✓-FFB300)
@@ -122,17 +124,17 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), supported ar
 
 ## Security Considerations
 
-- Passwords are retained only for the active session and are not persisted
-- Temporary decrypted data created for Preview or external CLI operations is stored in restricted temporary locations and removed after the operation
-- Supported editable vaults are encrypted again when saved
-- OpenPGP operations use an isolated temporary GPG home and do not import keys into the user's default keyring
-- Clipboard auto-clear and vault auto-lock are configurable
+- Passwords are kept only for the active session and are never persisted
+- Temporary decrypted data is stored in restricted locations and removed after use
+- Editable vaults are re-encrypted when saved
+- OpenPGP operations use an isolated temporary GPG home and don't modify the user's default keyring
+- Auto-lock and clipboard auto-clear are configurable
 - SATO does not use cloud services or collect telemetry
-- Archive entry paths are validated before extraction to prevent directory traversal
-- Existing destination files are not overwritten during archive extraction
-- Optional `<archive-name>.bak` backups can be created before supported archive modifications
-- Archives handled by external CLI tools are inspected and extracted through temporary directories
-- Missing optional external tools disable only the formats or operations that depend on those tools; built-in features remain available
+- Archive paths are validated to prevent directory traversal
+- Archive extraction does not overwrite existing files
+- Optional backups can be created before modifying supported archives
+- External CLI operations use isolated temporary directories
+- Missing optional tools disable only the dependent formats or operations
 
 ---
 
@@ -152,7 +154,7 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), supported ar
  
 7. Commands available from the Command Palette `Ctrl/Cmd + Shift + P`:
 
-  * `SATO: Open Password Vault`
+  * `SATO: Open Vault or Crypto File`
   * `SATO: Lock Vault`
   * `SATO: Reload Vault`
 
@@ -229,7 +231,7 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), supported ar
 | `.nupkg`      | NuGet `package`                                              | View, Preview, extract                         |
 | `.sb2`        | Scratch 2 project `file`                                     | View, Preview, extract                         |
 | `.sb3`        | Scratch 3 project `file`                                     | View, Preview, extract                         |
-| `.vsix`       | Visual Studio or VS Code extension `package`                 | View, Preview, extract                         |
+| `.vsix`       | Visual Studio or VS Code extension `package`                 | View, Preview, validate, install, extract      |
 | `.war`        | Java Web Application `Archive`                               | View, Preview, extract                         |
 | `.whl`        | Python wheel `package`                                       | View, Preview, extract                         |
 | `.xlsx`       | Microsoft Excel `workbook`                                   | View, Preview, extract                         |
@@ -255,6 +257,7 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), supported ar
 | `.lha`        | LHA `archive`                                                | View, Preview, extract                         |
 | `.arj`        | ARJ `archive`                                                | View, Preview, extract                         |
 | `.xar`        | Extensible `Archive` format                                  | View, Preview, extract                         |
+| `.vcf`        |	vCard contact `file`                                         | View, search, Preview, convert, generate QR    |
 | `.<EXT>.bak`  | Created by SATO backup `file`                                | View, open, unlock, Preview, extract (RO mode) |
 
 ### Additional Features Provided by Optional External Tools
@@ -303,13 +306,14 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), supported ar
 |------------------------|---------|
 | **Vault management**   | Three-pane viewer for groups, entries, and details<br>Read and write supported vault formats<br>Create, edit, duplicate, and delete entries<br>Create, rename, and delete groups |
 | **Crypto file viewer** | Two-pane viewer for crypto files and details and keys<br>Inspect files listed in **Supported Formats**<br>Unlock supported crypto containers and encrypted PK<br>View metadata, fingerprints, hashes, and decrypted content |
-| **Сonverter**          | Convert X.509 certificates between PEM and DER formats<br>View source certificate information before conversion<br>Configure the output format and file name<br>Access conversion from the Tools menu or crypto file context menu |
+| **Converter**          | Convert certificates, public and private keys, vCard contacts, and other supported formats<br>Convert between YAML and JSON with live conversion and synchronized scrolling<br>Encode and decode Base64URL, Base64, Base32, Base32Hex, and Hex data<br>Upload and download files, access from the Main menu, context menus or other converters |
+| **YAML ↔ JSON Converter** | Convert between YAML and JSON in both directions<br>Live conversion with synchronized Input and Output scrolling<br>Upload and download files, copy to the clipboard<br>Configure the default conversion direction and JSON indentation |
 | **Quick actions**      | Show, hide, and copy passwords<br>Copy PK, usernames, URLs, notes, paths and other values<br>Open URLs directly from entry details<br>Show or hide empty values |
 | **Search**             | Search vault entries and crypto metadata<br>Search titles, usernames, URLs<br>Search notes, subjects, issuers, paths, and fingerprints |
 | **Password generator** | Configurable length and character sets<br>Password strength indicator<br>Entry editor integration and one-click copy<br>Show generated passwords as QR codes |
 | **Security controls**  | Lock and reload vaults<br>Lock containers and hide decrypted content<br>Configurable auto-lock and clipboard auto-clear<br>Checks for required external tools |
 | **Interface**          | File, Entry, Folder, Tools, View, Settings, and Help menus<br>Status bar with vault, archive, or crypto metadata<br>Selectable VS Code, Dark, Gray, and Light themes<br>Optimized bundled extension package for faster installation and startup |
-| **Archive management** | Browse supported archives from the current directory<br>Display archive folders and files as a hierarchical tree<br>Preview supported text files and images without extracting them<br>Extract individual files, folders, or complete archives<br>Add and delete files in ZIP archives<br>Create and delete ZIP folders<br>Set, change, remove, lock, and unlock ZIP passwords<br>Support ZipCrypto and WinZip AES archives<br>Optionally create `.zip.bak` backups before modification |
+| **Archive management** | Browse archives, display content as a hierarchical tree<br>Preview supported text files and images without extracting them<br>Extract individual files, folders, or complete archives<br>Add and delete files in ZIP archives; create and delete ZIP folders<br>Set, change, remove, lock, and unlock ZIP passwords (with optional backupp)|
 | **ZIP-based containers** | Browse and extract application packages such as VSIX, JAR, EPUB, XLSX, NuGet, Python wheels, Scratch projects, and Minecraft packages<br>Validate ZIP signatures before opening<br>Protect package integrity through read-only access |
 | **QR code generator**    | Generate QR codes from text, URLs, passwords, and other values<br>Paste and clear input<br>Copy QR images and save them as PNG files |
 
@@ -317,20 +321,24 @@ Open, browse, edit and manage vaults (`.kdbx`, `.psafe3`, `.ibak`), supported ar
 
 ## Extension Settings
 
-| Setting                         | Description                                                                                    |
-|---------------------------------|------------------------------------------------------------------------------------------------|
-| `sato.autoLockTimeout`          | Auto-lock vault after N minutes of inactivity.<br>`0` disables auto-lock                       |
-| `sato.clipboardClearTimeout`    | Clear clipboard N seconds after copying a secret.<br>`0` disables clipboard auto-clear         |
-| `sato.passwordGeneratorLength`  | Default password length used by the generator                                                  |
-| `sato.confirmBeforeDelete`      | Ask for confirmation before deleting entries or folders                                        |
-| `sato.showPasswordsByDefault`   | Reveal passwords automatically in the entry details pane                                       |
-| `sato.showEmptyValuesByDefault` | Show empty values by default in vault and crypto file details                                  |
-| `sato.showStatusBar`            | Show or hide vault statistics, archive statistics, or cryptographic metadata                   |
-| `sato.theme`                    | SATO interface theme: `vscode`, `dark`, `gray`, or `light`.<br>Default: `vscode`               |
-| `sato.createArchiveBackups`     | Create a `.zip.bak` backup before modifying a ZIP archive.<br>Default: `false`                 |
-| `sato.fileCategoryFilters`      | File categories displayed in the first column: `all`, `vaults`, `archives`, `ssh`, or `crypto` |
+| Setting                         | Description                                                                                 | Default value  |
+|---------------------------------|---------------------------------------------------------------------------------------------|----------------|
+| `sato.autoLockTimeout`          | Auto-lock the vault after N minutes of inactivity. `0` disables auto-lock                   | `0`            |
+| `sato.clipboardClearTimeout`    | Clear the clipboard N seconds after copying a secret. `0` disables clipboard auto-clear     | `0`            |
+| `sato.passwordGeneratorLength`  | Default password length used by the Password Generator                                      | `20`           |
+| `sato.confirmBeforeDelete`      | Ask for confirmation before deleting entries or folders                                     | `true`         |
+| `sato.showPasswordsByDefault`   | Reveal passwords automatically in the entry details pane                                    | `false`        |
+| `sato.showEmptyValuesByDefault` | Show empty values by default in vault and cryptographic file details                        | `true`         |
+| `sato.showStatusBar`            | Show or hide vault, archive, contact, or cryptographic metadata in the status bar           | `true`         |
+| `sato.theme`                    | SATO interface theme: `vscode`, `dark`, `gray`, `light`                                     | `vscode`       |
+| `sato.createArchiveBackups`     | Create a backup before modifying a supported archive                                        | `true`         |
+| `sato.fileCategoryFilters`      | File categories displayed in the first column: `all`, `vaults`, `archives`, `ssh`, `crypto` | `all`          |
+| `sato.base64DefaultOperation`   | Base64 Converter operation: `encode`, `decode`                                              | `encode`       |
+| `sato.base64DefaultFormat`      | Base64 Converter format: `base64url`, `base64`, `base32`, `base32hex`, `hex`                | `base64url`    |
+| `sato.yamlJsonDefaultOperation` | YAML ↔ JSON conversion direction: `yaml-to-json`, `json-to-yaml`                            | `yaml-to-json` |
+| `sato.yamlJsonIndentation`      | JSON output indentation: `spaces-2`, `spaces-4`, `tabs`                                     | `spaces-2`     |
 
----
+---     
 
 ## Development
 
@@ -342,8 +350,8 @@ Open folder `.devcontainer` in VSCode and use commands:
 | Build the project         | `npm run build:extension-bundle:production`                               |
 | Package `.vsix` extension | `npm run package`                                                         |
 | List packaged files       | `npx @vscode/vsce ls --tree`                                              |
-| Install generated VSIX    | `code --install-extension files/sato-vscode-ext-<version>.vsix --force`   |
 | Install in VSCodium       | `codium --install-extension files/sato-vscode-ext-<version>.vsix --force` |
+| Install in VSCode         | `code --install-extension files/sato-vscode-ext-<version>.vsix --force`   |
 
 ---
 

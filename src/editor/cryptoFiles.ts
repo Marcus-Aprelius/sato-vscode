@@ -1,6 +1,10 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
+import { buildVcardVault } from "../contacts";
+import { describeError } from "../utils/errors";
+import { supportedFileCategory } from "../fileFormats";
+
 import {
     buildCertificateDirectoryVault,
     isCertificateLikeFileName,
@@ -11,9 +15,6 @@ import {
 import type { GroupView } from "../vault";
 import type { VaultDocument } from "../types";
 import type { SupportedDirectoryFile } from "../archives";
-
-import { describeError } from "../utils/errors";
-import { supportedFileCategory } from "../fileFormats";
 
 export async function openCertificateFile(
     document: VaultDocument
@@ -49,7 +50,13 @@ export async function openCertificateFile(
         });
     }
 
-    supportedFiles.sort((left, right) => left.fileName.localeCompare(right.fileName, undefined, {sensitivity: "base"}));
+    supportedFiles.sort((left, right) => left.fileName.localeCompare( right.fileName, undefined, {sensitivity: "base"}));
+
+    if (activeUri.fsPath.toLowerCase().endsWith(".vcf")) {
+        document.certificate = buildVcardVault(activeUri, selectedFiles[0].bytes, supportedFiles);
+        return true;
+    }
+
     document.certificate = buildCertificateDirectoryVault(selectedFiles, activeUri, supportedFiles);
     return true;
 }
@@ -81,7 +88,6 @@ export async function readCryptoFilesFromDirectory(
 
         try {
             const bytes = await vscode.workspace.fs.readFile(fileUri);
-
             result.push({uri: fileUri, bytes});
 
         } catch {

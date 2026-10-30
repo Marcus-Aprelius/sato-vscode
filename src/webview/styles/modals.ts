@@ -164,7 +164,8 @@ export const MODAL_STYLES = `
     font: inherit;
 }
 
-.settings-tabs {display: flex; gap: 0; padding: 0 0 0 0px; border-bottom: 1px solid var(--vscode-panel-border);}
+.settings-modal > .modal-title {border-bottom: none;}
+.settings-tabs {display: flex; gap: 0; padding: 0; border-top: none; border-bottom: 1px solid var(--vscode-panel-border);}
 
 .settings-tab {
     padding: 7px 12px;
@@ -189,7 +190,9 @@ export const MODAL_STYLES = `
 
 .settings-tab-content {flex: 1;}
 .settings-modal {width: min(460px, 92vw); height: 390px; max-height: 90vh;}
-.settings-modal .settings-tab-content {flex: 1; min-height: 0; overflow-y: auto;}
+.settings-modal .settings-tab-content {flex: 1; min-height: 0; overflow-y: auto; padding-top: 0;}
+.settings-modal .settings-tab-content > h3 {margin: 6px 0 6px;}
+.settings-modal .settings-tab-content > h3:first-child {margin-top: 0;}
 .settings-number-row select {width: 140px; min-width: 140px; padding: 4px 6px; }
 .settings-section-separator {width: 100%; height: 1px; margin: 3px 0; background: var(--vscode-panel-border);}
 .modal-body label.settings-number-row {display: grid; grid-template-columns: minmax(0, 1fr) 140px; align-items: center; gap: 12px;}
@@ -269,8 +272,16 @@ export const MODAL_STYLES = `
 }
 
 .converter-modal-body {flex: 1; min-width: 0; min-height: 0; overflow: hidden;}
-#converter-file-content, #converter-base64-content {height: 100%; min-height: 0;}
-#converter-base64-content {flex: 1; flex-direction: column; gap: 12px; min-width: 0; min-height: 0;}
+
+#converter-file-content,
+#converter-base64-content,
+#converter-yaml-json-content {height: 100%; min-height: 0;}
+
+#converter-base64-content,
+#converter-yaml-json-content {flex: 1; flex-direction: column; gap: 12px; min-width: 0;}
+
+#converter-yaml-json-content .base64-columns {height: 100%;}
+
 .base64-toolbar {display: flex; align-items: end; gap: 12px;}
 .modal-body label.base64-option {display: flex; flex-direction: column; gap: 4px; min-width: 170px; color: var(--vscode-descriptionForeground);}
 .base64-option select {width: 100%;}

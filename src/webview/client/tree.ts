@@ -328,11 +328,12 @@ export function selectGroup(groupId: string): void {
 function isConvertibleCryptoFile(
     entry: EntryView
 ): boolean {
-    return (entry.values?.Type === "X.509 Certificate" && (entry.values.Encoding === "PEM" || entry.values.Encoding === "DER")) ||
+    return (
+        entry.values?.Type === "X.509 Certificate" && (entry.values.Encoding === "PEM" || entry.values.Encoding === "DER")) ||
         entry.values?.Type === "OpenSSH Public Key" || entry.values?.Type === "RSA Private Key" || entry.values?.Type === "RSA Public Key" ||
         entry.values?.Type === "EC Private Key" || entry.values?.Type === "EC Public Key" ||
-            (entry.values?.Type === "Private Key" && (entry.values.Algorithm === "RSA" || entry.values.Algorithm === "EC")) ||
-            entry.values?.Type === "Authenticode Certificate Container";
+        (entry.values?.Type === "Private Key" && (entry.values.Algorithm === "RSA" || entry.values.Algorithm === "EC")) ||
+        entry.values?.Type === "Authenticode Certificate Container" || entry.values?.Type === "vCard Contact";
 }
 
 function isExtractableCryptoFile(
@@ -349,91 +350,137 @@ function openCryptoFileMenu(
     y: number,
     entry: EntryView
 ): void {
-
     const convertible = isConvertibleCryptoFile(entry);
     const extractable = isExtractableCryptoFile(entry);
+    const vcardContact = entry.values?.Type === "vCard Contact";
     const passwordEditable = isPasswordEditablePrivateKey(entry);
     const encryption = (entry.values?.Encryption || "").trim().toLowerCase();
     const protection = (entry.values?.Protection || "").trim().toLowerCase();
     const summary = entry.values?.Summary || "";
 
-    const passwordEncrypted = entry.values?.Status === "Locked" || protection.includes("password") || protection === "passphrase" ||
-        (encryption !== "" && encryption !== "none") || (/\bencrypted\b/i.test(summary) && !/\bunencrypted\b/i.test(summary));
+    const passwordEncrypted = entry.values?.Status === "Locked" ||
+        protection.includes("password") || protection === "passphrase" ||
+        (encryption !== "" && encryption !== "none") ||
+        (/\bencrypted\b/i.test(summary) && !/\bunencrypted\b/i.test(summary));
 
     const items: MenuItem[] = [];
 
-    items.push({
-        label: "Show Info",
-        title: "Show information about the selected crypto file",
-
-        action: () => {
-            byId("dbinfo-body").innerHTML = '<div class="empty">Loading...</div>';
-            byId("dbinfo-title-label").textContent = "File Info";
-            openModal("dbinfo-modal");
-            vscode.postMessage({type: "getDbInfo", entryId: entry.id});
-        }
-    });
-
     if (passwordEditable) {
-        items.push({sep: true});
         const keyStore = isJavaKeyStore(entry);
         const ageFile = entry.values?.Type === "age Encrypted File";
-        const luksContainer =
-            entry.values?.Type === "LUKS Encrypted Container" ||
-            entry.values?.Type === "LUKS1 Encrypted Container" ||
-            entry.values?.Type === "LUKS2 Encrypted Container";
+        const luksContainer = entry.values?.Type === "LUKS Encrypted Container" || entry.values?.Type === "LUKS1 Encrypted Container" || entry.values?.Type === "LUKS2 Encrypted Container";
 
         if (ageFile || luksContainer) {
             items.push({
                 label: "Change Password...",
-                action: () => {vscode.postMessage({type: "preparePrivateKeyPasswordChange", entryId: entry.id});}
+                action: () => {
+                    vscode.postMessage({
+                        type: "preparePrivateKeyPasswordChange",
+                        entryId: entry.id
+                    });
+                }
             });
+
         } else if (passwordEncrypted) {
             items.push({
                 label: "Change Password...",
-                action: () => {vscode.postMessage({type: "preparePrivateKeyPasswordChange", entryId: entry.id});}
+                action: () => {
+                    vscode.postMessage({
+                        type: "preparePrivateKeyPasswordChange",
+                        entryId: entry.id
+                    });
+                }
             });
 
             if (!keyStore) {
                 items.push({
                     label: "Remove Password...",
-                    action: () => {openPrivateKeyPasswordModal(entry.id, "remove");}
+                    action: () => {openPrivateKeyPasswordModal(entry.id, "remove");
+                    }
                 });
             }
+
         } else if (!keyStore) {
             items.push({
                 label: "Set Password...",
-                action: () => {vscode.postMessage({type: "preparePrivateKeyPasswordChange", entryId: entry.id});}
+                action: () => {
+                    vscode.postMessage({
+                        type: "preparePrivateKeyPasswordChange",
+                        entryId: entry.id
+                    });
+                }
             });
         }
+
+        items.push({sep: true});
+    }
+
+    if (vcardContact) {
+        items.push(
+            {
+                label: "Show Decoded Info",
+                title: "Show all contacts with decoded names and contact fields",
+                action: () => {
+                    byId("dbinfo-body").innerHTML ='<div class="empty">Loading...</div>';
+                    byId("dbinfo-title-label" ).textContent = "Decoded vCard Info";
+                    openModal("dbinfo-modal");
+                    vscode.postMessage({type: "showDecodedVcardInfo"});
+                }
+            },
+            {
+                label: "Convert to...",
+                title: "Convert contacts to Text, YAML, JSON, vCard 3.0, or vCard 4.0",
+                action: () => { vscode.postMessage({type: "prepareCryptoConversion", entryId: entry.id, initialTab: "convert"}); }
+            }
+        );
+
+    } else {
+        items.push(
+            {
+                label: "Convert to...",
+                title: convertible ? "Convert the selected file" : "Conversion is not available for this file",
+                disabled: !convertible,
+                action: () => {
+                    if (!convertible) {
+                        return;
+                    }
+
+                    vscode.postMessage({
+                        type: "prepareCryptoConversion",
+                        entryId: entry.id,
+                        initialTab: "convert"
+                    });
+                }
+            },
+            {
+                label: "Extract...",
+                title: extractable ? "Extract available content from the selected file" : "Extraction is not available for this file",
+                disabled: !extractable,
+                action: () => {
+                    if (!extractable) {
+                        return;
+                    }
+
+                    vscode.postMessage({ type: "prepareCryptoConversion", entryId: entry.id, initialTab: "extract"});
+                }
+            }
+        );
     }
 
     items.push(
-        { sep: true },
+        {sep: true},
         {
-            label: "Convert...",
-            title: convertible ? "Convert the selected file" : "Conversion is not available for this file",
-            disabled: !convertible,
-
+            label: "Show Info",
+            title: vcardContact ? "Show vCard file information" : "Show information about the selected crypto file",
             action: () => {
-                if (!convertible) {
-                    return;
-                }
+                byId("dbinfo-body").innerHTML = '<div class="empty">Loading...</div>';
+                byId("dbinfo-title-label").textContent = vcardContact ? "vCard File Info" : "File Info";
+                openModal("dbinfo-modal");
 
-                vscode.postMessage({type: "prepareCryptoConversion", entryId: entry.id, initialTab: "convert"});
-            }
-        },
-        {
-            label: "Extract...",
-            title: extractable ? "Extract available content from the selected file" : "Extraction is not available for this file",
-            disabled: !extractable,
-
-            action: () => {
-                if (!extractable) {
-                    return;
-                }
-
-                vscode.postMessage({type: "prepareCryptoConversion", entryId: entry.id, initialTab: "extract"});
+                vscode.postMessage({
+                    type: "getDbInfo",
+                    entryId: vcardContact ? null : entry.id
+                });
             }
         }
     );

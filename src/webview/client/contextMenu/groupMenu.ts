@@ -55,80 +55,122 @@ export function openGroupMenu(
 
         if (isArchiveRoot) {
             const folderName = archiveExtractionFolderName(app.state.tree.name);
+            const vsixPackage = app.state.selectedArchivePath ?.toLowerCase().endsWith(".vsix") === true;
+            const items: MenuItem[] = [];
 
-            const items: MenuItem[] = [
-                { label: "Extract all to...", action: () => {vscode.postMessage({type: "extractArchiveAll"}); }},
-                { label: `Extract all to "${folderName}"`, action: () => {vscode.postMessage({type: "extractArchiveToFolder"}); }},
-            ];
+            if (vsixPackage) {
+                items.push(
+                    {
+                        label: "Install VSIX Package",
+                        title: "Validate and install this VSIX package into the current VS Code environment",
+                        action: () => { vscode.postMessage({type: "installVsixPackage"}); }
+                    },
+                    {
+                        label: "Validate VSIX Package",
+                        title: "Validate the VSIX package structure without installing it",
+                        action: () => { vscode.postMessage({type: "validateVsixPackage"}); }
+                    },
+                    {sep: true}
+                );
+            }
+
+            items.push(
+                {
+                    label: "Extract all to...",
+                    action: () => { vscode.postMessage({type: "extractArchiveAll"});}
+                },
+                {
+                    label: `Extract all to "${folderName}"`,
+                    action: () => { vscode.postMessage({type: "extractArchiveToFolder"}); }
+                }
+            );
 
             if (passwordEditable) {
                 if (archiveEncrypted) {
-                    items.push({
-                        label: "Change Password...",
-                        title: app.archiveUnlocked ? "Change the archive password" : "Unlock the archive before changing its password",
-                        disabled: !app.archiveUnlocked,
+                    items.push(
+                        {sep: true},
+                        {
+                            label: "Change Password...",
+                            title: app.archiveUnlocked ? "Change the archive password" : "Unlock the archive before changing its password",
+                            disabled: !app.archiveUnlocked,
+                            action: () => {
+                                if (!app.archiveUnlocked) {
+                                    return;
+                                }
 
-                        action: () => {
-                            if (!app.archiveUnlocked) {
-                                return;
+                                vscode.postMessage({type: "prepareArchivePasswordChange"});
                             }
+                        },
+                        {
+                            label: "Delete Password",
+                            title: app.archiveUnlocked ? "Remove password protection from the archive" : "Unlock the archive before removing its password",
+                            disabled: !app.archiveUnlocked,
+                            action: () => {
+                                if (!app.archiveUnlocked) {
+                                    return;
+                                }
 
-                            vscode.postMessage({type: "prepareArchivePasswordChange"});
-                        }
-                    });
-
-                    items.push({
-                        label: "Delete Password",
-                        title: app.archiveUnlocked ? "Remove password protection from the archive" : "Unlock the archive before removing its password",
-                        disabled: !app.archiveUnlocked,
-
-                        action: () => {
-                            if (!app.archiveUnlocked) {
-                                return;
+                                vscode.postMessage({type: "deleteArchivePassword"});
                             }
-
-                            vscode.postMessage({type: "deleteArchivePassword"});
                         }
-                    });
+                    );
+
                 } else {
-                    items.push({
-                        label: "Set Password...",
-                        title: "Protect the archive with a password",
-
-                        action: () => {vscode.postMessage({type: "prepareArchivePasswordSet"});}
-                    });
+                    items.push(
+                        {sep: true},
+                        {
+                            label: "Set Password...",
+                            title: "Protect the archive with a password",
+                            action: () => { vscode.postMessage({type: "prepareArchivePasswordSet"}); }
+                        }
+                    );
                 }
             }
 
-            items.push({sep: true});
-            items.push({label: "Show Info",
-
-                action: () => {
-                    byId("dbinfo-title-label").textContent = "Archive Info";
-                    byId("dbinfo-body").innerHTML = '<div class="empty">' + "Loading..." + "</div>";
-
-                    openModal("dbinfo-modal");
-                    vscode.postMessage({type: "getDbInfo"});
+            items.push(
+                {sep: true},
+                {
+                    label: "Show Info",
+                    action: () => {
+                        byId("dbinfo-title-label").textContent = vsixPackage ? "VSIX Package Info" : "Archive Info";
+                        byId("dbinfo-body").innerHTML = '<div class="empty">Loading...</div>';
+                        openModal("dbinfo-modal");
+                        vscode.postMessage({type: "getDbInfo"});
+                    }
                 }
-            });
+            );
 
             showMenu(x, y, items);
-
             return;
         }
 
         const items: MenuItem[] = [
-            { label: "Extract Folder to...", action: () => {vscode.postMessage({type: "extractArchiveFolder", groupId}); }},
-            { label: "Extract all to...", action: () => {vscode.postMessage({type: "extractArchiveAll"}); }}
+            {
+                label: "Extract Folder to...",
+                action: () => { vscode.postMessage({type: "extractArchiveFolder", groupId});}
+            },
+            {
+                label: "Extract all to...",
+                action: () => { vscode.postMessage({type: "extractArchiveAll"}); }
+            }
         ];
 
         if (archiveEditable) {
             items.push(
-                { sep: true },
-                { label: "Create Folder...", action: () => {vscode.postMessage({type: "createArchiveFolder", groupId}); }},
-                { label: "Delete Folder...", action: () => { vscode.postMessage({type: "deleteArchiveFolder", groupId}); }},
-                { sep: true },
-                { label: "Add File...", action: () => {vscode.postMessage({type: "addArchiveFile", groupId});}}
+                {sep: true},
+                {
+                    label: "Create Folder...",
+                    action: () => { vscode.postMessage({type: "createArchiveFolder", groupId}); }
+                },
+                {
+                    label: "Delete Folder...",
+                    action: () => { vscode.postMessage({type: "deleteArchiveFolder", groupId}); }
+                },
+                {sep: true},
+                {
+                    label: "Add File...",
+                    action: () => { vscode.postMessage({type: "addArchiveFile", groupId}); }
+                }
             );
         }
 
@@ -141,11 +183,23 @@ export function openGroupMenu(
     }
 
     showMenu(x, y, [
-        { label: "New Entry", action: () => {openEntryModal(null, groupId); }},
-        { label: "New Folder", action: () => {vscode.postMessage({type: "createGroup", parentId: groupId}); }},
-        { sep: true },
-        { label: "Rename", action: () => {vscode.postMessage({type: "renameGroup", groupId}); }},
-        { label: "Delete", action: () => {vscode.postMessage({type: "deleteGroup", groupId}); }}
+        {
+            label: "New Entry",
+            action: () => { openEntryModal(null, groupId); }
+        },
+        {
+            label: "New Folder",
+            action: () => { vscode.postMessage({type: "createGroup", parentId: groupId}); }
+        },
+        {sep: true},
+        {
+            label: "Rename",
+            action: () => { vscode.postMessage({type: "renameGroup", groupId}); }
+        },
+        {
+            label: "Delete",
+            action: () => { vscode.postMessage({type: "deleteGroup", groupId}); }
+        }
     ]);
 }
 

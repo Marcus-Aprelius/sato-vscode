@@ -1,13 +1,15 @@
 import QRCode from "qrcode";
+import { app } from "../state";
 import { maybeById } from "../dom";
 import { vscode } from "../globals";
 import { closeModal, openModal } from "./modalLifecycle";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
-type CryptoOutputFormat = | "PEM" | "DER" | "RFC4716" | "PKCS8"
-    | "RSA_PKCS1_PEM" | "RSA_PKCS1_DER" | "RSA_PKCS8_PEM" | "RSA_PKCS8_DER"
-    | "RSA_SPKI_PEM" | "RSA_SPKI_DER" | "RSA_PUBLIC_PKCS1_PEM" | "RSA_PUBLIC_PKCS1_DER"
-    | "EC_SEC1_PEM" | "EC_SEC1_DER" | "EC_PKCS8_PEM" | "EC_PKCS8_DER" | "EC_SPKI_PEM" | "EC_SPKI_DER"
-    | "SPC_CMS_PEM" | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER" | "SPC_CERTIFICATE_CHAIN_P7B";
+type CryptoOutputFormat = | "PEM" | "DER" | "RFC4716" | "PKCS8" | "RSA_PKCS1_PEM" | "RSA_PKCS1_DER"
+    | "RSA_PKCS8_PEM" | "RSA_PKCS8_DER" | "RSA_SPKI_PEM" | "RSA_SPKI_DER" | "RSA_PUBLIC_PKCS1_PEM"
+    | "RSA_PUBLIC_PKCS1_DER" | "EC_SEC1_PEM" | "EC_SEC1_DER" | "EC_PKCS8_PEM" | "EC_PKCS8_DER"
+    | "EC_SPKI_PEM" | "EC_SPKI_DER" | "SPC_CMS_PEM" | "SPC_CERTIFICATES_PEM" | "SPC_CERTIFICATES_DER"
+    | "SPC_CERTIFICATE_CHAIN_P7B" | "VCARD_3" | "VCARD_4" | "VCARD_TXT" | "VCARD_YAML" | "VCARD_JSON";
 
 interface AvailableOutputFormat {
     value: CryptoOutputFormat;
@@ -34,9 +36,11 @@ interface CryptoConversionData {
 }
 
 let conversionData: CryptoConversionData | undefined;
-type ConverterTab = "convert" | "extract" | "base64" | "qr";
+type ConverterTab = | "convert" | "extract" | "base64" | "qr" | "yamlJson";
 let activeConverterTab: ConverterTab = "convert";
 let base64LiveMode = true;
+let yamlJsonLiveMode = true;
+let yamlJsonSourceFilePath = "";
 let qrDataUrl = "";
 
 export function openCryptoConverter(
@@ -56,8 +60,8 @@ export function openCryptoConverter(
     const extractFormats = formatsForTab(data, "extract");
     const requestedTab = data.initialTab || "convert";
     const requestedFormats = requestedTab === "extract" ? extractFormats : convertFormats;
-
     activeConverterTab = requestedFormats.length > 0 ? requestedTab : convertFormats.length > 0 ? "convert" : "extract";
+
     const activeFormats = activeConverterTab === "convert" ? convertFormats : extractFormats;
     populateOutputFormats(activeFormats);
 
@@ -158,6 +162,79 @@ export function bindConverterModalActions(): void {
 
     maybeById("converter-tab-base64")?.addEventListener("click", () => {setConverterTab("base64");});
     maybeById("converter-tab-qr")?.addEventListener("click", () => {setConverterTab("qr");});
+    maybeById("converter-tab-yaml-json")?.addEventListener("click", () => {setConverterTab("yamlJson");});
+
+    maybeById("yaml-json-input")?.addEventListener("input", () => { updateYamlJsonCharacterCounts();
+
+        if (yamlJsonLiveMode) {
+            processYamlJson();
+        }
+    });
+
+    maybeById("yaml-json-operation")?.addEventListener("change", () => {updateYamlJsonInterface(); clearYamlJsonError();
+
+        if (yamlJsonLiveMode) {
+            processYamlJson();
+        }
+    });
+
+    maybeById("yaml-json-live-mode")?.addEventListener("click", () => {yamlJsonLiveMode = !yamlJsonLiveMode; updateYamlJsonLiveModeButton(); updateYamlJsonActionButton();
+
+        if (yamlJsonLiveMode) {
+            processYamlJson();
+        }
+    });
+
+    maybeById("yaml-json-swap")?.addEventListener("click", () => {swapYamlJsonFields();});
+    maybeById("yaml-json-upload")?.addEventListener("click", () => {vscode.postMessage({type: "openYamlJsonFile"});});
+
+    maybeById("yaml-json-download")?.addEventListener("click", () => {
+        const output = maybeById<HTMLTextAreaElement>("yaml-json-output");
+        const operation = maybeById<HTMLSelectElement>("yaml-json-operation");
+
+        if (!output?.value || !operation) {
+            return;
+        }
+
+        const format: "yaml" | "json" = operation.value === "json-to-yaml" ? "yaml" : "json";
+        vscode.postMessage({ type: "saveYamlJsonFile", content: output.value, format, sourceFilePath: yamlJsonSourceFilePath});
+    });
+
+    maybeById("yaml-json-paste")?.addEventListener("click", async () => {
+        const input = maybeById<HTMLTextAreaElement>("yaml-json-input");
+
+        if (!input) {
+            return;
+        }
+
+        try {
+            input.value = await navigator.clipboard.readText();
+            input.focus();
+            updateYamlJsonCharacterCounts();
+
+            if (yamlJsonLiveMode) {
+                processYamlJson();
+            }
+
+        } catch {
+            showYamlJsonError("Failed to read text from the clipboard.");
+        }
+    });
+
+    maybeById("yaml-json-clear")?.addEventListener("click", () => {
+        clearYamlJsonFields();
+        maybeById<HTMLTextAreaElement>("yaml-json-input")?.focus();
+    });
+
+    maybeById("yaml-json-copy")?.addEventListener("click",() => {
+        const output = maybeById<HTMLTextAreaElement>("yaml-json-output");
+
+        if (!output?.value) {
+            return;
+        }
+
+        vscode.postMessage({type: "copyText", text: output.value});
+    });
 
     maybeById("base64-live-mode")?.addEventListener("click", () => {
         base64LiveMode = !base64LiveMode;
@@ -230,6 +307,7 @@ export function bindConverterModalActions(): void {
     maybeById("base64-clear")?.addEventListener("click", () => {clearBase64Fields(); maybeById<HTMLTextAreaElement>("base64-input")?.focus();});
     maybeById("base64-swap")?.addEventListener("click", () => {swapBase64Fields();});
     maybeById("qr-input")?.addEventListener("input", () => {void generateQrCode();});
+    maybeById("qr-upload")?.addEventListener("click", () => {vscode.postMessage({type: "openQrTextFile"});});
     maybeById("qr-paste")?.addEventListener("click", async () => {const input = maybeById<HTMLTextAreaElement>("qr-input");
 
         if (!input) {
@@ -250,6 +328,42 @@ export function bindConverterModalActions(): void {
     maybeById("qr-clear")?.addEventListener("click", () => {clearQrCode(); maybeById<HTMLTextAreaElement>("qr-input")?.focus();});
     maybeById("qr-copy")?.addEventListener("click", () => {void copyQrCodeImage();});
     maybeById("qr-save")?.addEventListener("click", () => {void saveQrCodeImage();});
+
+    bindYamlJsonSynchronizedScrolling();
+}
+
+function bindYamlJsonSynchronizedScrolling(): void {
+    const input = maybeById<HTMLTextAreaElement>("yaml-json-input");
+    const output = maybeById<HTMLTextAreaElement>("yaml-json-output");
+
+    if (!input || !output) {
+        return;
+    }
+
+    let synchronizing = false;
+
+    const synchronizeScroll = (source: HTMLTextAreaElement, target: HTMLTextAreaElement): void => {
+        if (synchronizing) {
+            return;
+        }
+
+        synchronizing = true;
+        const sourceVerticalRange = source.scrollHeight - source.clientHeight;
+        const targetVerticalRange = target.scrollHeight - target.clientHeight;
+        const verticalRatio = sourceVerticalRange > 0 ? source.scrollTop / sourceVerticalRange: 0;
+
+        target.scrollTop = verticalRatio * Math.max(0, targetVerticalRange);
+        const sourceHorizontalRange = source.scrollWidth - source.clientWidth;
+        const targetHorizontalRange = target.scrollWidth - target.clientWidth;
+        const horizontalRatio = sourceHorizontalRange > 0 ? source.scrollLeft / sourceHorizontalRange : 0;
+
+        target.scrollLeft = horizontalRatio * Math.max(0, targetHorizontalRange);
+
+        requestAnimationFrame(() => {synchronizing = false;});
+    };
+
+    input.addEventListener("scroll", () => {synchronizeScroll(input, output);});
+    output.addEventListener("scroll", () => {synchronizeScroll(output, input);});
 }
 
 export function openBase64Converter(): void {
@@ -261,6 +375,44 @@ export function openQrCodeGenerator(): void {
     openEmptyCryptoConverter();
     clearQrCode();
     setConverterTab("qr");
+}
+
+export function openYamlJsonConverter(): void {
+    yamlJsonSourceFilePath = "";
+    openEmptyCryptoConverter();
+    setConverterTab("yamlJson");
+}
+
+export function setYamlJsonFileContent(
+    content: string,
+    format: "yaml" | "json",
+    filePath: string
+): void {
+    openEmptyCryptoConverter();
+    setConverterTab("yamlJson");
+
+    yamlJsonSourceFilePath = filePath;
+    const operation = maybeById<HTMLSelectElement>("yaml-json-operation");
+    const input = maybeById<HTMLTextAreaElement>("yaml-json-input");
+
+    if (!operation || !input) {
+        return;
+    }
+
+    operation.value = format === "json" ? "json-to-yaml" : "yaml-to-json";
+    input.value = content;
+
+    updateYamlJsonInterface();
+    clearYamlJsonError();
+    updateYamlJsonCharacterCounts();
+
+    if (yamlJsonLiveMode) {
+        processYamlJson();
+    } else {
+        updateYamlJsonActionButton();
+    }
+
+    setTimeout(() => {input.focus(); input.setSelectionRange(0, 0); input.scrollTop = 0; input.scrollLeft = 0;}, 0);
 }
 
 export function openQrCodeGeneratorWithValue(
@@ -281,9 +433,14 @@ export function openQrCodeGeneratorWithValue(
     setTimeout(() => {input.focus(); input.select();}, 0);
 }
 
+export function setQrTextFileContent(
+    content: string
+): void {
+    openQrCodeGeneratorWithValue(content);
+}
+
 export function openEmptyCryptoConverter(): void {
     conversionData = undefined;
-
     const sourceDetails = maybeById<HTMLElement>("converter-source-details");
 
     if (sourceDetails) {
@@ -345,9 +502,13 @@ export function openEmptyCryptoConverter(): void {
 }
 
 function submitCryptoConversion(): void {
+    if (activeConverterTab === "yamlJson") {
+        processYamlJson();
+        return;
+    }
+
     if (activeConverterTab === "base64") {
         processBase64Text();
-
         return;
     }
 
@@ -478,6 +639,25 @@ function setOptionalText(
 function setConverterTab(
     tab: ConverterTab
 ): void {
+
+    if (tab === "yamlJson") {
+        activeConverterTab = "yamlJson";
+        clearYamlJsonFields();
+        const operation = maybeById<HTMLSelectElement>("yaml-json-operation");
+
+        if (operation) {
+            operation.value = app.settings.yamlJsonDefaultOperation || "yaml-to-json";
+        }
+        updateYamlJsonInterface();
+        updateYamlJsonLiveModeButton();
+        updateConverterTabs();
+
+        const input = maybeById<HTMLTextAreaElement>("yaml-json-input");
+        setTimeout(() => {input?.focus();}, 0);
+
+        return;
+    }
+
     if (tab === "qr") {
         clearQrCode();
         activeConverterTab = "qr";
@@ -496,11 +676,11 @@ function setConverterTab(
         const format = maybeById<HTMLSelectElement>("base64-format");
 
         if (operation) {
-            operation.value = "encode";
+            operation.value = app.settings.base64DefaultOperation || "encode";
         }
 
         if (format) {
-            format.value = "base64url";
+            format.value = app.settings.base64DefaultFormat || "base64url";
         }
 
         updateBase64LiveModeButton();
@@ -578,16 +758,19 @@ function updateConverterTabs(): void {
     const extractTab = maybeById<HTMLButtonElement>("converter-tab-extract");
     const base64Tab = maybeById<HTMLButtonElement>("converter-tab-base64");
     const qrTab = maybeById<HTMLButtonElement>("converter-tab-qr");
+    const yamlJsonTab = maybeById<HTMLButtonElement>("converter-tab-yaml-json");
     const actionButton = maybeById<HTMLButtonElement>("converter-convert");
     const fileContent = maybeById<HTMLElement>("converter-file-content");
     const base64Content = maybeById<HTMLElement>("converter-base64-content");
     const qrContent = maybeById<HTMLElement>("converter-qr-content");
+    const yamlJsonContent = maybeById<HTMLElement>("converter-yaml-json-content");
     const outputTitle = maybeById<HTMLElement>("converter-output-title");
     const convertFormats = conversionData ? formatsForTab(conversionData, "convert") : [];
     const extractFormats = conversionData ? formatsForTab(conversionData, "extract") : [];
     const base64Mode = activeConverterTab === "base64";
     const qrMode = activeConverterTab === "qr";
-    const textToolMode = base64Mode || qrMode;
+    const yamlJsonMode = activeConverterTab === "yamlJson";
+    const textToolMode = base64Mode || qrMode || yamlJsonMode;
 
     if (convertTab) {
         convertTab.disabled = !!conversionData && convertFormats.length === 0;
@@ -601,6 +784,7 @@ function updateConverterTabs(): void {
 
     base64Tab?.classList.toggle("active", base64Mode);
     qrTab?.classList.toggle("active", qrMode);
+    yamlJsonTab?.classList.toggle("active", yamlJsonMode);
 
     if (fileContent) {
         fileContent.style.display = textToolMode ? "none" : "";
@@ -612,6 +796,19 @@ function updateConverterTabs(): void {
 
     if (qrContent) {
         qrContent.style.display = qrMode ? "block" : "none";
+    }
+
+    if (yamlJsonContent) {
+        yamlJsonContent.style.display = yamlJsonMode ? "flex" : "none";
+    }
+
+    if (yamlJsonMode) {
+        if (actionButton) {
+            actionButton.style.display = "";
+        }
+
+        updateYamlJsonActionButton();
+        return;
     }
 
     if (qrMode) {
@@ -1041,6 +1238,210 @@ function updateBase64LiveModeButton(): void {
     const description = base64LiveMode ? "Disable automatic Base64 conversion" : "Enable automatic Base64 conversion";
     button.title = description;
     button.setAttribute("aria-label", description);
+}
+
+function yamlJsonOutputIndentation():
+    | number | string {
+    switch (app.settings.yamlJsonIndentation) {
+        case "spaces-4":
+            return 4;
+
+        case "tabs":
+            return "\t";
+
+        case "spaces-2":
+        default:
+            return 2;
+    }
+}
+
+function processYamlJson(): void {
+    const input = maybeById<HTMLTextAreaElement>("yaml-json-input");
+    const output = maybeById<HTMLTextAreaElement>("yaml-json-output");
+    const operation = maybeById<HTMLSelectElement>("yaml-json-operation");
+
+    if (!input || !output || !operation) {
+        return;
+    }
+
+    clearYamlJsonError();
+
+    if (!input.value.trim()) {
+        output.value = "";
+        updateYamlJsonCharacterCounts();
+        updateYamlJsonActionButton();
+        return;
+    }
+
+    try {
+        if (operation.value === "json-to-yaml") {
+            const parsed = JSON.parse(input.value);
+            output.value = stringifyYaml(parsed, { indent: 2, lineWidth: 0 });
+
+        } else {
+            const parsed = parseYaml(input.value);
+            output.value = JSON.stringify(parsed, null, yamlJsonOutputIndentation()) + "\n";}
+
+    } catch (error) {
+        output.value = "";
+        showYamlJsonError(error instanceof Error ? error.message : "Failed to convert YAML or JSON.");
+    }
+
+    updateYamlJsonCharacterCounts();
+    updateYamlJsonActionButton();
+}
+
+function updateYamlJsonInterface(): void {
+    const operation = maybeById<HTMLSelectElement>("yaml-json-operation");
+    const inputTitle = maybeById<HTMLElement>("yaml-json-input-title");
+    const outputTitle = maybeById<HTMLElement>("yaml-json-output-title");
+    const input = maybeById<HTMLTextAreaElement>("yaml-json-input");
+
+    if (!operation) {
+        return;
+    }
+
+    const jsonToYaml = operation.value === "json-to-yaml";
+
+    if (inputTitle) {
+        inputTitle.textContent = jsonToYaml ? "JSON Input" : "YAML Input";
+    }
+
+    if (outputTitle) {
+        outputTitle.textContent = jsonToYaml ? "YAML Output" : "JSON Output";
+    }
+
+    if (input) {
+        input.placeholder = jsonToYaml ? "Enter JSON data" : "Enter YAML data";
+    }
+}
+
+function swapYamlJsonFields(): void {
+    const input = maybeById<HTMLTextAreaElement>("yaml-json-input");
+    const output = maybeById<HTMLTextAreaElement>("yaml-json-output");
+    const operation = maybeById<HTMLSelectElement>("yaml-json-operation");
+
+    if (!input || !output || !operation) {
+        return;
+    }
+
+    const previousOutput = output.value;
+    operation.value = operation.value === "yaml-to-json" ? "json-to-yaml" : "yaml-to-json";
+    input.value = previousOutput;
+    output.value = "";
+
+    updateYamlJsonInterface();
+    clearYamlJsonError();
+    updateYamlJsonCharacterCounts();
+
+    if (yamlJsonLiveMode && input.value.trim()) {
+        processYamlJson();
+    }
+
+    input.focus();
+}
+
+function clearYamlJsonFields(): void {
+    const input = maybeById<HTMLTextAreaElement>("yaml-json-input");
+    const output = maybeById<HTMLTextAreaElement>("yaml-json-output");
+
+    if (input) {
+        input.value = "";
+    }
+
+    if (output) {
+        output.value = "";
+    }
+
+    clearYamlJsonError();
+    updateYamlJsonCharacterCounts();
+    updateYamlJsonActionButton();
+}
+
+function updateYamlJsonCharacterCounts(): void {
+    const input = maybeById<HTMLTextAreaElement>("yaml-json-input");
+    const output = maybeById<HTMLTextAreaElement>("yaml-json-output");
+    const inputCount = maybeById<HTMLElement>("yaml-json-input-count");
+    const outputCount = maybeById<HTMLElement>("yaml-json-output-count");
+    const inputLength = input?.value.length || 0;
+    const outputLength = output?.value.length || 0;
+
+    if (inputCount) {
+        inputCount.textContent = `${inputLength} ` + `${inputLength === 1 ? "character" : "characters"}`;
+    }
+
+    if (outputCount) {
+        outputCount.textContent = `${outputLength} ` + `${outputLength === 1 ? "character" : "characters"}`;
+    }
+
+    const copyButton = maybeById<HTMLButtonElement>("yaml-json-copy");
+
+    if (copyButton) {
+        copyButton.disabled = outputLength === 0;
+    }
+
+    const downloadButton = maybeById<HTMLButtonElement>("yaml-json-download");
+
+    if (downloadButton) {
+        downloadButton.disabled = outputLength === 0;
+    }
+}
+
+function updateYamlJsonLiveModeButton(): void {
+    const button = maybeById<HTMLButtonElement>("yaml-json-live-mode");
+
+    if (!button) {
+        return;
+    }
+
+    button.textContent = yamlJsonLiveMode ? "Live Mode: ON" : "Live Mode: OFF";
+    button.classList.toggle("primary", yamlJsonLiveMode);
+    button.setAttribute("aria-pressed", String(yamlJsonLiveMode));
+
+    const description = yamlJsonLiveMode ? "Disable automatic YAML and JSON conversion" : "Enable automatic YAML and JSON conversion";
+    button.title = description;
+    button.setAttribute("aria-label", description);
+}
+
+function updateYamlJsonActionButton(): void {
+    if (activeConverterTab !== "yamlJson") {
+        return;
+    }
+
+    const actionButton = maybeById<HTMLButtonElement>("converter-convert");
+    const input = maybeById<HTMLTextAreaElement>("yaml-json-input");
+
+    if (!actionButton) {
+        return;
+    }
+
+    actionButton.textContent = "Convert";
+    actionButton.disabled = yamlJsonLiveMode || !input?.value.trim();
+    actionButton.title = yamlJsonLiveMode ? "Conversion runs automatically in Live Mode" : "";
+}
+
+function clearYamlJsonError(): void {
+    const error = maybeById<HTMLElement>("yaml-json-error");
+
+    if (!error) {
+        return;
+    }
+
+    error.textContent = "";
+    error.style.display = "none";
+}
+
+function showYamlJsonError(
+    message: string
+): void {
+    const error = maybeById<HTMLElement>("yaml-json-error");
+
+    if (!error) {
+        return;
+    }
+
+    error.textContent = message;
+    error.style.display = "";
 }
 
 async function generateQrCode(): Promise<void> {

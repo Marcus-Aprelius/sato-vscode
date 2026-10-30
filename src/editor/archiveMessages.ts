@@ -1,8 +1,11 @@
 import * as vscode from "vscode";
 
 import { spawnSync } from "child_process";
-
 import { describeError } from "../utils/errors";
+import { isSatoBackupFileName } from "../fileFormats";
+import { refreshSelectedArchive } from "./archiveFiles";
+import { archiveExtractionFolderName } from "../shared/archiveFileName";
+
 import {
     changeArchivePassword,
     editArchive,
@@ -11,12 +14,9 @@ import {
     isEditableArchiveFormat,
     previewArchiveEntry,
     archiveContainerLabel,
-    testPasswordForArchive
+    testPasswordForArchive,
+    validateVsixPackage
 } from "../archives";
-import { isSatoBackupFileName } from "../fileFormats";
-import { archiveExtractionFolderName } from "../shared/archiveFileName";
-
-import { refreshSelectedArchive } from "./archiveFiles";
 
 import type { Settings } from "../webview";
 import type { FromWebview, VaultDocument } from "../types";
@@ -94,6 +94,14 @@ export async function handleArchiveMessage(
 
         case "extractArchiveFolder":
             await extractArchiveFolder(document, msg.groupId);
+            return true;
+
+        case "validateVsixPackage":
+            await validateSelectedVsixPackage(document);
+            return true;
+
+        case "installVsixPackage":
+            await installSelectedVsixPackage(document);
             return true;
 
         case "extractArchiveAll":
@@ -575,6 +583,118 @@ async function extractArchiveFolder(
     await runExtraction(document, destination, selectedPaths);
 }
 
+async function validateSelectedVsixPackage(
+    document: VaultDocument
+): Promise<void> {
+    const filePath = selectedVsixPath(document);
+
+    if (!filePath) {
+        vscode.window.showWarningMessage("SATO: select a VSIX package first.");
+        return;
+    }
+
+    try {
+        const result = await validateVsixPackage(filePath);
+
+        if (!result.valid) {
+            await vscode.window.showErrorMessage(formatVsixValidationFailure(result), {modal: true});
+            return;
+        }
+
+        const warningText = result.warnings.length > 0 ? "\n\nWarnings:\n" + result.warnings.map(message => `- ${message}`).join("\n") : "";
+        await vscode.window.showInformationMessage(formatVsixValidationSuccess(result) + warningText, {modal: true});
+
+    } catch (error) {
+        vscode.window.showErrorMessage("SATO: failed to validate the VSIX package - " + describeError(error));
+    }
+}
+
+async function installSelectedVsixPackage(
+    document: VaultDocument
+): Promise<void> {
+    const filePath = selectedVsixPath(document);
+
+    if (!filePath) {
+        vscode.window.showWarningMessage("SATO: select a VSIX package first.");
+        return;
+    }
+
+    try {
+        const validation = await validateVsixPackage(filePath);
+
+        if (!validation.valid) {
+            await vscode.window.showErrorMessage(
+                "SATO: installation was cancelled because the VSIX package failed validation.\n\n" +
+                validation.errors.map(message => `- ${message}`).join("\n"), {modal: true}
+            );
+
+            return;
+        }
+
+        const extensionName = validation.displayName || validation.extensionName || pathBaseName(filePath);
+
+        const publisher = validation.publisher || "Unknown";
+        const version = validation.version || "Unknown";
+
+        const answer = await vscode.window.showWarningMessage(
+            `Install "${extensionName}"?\n\n` +
+            `Publisher: ${publisher}\n` +
+            `Version: ${version}\n\n` +
+            "The extension will be installed into the current " +
+            "VS Code environment.",
+            {modal: true},
+            "Install"
+        );
+
+        if (answer !== "Install") {
+            return;
+        }
+
+        await vscode.commands.executeCommand("workbench.extensions.installExtension", vscode.Uri.file(filePath));
+        const reloadAnswer = await vscode.window.showInformationMessage(`${extensionName} ${version} was installed successfully.`, "Reload Window", "Later");
+
+        if (reloadAnswer === "Reload Window") {
+            await vscode.commands.executeCommand("workbench.action.reloadWindow");
+        }
+
+    } catch (error) {
+        vscode.window.showErrorMessage("SATO: failed to install the VSIX package - " + describeError(error));
+    }
+}
+
+function selectedVsixPath(
+    document: VaultDocument
+): string | undefined {
+    const filePath = document.archive?.selectedArchivePath;
+
+    if (!filePath?.toLowerCase().endsWith(".vsix")) {
+        return undefined;
+    }
+
+    return filePath;
+}
+
+function formatVsixValidationSuccess(
+    result: Awaited<ReturnType<typeof validateVsixPackage>>
+): string {
+    return [
+        "VSIX package validation passed.",
+        "",
+        `Extension: ${result.displayName || result.extensionName || "Unknown"}`,
+        `Publisher: ${result.publisher || "Unknown"}`,
+        `Version: ${result.version || "Unknown"}`,
+        `VS Code engine: ${result.vscodeEngine || "Unknown"}`,
+        `Main: ${result.main || "Not declared"}`,
+        `Package files: ${result.fileCount}`
+    ].join("\n");
+}
+
+function formatVsixValidationFailure(
+    result: Awaited<ReturnType<typeof validateVsixPackage>>
+): string {
+    return ["VSIX package validation failed.", "", ...result.errors.map(message => `- ${message}`)].join("\n");
+}
+
 async function extractArchiveAll(
     document: VaultDocument
 ): Promise<void> {
@@ -721,7 +841,6 @@ async function showArchiveInfo(
     const encryptedEntryCount = inspection.entries.filter(entry => entry.encrypted).length;
     const totalCompressedSize = inspection.entries.reduce((total, entry) => total + (entry.compressedSize ?? 0), 0);
     const compressionRatio = totalCompressedSize > 0 ? inspection.totalUncompressedSize / totalCompressedSize : undefined;
-
     const packageRows = inspection.format === "deb" ? readDebPackageInfo(inspection.filePath) : [];
 
     const rows: [string, string][] = [
@@ -782,9 +901,7 @@ function readDebPackageInfo(
         ["Priority", fields.get("Priority") || ""],
         ["Homepage", fields.get("Homepage") || ""],
         ["Description", fields.get("Description") || ""]
-    ].filter(
-        (row): row is [string, string] => row[1] !== ""
-    );
+    ].filter((row): row is [string, string] => row[1] !== "");
 }
 
 function parseDebControlFields(
@@ -809,7 +926,6 @@ function parseDebControlFields(
 
         const previousValue = fields.get(currentField) || "";
         const continuation = rawLine.slice(1);
-
         fields.set(currentField, previousValue ? `${previousValue}\n${continuation}` : continuation);
     }
 

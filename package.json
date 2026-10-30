@@ -3,7 +3,7 @@
   "displayName": "SATO Secrets",
   "description": "Browse password vaults and crypto files directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
@@ -124,58 +124,58 @@
             "filenamePattern": "*.pfx"
           },
           {
-              "filenamePattern": "*.p12.bak"
+            "filenamePattern": "*.p12.bak"
           },
           {
-              "filenamePattern": "*.pfx.bak"
+            "filenamePattern": "*.pfx.bak"
           },
           {
-              "filenamePattern": "*.pem.bak"
+            "filenamePattern": "*.pem.bak"
           },
           {
-              "filenamePattern": "*.key.bak"
+            "filenamePattern": "*.key.bak"
           },
           {
-              "filenamePattern": "*.p8.bak"
+            "filenamePattern": "*.p8.bak"
           },
           {
-              "filenamePattern": "*.pk8.bak"
+            "filenamePattern": "*.pk8.bak"
           },
           {
-              "filenamePattern": "*.ppk.bak"
+            "filenamePattern": "*.ppk.bak"
           },
           {
-              "filenamePattern": "*.age.bak"
+            "filenamePattern": "*.age.bak"
           },
           {
-              "filenamePattern": "*.jks.bak"
+            "filenamePattern": "*.jks.bak"
           },
           {
-              "filenamePattern": "*.jceks.bak"
+            "filenamePattern": "*.jceks.bak"
           },
           {
-              "filenamePattern": "*.gpg.bak"
+            "filenamePattern": "*.gpg.bak"
           },
           {
-              "filenamePattern": "*.pgp.bak"
+            "filenamePattern": "*.pgp.bak"
           },
           {
-              "filenamePattern": "*.asc.bak"
+            "filenamePattern": "*.asc.bak"
           },
           {
-              "filenamePattern": "**/id_rsa.bak"
+            "filenamePattern": "**/id_rsa.bak"
           },
           {
-              "filenamePattern": "**/id_ecdsa.bak"
+            "filenamePattern": "**/id_ecdsa.bak"
           },
           {
-              "filenamePattern": "**/id_ed25519.bak"
+            "filenamePattern": "**/id_ed25519.bak"
           },
           {
-              "filenamePattern": "*.zipx.bak"
+            "filenamePattern": "*.zipx.bak"
           },
           {
-              "filenamePattern": "*.7z.bak"
+            "filenamePattern": "*.7z.bak"
           },
           {
             "filenamePattern": "*.p7b"
@@ -437,6 +437,12 @@
           },
           {
             "filenamePattern": "*.chw"
+          },
+          {
+            "filenamePattern": "*.vcf"
+          },
+          {
+            "filenamePattern": "*.vcf.bak"
           }
         ],
         "priority": "default"
@@ -493,6 +499,20 @@
           "default": true,
           "description": "Create a .zip.bak backup before modifying a ZIP archive."
         },
+        "sato.base64DefaultFormat": {
+          "type": "string",
+          "default": "base64url",
+          "enum": ["base64url", "base64", "base32", "base32hex", "hex"],
+          "enumDescriptions": ["Base64URL", "Base64", "Base32", "Base32Hex", "Hex"],
+          "description": "Default format selected in the Base64 Converter."
+        },
+        "sato.yamlJsonIndentation": {
+          "type": "string",
+          "default": "spaces-2",
+          "enum": ["spaces-2", "spaces-4", "tabs"],
+          "enumDescriptions": ["Use 2 spaces", "Use 4 spaces", "Use tabs"],
+          "description": "Indentation used for JSON output in the YAML and JSON Converter."
+        },
         "sato.showPasswordsByDefault": {
           "type": "boolean",
           "default": false,
@@ -510,18 +530,10 @@
         },
         "sato.fileCategoryFilters": {
           "type": "array",
-          "default": [
-            "all"
-          ],
+          "default": [ "all" ],
           "items": {
             "type": "string",
-            "enum": [
-              "all",
-              "vaults",
-              "archives",
-              "ssh",
-              "crypto"
-            ]
+            "enum": ["all", "vaults", "archives", "ssh", "crypto"]
           },
           "minItems": 1,
           "uniqueItems": true,
@@ -530,12 +542,7 @@
         "sato.theme": {
           "type": "string",
           "default": "vscode",
-          "enum": [
-            "vscode",
-            "dark",
-            "gray",
-            "light"
-          ],
+          "enum": ["vscode", "dark", "gray", "light"],
           "enumDescriptions": [
             "Use colors from the current VS Code theme",
             "Use the SATO dark theme",
@@ -543,6 +550,20 @@
             "Use the SATO light theme"
           ],
           "description": "Controls the color theme used by SATO."
+        },
+        "sato.base64DefaultOperation": {
+          "type": "string",
+          "default": "encode",
+          "enum": ["encode", "decode"],
+          "enumDescriptions": ["Encode", "Decode"],
+          "description": "Default operation selected in the Base64 Converter."
+        },
+        "sato.yamlJsonDefaultOperation": {
+          "type": "string",
+          "default": "yaml-to-json",
+          "enum": ["yaml-to-json", "json-to-yaml"],
+          "enumDescriptions": ["YAML to JSON", "JSON to YAML"],
+          "description": "Default operation selected in the YAML and JSON Converter."
         }
       }
     }
@@ -563,7 +584,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/vscode": "^1.120.0",
     "@types/yauzl": "^3.4.0",
-    "@vscode/vsce": "^4.0.0",
+    "@vscode/vsce": "^4.1.0",
     "concurrently": "^10.0.6",
     "esbuild": "^0.28.2",
     "typescript": "^7.0.2"
@@ -576,10 +597,15 @@
     "kdbxweb": "^2.1.1",
     "password-safe": "^0.0.3",
     "qrcode": "^1.5.4",
+    "yaml": "^2.9.1",
     "yauzl": "^3.4.0"
   },
   "overrides": {
     "@xmldom/xmldom": "0.8.15",
     "uuid": "11.1.1"
+  },
+  "allowScripts": {
+    "@vscode/vsce-sign@2.1.0": true,
+    "esbuild@0.28.2": true
   }
 }
