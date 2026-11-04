@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>SATO Secrets | Contact Us</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons & FontAwesome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External stylesheet -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+    <!-- Background Aurora Blobs -->
+    <div class="glow-blob" style="width: 500px; height: 500px; background: rgba(199, 210, 254, 0.5); top: -80px; left: -100px;"></div>
+    <div class="glow-blob" style="width: 550px; height: 550px; background: rgba(233, 213, 255, 0.4); top: 15%; right: -100px;"></div>
+
+    <!-- Header / Navbar -->
+    <header id="header" class="fixed-top py-3">
+      <div class="container-fluid container-xl">
+        <div class="glass-card px-4 py-2.5 d-flex align-items-center justify-content-between shadow-sm">
+
+          <!-- Logo -->
+          <a href="index.html" class="d-flex align-items-center gap-3 text-decoration-none">
+            <img src="assets/img/sato.png" alt="SATO Secrets" width="40" height="40" class="rounded-3 shadow-sm" style="display: block; object-fit: cover;">
+            <span class="fs-4 fw-bold text-dark">SATO <span class="text-gradient"> Secrets</span></span>
+          </a>
+
+          <!-- Navigation -->
+          <nav class="d-none d-md-flex align-items-center gap-4 fw-semibold">
+            <a href="index.html" class="text-decoration-none text-secondary">Home</a>
+            <a href="documentation.html" class="text-decoration-none text-secondary">Documentation</a>
+            <a href="contact.html" class="text-decoration-none text-secondary">Contact</a>
+            <a href="donate.html" class="text-decoration-none text-secondary">Donate</a>
+          </nav>
+
+        </div>
+      </div>
+    </header>
+
+  <main class="main" style="padding-top: 65px;">
+    <section class="pt-1 pb-5">
+      <div class="container" style="max-width:800px;">
+        <h1 class="display-6 text-center text-dark mb-3 fw-bold">Contact Us</h1>
+
+        <div class="glass-card p-4 p-md-5 bg-white shadow-sm">
+          <form id="contact-form" action="https://formsubmit.co/marcus.aprelius.antoninus@gmail.com" method="POST" novalidate>
+            <input type="hidden" name="_subject" value="New SATO Secrets contact message">
+            <input type="hidden" name="_template" value="table">
+            <input type="hidden" name="_captcha" value="false">
+            <input type="text" name="_honey" class="d-none" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="contact-name" class="visually-hidden">Name</label>
+                <input id="contact-name" name="name" type="text" required minlength="2" maxlength="100" autocomplete="name" placeholder="Name" class="form-control form-control-lg bg-light fs-6">
+                <div class="invalid-feedback">[Required] Please enter your name</div>
+              </div>
+              <div class="col-md-6">
+                <label for="contact-email" class="visually-hidden">E-mail</label>
+                <input id="contact-email" name="email" type="email" required maxlength="254" autocomplete="email" placeholder="E-mail" class="form-control form-control-lg bg-light fs-6">
+                <div class="invalid-feedback">[Required] Please enter a valid email</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="contact-subject" class="visually-hidden">Subject</label>
+              <input id="contact-subject" name="subject" type="text" required minlength="3" maxlength="150" placeholder="Subject" class="form-control form-control-lg bg-light fs-6">
+              <div class="invalid-feedback">[Required] Please enter a subject (min=3, max=150)</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="contact-message" class="visually-hidden">Message</label>
+              <textarea id="contact-message" name="message" rows="5" required minlength="10" maxlength="5000" placeholder="Message" class="form-control form-control-lg bg-light fs-6"></textarea>
+              <div class="invalid-feedback">[Required] Please enter your Message (min=10, max=5000)</div>
+            </div>
+
+            <div class="mb-4">
+              <div class="d-flex align-items-start gap-2 flex-wrap">
+                <label id="contact-captcha-label" for="contact-captcha" class="form-label fw-semibold mb-0 pt-2 text-nowrap">Verification:</label>
+                <div>
+                  <input id="contact-captcha" name="verification" type="text" required inputmode="numeric" pattern="[0-9]+" autocomplete="off" placeholder="Answer" aria-label="Verification answer" class="form-control form-control-lg bg-light fs-6" style="width:130px;">
+                  <div class="invalid-feedback">[Required] Please enter the correct answer</div>
+                </div>
+              </div>
+            </div>
+
+            <div id="contact-status" class="alert d-none" role="status" aria-live="polite"></div>
+
+            <div class="d-flex justify-content-center">
+              <button id="contact-submit" type="submit" class="btn btn-primary btn-lg px-5 py-3 fw-bold rounded-3 border border-2 border-primary shadow-sm">
+                <span class="submit-label">Send Message</span>
+                <span class="submit-progress d-none"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Sending...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+    <!-- Footer -->                   
+    <footer class="site-footer bg-dark text-white py-4">
+      <div class="container text-center">
+        <div class="small text-secondary">
+          &copy; 2026
+          <a href="https://github.com/Marcus-Aprelius"
+             target="_blank"
+             rel="noopener noreferrer"
+             title="GitHub profile: Marcus Aprelius Antoninus"
+             class="text-decoration-none text-secondary fw-bold">
+            Marcus Aprelius Antoninus.
+          </a>
+          All Rights Reserved.
+        </div>
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/contact-form.js"></script>
+</body>
+</html>

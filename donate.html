@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+  <title>SATO Secrets | Donate</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- Bootstrap 5 CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+
+  <!-- Bootstrap Icons -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    rel="stylesheet"
+  >
+
+  <!-- Font Awesome -->
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    rel="stylesheet"
+  >
+
+  <!-- External stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body class="donate-page">
+
+  <!-- Background Aurora Blobs -->
+  <div
+    class="glow-blob"
+    style="
+      width: 500px;
+      height: 500px;
+      background: rgba(199, 210, 254, 0.4);
+      top: -100px;
+      left: -100px;
+    "
+  ></div>
+
+  <div
+    class="glow-blob"
+    style="
+      width: 550px;
+      height: 550px;
+      background: rgba(233, 213, 255, 0.35);
+      top: 10%;
+      right: -100px;
+    "
+  ></div>
+
+  <!-- Header / Navbar -->
+  <header id="header" class="fixed-top py-3">
+    <div class="container-fluid container-xl">
+      <div
+        class="glass-card px-4 py-2.5 d-flex align-items-center justify-content-between shadow-sm"
+      >
+
+        <!-- Logo -->
+        <a
+          href="index.html"
+          class="d-flex align-items-center gap-3 text-decoration-none"
+        >
+          <img
+            src="assets/img/sato.png"
+            alt="SATO Secrets"
+            width="40"
+            height="40"
+            class="rounded-3 shadow-sm"
+            style="display: block; object-fit: cover;"
+          >
+
+          <span class="fs-4 fw-bold text-dark">
+            SATO <span class="text-gradient">Secrets</span>
+          </span>
+        </a>
+
+        <!-- Navigation -->
+        <nav class="d-none d-md-flex align-items-center gap-4 fw-semibold">
+          <a
+            href="index.html"
+            class="text-decoration-none text-secondary"
+          >
+            Home
+          </a>
+
+          <a
+            href="documentation.html"
+            class="text-decoration-none text-secondary"
+          >
+            Documentation
+          </a>
+
+          <a
+            href="contact.html"
+            class="text-decoration-none text-secondary"
+          >
+            Contact
+          </a>
+
+          <a
+            href="donate.html"
+            class="text-decoration-none text-secondary"
+            aria-current="page"
+          >
+            Donate
+          </a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main" style="padding-top: 80px;">
+    <section class="pt-0 pb-3">
+      <div class="container" style="max-width: 1080px;">
+
+        <!-- Donation information -->
+        <div class="text-center mb-4">
+          <p
+            class="lead text-secondary mx-auto mb-2"
+            style="max-width: 1050px;"
+          >
+            Your donations inspire us to improve existing product features
+            and add new ones. You can make a donation directly to:
+          </p>
+
+          <!-- Wallet addresses -->
+          <div class="table-responsive d-flex justify-content-center my-3">
+            <table
+              class="table table-sm table-borderless w-auto align-middle mb-0 wallet-table"
+            >
+              <tbody>
+                <tr>
+                  <td
+                    class="fw-bold text-start text-nowrap pe-3 align-top"
+                  >
+                    BTC (On-Chain):
+                  </td>
+
+                  <td
+                    id="onchain-address"
+                    class="text-start wallet-address"
+                  ></td>
+
+                  <td class="ps-2 align-top">
+                    <div class="wallet-actions">
+                      <button
+                        type="button"
+                        class="btn btn-link p-0 border-0 wallet-qr-button"
+                        data-wallet="onchain"
+                        title="Show Bitcoin address QR code"
+                        aria-label="Show BTC On-Chain QR code"
+                      >
+                        <i class="fa-solid fa-qrcode"></i>
+                      </button>
+
+                      <button
+                        type="button"
+                        class="btn btn-link p-0 border-0 wallet-copy-button"
+                        onclick="copyText(WALLETS.onchain, this)"
+                        title="Copy Bitcoin address"
+                        aria-label="Copy Bitcoin address"
+                      >
+                        <i class="fa-regular fa-copy"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td
+                    class="fw-bold text-start text-nowrap pe-3 align-top"
+                  >
+                    Lightning Network:
+                  </td>
+
+                  <td
+                    id="lightning-address"
+                    class="text-start wallet-address"
+                  ></td>
+
+                  <td class="ps-2 align-top">
+                    <div class="wallet-actions">
+                      <button
+                        type="button"
+                        class="btn btn-link p-0 border-0 wallet-qr-button"
+                        data-wallet="lightning"
+                        title="Show Lightning address QR code"
+                        aria-label="Show Lightning Network QR code"
+                      >
+                        <i class="fa-solid fa-qrcode"></i>
+                      </button>
+
+                      <button
+                        type="button"
+                        class="btn btn-link p-0 border-0 wallet-copy-button"
+                        onclick="copyText(WALLETS.lightning, this)"
+                        title="Copy Lightning address"
+                        aria-label="Copy Lightning address"
+                      >
+                        <i class="fa-regular fa-copy"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="mb-0">Or use the form below:</p>
+        </div>
+
+        <!-- Donation form -->
+        <div class="glass-card px-4 px-md-5 pt-4 pt-md-5 pb-3 shadow-lg">
+
+          <!-- Desktop headings: both headings are in the same row -->
+          <div class="row gx-4 mb-2 w-100 d-none d-md-flex">
+            <div class="col-md-6">
+              <div class="donation-column-heading">
+                1. Select Predefined Amount
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="donation-column-heading text-center">
+                2. Scan QR Code and Pay
+              </div>
+            </div>
+          </div>
+
+          <!-- Donation controls -->
+          <div class="row gx-4 gy-4 align-items-start w-100">
+
+            <!-- Left Column -->
+            <div class="col-md-6">
+
+              <!-- Mobile Step 1 heading -->
+              <div
+                class="donation-column-heading d-md-none mb-2"
+              >
+                1. Select Predefined Amount
+              </div>
+
+              <!-- Predefined amounts -->
+              <div
+                class="row row-cols-3 g-2 mb-4"
+                id="amount-buttons"
+                style="width: 330px; max-width: 100%;"
+              >
+                <div class="col">
+                  <button
+                    type="button"
+                    class="btn amount-btn amount-btn-square"
+                    data-amount="5"
+                    onclick="selectAmount(5)"
+                  >
+                    $5
+                  </button>
+                </div>
+
+                <div class="col">
+                  <button
+                    type="button"
+                    class="btn amount-btn amount-btn-square active"
+                    data-amount="10"
+                    onclick="selectAmount(10)"
+                  >
+                    $10
+                  </button>
+                </div>
+
+                <div class="col">
+                  <button
+                    type="button"
+                    class="btn amount-btn amount-btn-square"
+                    data-amount="15"
+                    onclick="selectAmount(15)"
+                  >
+                    $15
+                  </button>
+                </div>
+
+                <div class="col">
+                  <button
+                    type="button"
+                    class="btn amount-btn amount-btn-square"
+                    data-amount="20"
+                    onclick="selectAmount(20)"
+                  >
+                    $20
+                  </button>
+                </div>
+
+                <div class="col">
+                  <button
+                    type="button"
+                    class="btn amount-btn amount-btn-square"
+                    data-amount="50"
+                    onclick="selectAmount(50)"
+                  >
+                    $50
+                  </button>
+                </div>
+
+                <div class="col">
+                  <button
+                    type="button"
+                    class="btn amount-btn amount-btn-square"
+                    data-amount="100"
+                    onclick="selectAmount(100)"
+                  >
+                    $100
+                  </button>
+                </div>
+              </div>
+
+              <!-- Custom amount -->
+              <div
+                class="input-group mb-4"
+                style="width: 330px; max-width: 100%;"
+              >
+                <span
+                  class="input-group-text bg-white border-end-0 text-muted fw-bold"
+                >
+                  $
+                </span>
+
+                <input
+                  type="number"
+                  id="custom-amount-input"
+                  class="form-control border-start-0 ps-0"
+                  placeholder="Or enter custom amount (max. 1000$)"
+                  min="1"
+                  max="1000"
+                  step="0.01"
+                  oninput="handleCustomAmount(this.value)"
+                  aria-label="Custom donation amount in US dollars"
+                >
+              </div>
+
+              <!-- Exchange rate -->
+              <div
+                class="d-flex align-items-center justify-content-between rounded-3 bg-light border"
+                style="
+                  width: 330px;
+                  max-width: 100%;
+                  padding: 8px;
+                "
+              >
+                <div
+                  id="btc-price-text"
+                  class="fw-semibold small text-slate-700"
+                  aria-live="polite"
+                >
+                  <i
+                    class="fa-solid fa-circle-notch fa-spin text-primary me-1"
+                  ></i>
+                  Loading rate...
+                </div>
+
+                <button
+                  id="update-btn"
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary rounded-2 py-1 px-2"
+                  style="font-size: 11px;"
+                  onclick="manualUpdateRate()"
+                >
+                  <i class="fa-solid fa-rotate me-1"></i>
+                  Update
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Column -->
+            <div
+              class="col-md-6 d-flex flex-column align-items-center"
+            >
+
+              <!-- Mobile Step 2 heading -->
+              <div
+                class="donation-column-heading text-center d-md-none mb-2"
+              >
+                2. Scan QR Code and Pay
+              </div>
+
+              <div class="qr-box-fixed px-4 pb-0 pt-0 text-center">
+
+                <!-- Network Tabs -->
+                <div
+                  id="network-tabs-group"
+                  class="network-tabs-group mb-3"
+                >
+                  <button
+                    type="button"
+                    id="tab-onchain"
+                    class="network-tab-btn active"
+                    onclick="switchNetwork('onchain')"
+                    aria-label="Use Bitcoin On-Chain network"
+                  >
+                    <i class="fa-brands fa-bitcoin me-1"></i>
+                    Bitcoin (On-Chain)
+                  </button>
+
+                  <button
+                    type="button"
+                    id="tab-lightning"
+                    class="network-tab-btn"
+                    onclick="switchNetwork('lightning')"
+                    aria-label="Use Lightning Network"
+                  >
+                    <i class="fa-solid fa-bolt me-1"></i>
+                    Lightning Network
+                  </button>
+                </div>
+
+                <!-- Amount and Unit Switcher -->
+                <div class="crypto-amount-row text-dark mb-3">
+                  <span
+                    id="crypto-amount-text"
+                    aria-live="polite"
+                  >
+                    Calculating...
+                  </span>
+
+                  <div
+                    id="unit-switch-group"
+                    class="unit-switch-group"
+                    role="group"
+                    aria-label="Cryptocurrency amount unit"
+                  >
+                    <button
+                      type="button"
+                      id="btn-unit-btc"
+                      class="unit-switch-btn active"
+                      onclick="setUnit('btc')"
+                      aria-label="Show amount in Bitcoin"
+                    >
+                      BTC
+                    </button>
+
+                    <button
+                      type="button"
+                      id="btn-unit-sats"
+                      class="unit-switch-btn"
+                      onclick="setUnit('sats')"
+                      aria-label="Show amount in Satoshi"
+                    >
+                      Satoshi
+                    </button>
+                  </div>
+                </div>
+
+                <!-- QR Code -->
+                <div class="my-2 d-flex justify-content-center">
+                  <div
+                    class="p-2 border rounded-3 bg-white shadow-sm"
+                  >
+                    <img
+                      id="qr-image"
+                      src=""
+                      alt="Bitcoin payment QR code"
+                      width="180"
+                      height="180"
+                      style="
+                        display: block;
+                        object-fit: contain;
+                      "
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer bg-dark text-white py-4">
+    <div class="container text-center">
+      <div class="small text-secondary">
+        &copy; 2026
+
+        <a
+          href="https://github.com/Marcus-Aprelius"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="GitHub profile: Marcus Aprelius Antoninus"
+          class="text-decoration-none text-secondary fw-bold"
+        >
+          Marcus Aprelius Antoninus.
+        </a>
+
+        All Rights Reserved.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Wallet QR Popup -->
+  <div
+    id="wallet-qr-popup"
+    role="tooltip"
+    aria-hidden="true"
+  >
+    <img
+      id="wallet-qr-popup-image"
+      src=""
+      alt="Wallet QR code"
+    >
+  </div>
+
+  <!-- Bootstrap 5 Bundle JS -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+  ></script>
+
+  <!-- Donate page logic -->
+  <script src="assets/js/bitcoin-donate.js"></script>
+</body>
+
+</html>

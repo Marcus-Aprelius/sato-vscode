@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SATO Secrets | Documentation</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <div class="glow-blob" style="width:500px;height:500px;background:rgba(199,210,254,.5);top:-80px;left:-100px;"></div>
+  <div class="glow-blob" style="width:550px;height:550px;background:rgba(233,213,255,.4);top:15%;right:-100px;"></div>
+
+  <header id="header" class="fixed-top py-3">
+    <div class="container-fluid container-xl">
+      <div class="glass-card px-4 py-2.5 d-flex align-items-center justify-content-between shadow-sm">
+        <a href="index.html" class="d-flex align-items-center gap-3 text-decoration-none">
+          <img src="assets/img/sato.png" alt="SATO Secrets" width="40" height="40" class="rounded-3 shadow-sm" style="display:block;object-fit:cover;">
+          <span class="fs-4 fw-bold text-dark">SATO <span class="text-gradient">Secrets</span></span>
+        </a>
+
+        <nav class="d-none d-md-flex align-items-center gap-4 fw-semibold">
+          <a href="index.html" class="text-decoration-none text-secondary">Home</a>
+          <a href="documentation.html" class="text-decoration-none text-secondary">Documentation</a>
+          <a href="contact.html" class="text-decoration-none text-secondary">Contact</a>
+          <a href="donate.html" class="text-decoration-none text-secondary">Donate</a>
+        </nav>
+
+      </div>
+    </div>
+  </header>
+
+  <main class="main" style="padding-top:92px;">
+    <section class="pt-2 pb-5">
+      <div class="container" style="max-width: 1620px;">
+        <h1 class="display-5 text-dark text-center fw-bold mb-3">Documentation <span class="fs-4 text-secondary">[v.0.4.1]</span></h1>
+
+        <div class="docs-layout">
+          <div class="docs-sidebar-column">
+          <aside class="docs-sidebar" aria-label="Documentation table of contents">
+            <button id="docs-sidebar-toggle" class="docs-sidebar-toggle" type="button" aria-label="Collapse table of contents" aria-expanded="true" title="Collapse table of contents">
+              <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+            </button>
+            <div class="docs-sidebar-title">SATO Secrets</div>
+
+            <nav class="docs-toc" aria-label="Table of contents">
+              <ol>
+                <li><a href="#introduction">1. Introduction</a></li>
+                <li><a href="#installation">2. Installation</a></li>
+                <li><a href="#work-with-sato">3. Work with SATO</a>
+                  <ol>
+                    <li><a href="#password-vault-management">3.1. Password Vault Management</a></li>
+                    <li><a href="#cryptofiles">3.2. Cryptofiles</a></li>
+                    <li><a href="#archives">3.3. Archives</a></li>
+                  </ol>
+                </li>
+                <li><a href="#internal-tools">4. SATO's internal tools</a></li>
+                <li><a href="#converters">5. Converters</a>
+                  <ol>
+                    <li><a href="#converter">5.1. Converter</a></li>
+                    <li><a href="#extractor">5.2. Extractor</a></li>
+                    <li><a href="#base64-converter">5.3. Base64 converter</a></li>
+                    <li><a href="#qr-code-converter">5.4. QR Code converter</a></li>
+                    <li><a href="#yaml-json-converter">5.5. YAML ↔ JSON converter</a></li>
+                  </ol>
+                </li>
+                <li><a href="#password-generator">6. Password Generator</a></li>
+                <li><a href="#settings">7. Settings</a></li>
+              </ol>
+            </nav>
+          </aside>
+          </div>
+
+          <article class="docs-content">
+            <section id="introduction">
+              <h2>1. Introduction</h2>
+              <p><strong>SATO</strong>, Security Access Task Operator, enables work with vaults, cryptographic files, and password-protected archives. See the complete list of <a href="https://github.com/Marcus-Aprelius/sato-vscode#supported-formats" target="_blank" rel="noopener noreferrer">supported formats</a>.</p>
+              <p><strong>SATO Secrets</strong> is a VS Code-compatible extension with a single unified interface and a collection of helpful tools.</p>
+              <p><strong>SATO's goal</strong> is to display different formats directly in a single UI, replacing numerous command-line tools in everyday work.</p>
+              <h3>Key capabilities</h3>
+              <ul>
+                <li>SATO stores data only in memory or temporary backup files.</li>
+                <li>Built-in tools include converters and a password generator.</li>
+              </ul>
+            </section>
+
+            <section id="installation">
+              <h2>2. Installation</h2>
+              <p>Select the editor below to view the appropriate installation instructions.</p>
+              <p>Open <strong>VS Code</strong> or <strong>VSCodium</strong>, select <strong>Extensions</strong> in the left panel, search for <strong>SATO Secrets</strong>, and select <strong>Install</strong>.</p>
+              <p>Download the <a href="https://github.com/Marcus-Aprelius/sato-vscode/releases/latest" target="_blank" rel="noopener noreferrer">latest</a> (or any other) VSIX version and run:</p>
+
+              <div class="install-tabs" data-install-tabs>
+                <div class="install-tab-list" role="tablist" aria-label="Editor installation instructions">
+                  <button id="tab-vscode" class="install-tab-button is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-vscode" data-tab="vscode">VS Code</button>
+                  <button id="tab-vscodium" class="install-tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-vscodium" data-tab="vscodium" tabindex="-1">VSCodium</button>
+                </div>
+
+                <div id="panel-vscode" class="install-tab-panel is-active" role="tabpanel" aria-labelledby="tab-vscode" data-panel="vscode">
+                  <div class="docs-code">code --install-extension sato-vscode-ext-0.4.1.vsix --force</div>
+                </div>
+
+                <div id="panel-vscodium" class="install-tab-panel" role="tabpanel" aria-labelledby="tab-vscodium" data-panel="vscodium" hidden>
+                  <div class="docs-code">codium --install-extension sato-vscode-ext-0.4.1.vsix --force</div>
+                </div>
+              </div>
+
+              <p>To start SATO, open any supported file. The SATO UI appears automatically.</p>
+              <h3>External Tools Setup (Optional)</h3>
+              <p>External tools allow SATO to retrieve and display additional information alongside the built-in data. See the <a href="https://github.com/Marcus-Aprelius/sato-vscode#additional-features-provided-by-optional-external-tools" target="_blank" rel="noopener noreferrer">external tools details</a>.</p>
+              <div class="install-tabs" data-install-tabs>
+                <div class="tools-tab-list" role="tablist" aria-label="External tools installation by operating system">
+                  <button id="tab-debian" class="tools-tab-button is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-debian" data-tab="debian">Debian/Ubuntu</button>
+                  <button id="tab-fedora" class="tools-tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-fedora" data-tab="fedora" tabindex="-1">Fedora/RHEL</button>
+                  <button id="tab-arch" class="tools-tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-arch" data-tab="arch" tabindex="-1">Arch Linux</button>
+                  <button id="tab-alpine" class="tools-tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-alpine" data-tab="alpine" tabindex="-1">Alpine Linux</button>
+                  <button id="tab-macos" class="tools-tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-macos" data-tab="macos" tabindex="-1">macOS</button>
+                  <button id="tab-windows" class="tools-tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-windows" data-tab="windows" tabindex="-1">Windows</button>
+                </div>
+
+                <div id="panel-debian" class="tools-tab-panel is-active" role="tabpanel" aria-labelledby="tab-debian" data-panel="debian">
+                  <div class="docs-code">sudo apt install -y openssl gnupg default-jre-headless putty-tools openssh-client 7zip age cryptsetup util-linux rpm curl ca-certificates</div>
+                </div>
+                <div id="panel-fedora" class="tools-tab-panel" role="tabpanel" aria-labelledby="tab-fedora" data-panel="fedora" hidden>
+                  <div class="docs-code">sudo dnf install -y openssl gnupg2 java-latest-openjdk-headless putty openssh-clients 7zip age cryptsetup util-linux rpm curl ca-certificates</div>
+                </div>
+                <div id="panel-arch" class="tools-tab-panel" role="tabpanel" aria-labelledby="tab-arch" data-panel="arch" hidden>
+                  <div class="docs-code">sudo pacman -S openssl gnupg jre-openjdk-headless putty openssh 7zip age cryptsetup util-linux rpm-tools curl ca-certificates</div>
+                </div>
+                <div id="panel-alpine" class="tools-tab-panel" role="tabpanel" aria-labelledby="tab-alpine" data-panel="alpine" hidden>
+                  <div class="docs-code">sudo apk add openssl gnupg openjdk17-jre-headless putty openssh-client 7zip age cryptsetup util-linux curl ca-certificates</div>
+                </div>
+                <div id="panel-macos" class="tools-tab-panel" role="tabpanel" aria-labelledby="tab-macos" data-panel="macos" hidden>
+                  <div class="docs-code">brew install openssl gnupg openjdk putty sevenzip age blurfx/tap/unegg</div>
+                </div>
+                <div id="panel-windows" class="tools-tab-panel" role="tabpanel" aria-labelledby="tab-windows" data-panel="windows" hidden>
+                  <ul class="mb-0">
+                    <li>Install Gpg4win, OpenSSL for Windows, PuTTY, OpenJDK or another Java Runtime, 7-Zip CLI, unegg, and age.</li>
+                    <li>Enable the Windows OpenSSH Client optional feature.</li>
+                    <li>Ensure <code>openssl</code>, <code>gpg</code>, <code>keytool</code>, <code>7z</code>, and <code>unegg</code> are available in <code>PATH</code>.</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <section id="work-with-sato">
+              <h2>3. Work with SATO</h2>
+              <p>SATO uses a simplified interface that adapts to the opened file type. The context menu also changes according to the file type.</p>
+            </section>
+            <section id="password-vault-management">
+              <h3>3.1. Password Vault Management</h3>
+              <p>The vault view uses a three-pane interface:</p>
+              <ul>
+                <li><strong>Left pane:</strong> folder list</li>
+                <li><strong>Center pane:</strong> secrets list</li>
+                <li><strong>Right pane:</strong> secret details</li>
+              </ul>
+              <img class="docs-image" src="assets/img/docs/sato-doc-1.png" alt="SATO password vault three-pane interface" loading="lazy">
+            </section>
+
+            <section id="cryptofiles">
+              <h3>3.2. Cryptofile Management</h3>
+              <p>The cryptographic file view uses a two-pane interface:</p>
+
+              <ul>
+                <li><strong>Left pane:</strong> file list</li>
+                <li><strong>Right pane:</strong> file information</li>
+              </ul>
+
+              <img class="docs-image" src="assets/img/docs/sato-doc-2.png" alt="SATO cryptographic file two-pane interface" loading="lazy">
+            </section>
+
+            <section id="archives">
+              <h3>3.3. Archives Management</h3>
+              <p>SATO opens supported archives in the same adaptive interface and exposes relevant actions for the selected archive format.</p>
+            </section>
+
+            <section id="internal-tools">
+              <h2>4. SATO's Internal Tools</h2>
+              <p>SATO includes offline-friendly tools that are available directly from the extension interface.</p>
+            </section>
+            <section id="converters">
+              <h2>5. Converters</h2>
+              <p>The Converter changes supported files from one format to another and is organized into several tabs.</p>
+            </section>
+            <section id="converter">
+              <h3>5.1. Converter</h3>
+              <p>The Converter is available for supported certificate and cryptographic formats. If the action is inactive or absent, conversion is not supported for that file or has not yet been implemented.</p>
+              <img class="docs-image" src="assets/img/docs/sato-doc-3.png" alt="SATO certificate converter tab" loading="lazy">
+            </section>
+            <section id="extractor">
+              <h3>5.2. Extractor</h3>
+              <p>The Extractor retrieves keys from supported files. The Extractor is similar to the Converter but is separated into a dedicated workflow.</p>
+              <img class="docs-image" src="assets/img/docs/sato-doc-4.png" alt="SATO key extractor tab" loading="lazy">
+            </section>
+            <section id="base64-converter">
+              <h3>5.3. Base64 Converter</h3>
+              <p>Encodes or decodes information using Base64. Live Mode converts information in real time, and the result can also be converted to a QR code.</p>
+              <div class="docs-note">Encoding transforms data but does not encrypt or protect it.</div>
+              <img class="docs-image" src="assets/img/docs/sato-doc-5.png" alt="SATO Base64 converter tab" loading="lazy">
+            </section>
+            <section id="qr-code-converter">
+              <h3>5.4. QR Code Converter</h3>
+              <p>Converts information into a QR code for further use. Avoid encoding sensitive information in QR codes that could be scanned or photographed.</p>
+              <img class="docs-image" src="assets/img/docs/sato-doc-6.png" alt="SATO QR Code converter tab" loading="lazy">
+            </section>
+            <section id="yaml-json-converter">
+              <h3>5.5. YAML ↔ JSON Converter</h3>
+              <p>The built-in YAML ↔ JSON converter supports uploaded files and pasted text. Conversion runs locally, and input data is not sent anywhere.</p>
+              <img class="docs-image" src="assets/img/docs/sato-doc-7.png" alt="SATO YAML and JSON converter tab" loading="lazy">
+              <p>Converter options are available in <strong>Settings</strong> under the <strong>Converter</strong> tab.</p>
+            </section>
+
+            <section id="password-generator">
+              <h2>6. Password Generator</h2>
+              <p>Generates passwords according to the selected settings and can convert a generated password into a QR code.</p>
+              <img class="docs-image" src="assets/img/docs/sato-doc-8.png" alt="SATO Password Generator" loading="lazy">
+              <p>Password Generator options are available in <strong>Settings</strong> under the <strong>Password Generator</strong> tab.</p>
+            </section>
+
+            <section id="settings">
+              <h2>7. Settings</h2>
+              <p>Settings are available from SATO's main menu and are divided into tabs for the extension and individual components.</p>
+
+              <div class="install-tabs" data-install-tabs>
+                <div class="install-tab-list" role="tablist" aria-label="SATO settings categories">
+                  <button id="tab-settings-general" class="install-tab-button is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-settings-general" data-tab="settings-general">General</button>
+                  <button id="tab-settings-password-generator" class="install-tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-settings-password-generator" data-tab="settings-password-generator" tabindex="-1">Password Generator</button>
+                  <button id="tab-settings-converter" class="install-tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-settings-converter" data-tab="settings-converter" tabindex="-1">Converter</button>
+                </div>
+
+                <div id="panel-settings-general" class="install-tab-panel is-active" role="tabpanel" aria-labelledby="tab-settings-general" data-panel="settings-general">
+                  <div class="table-responsive">
+                    <table class="table table-bordered settings-table mb-0">
+                      <colgroup>
+                        <col class="settings-column-name">
+                        <col class="settings-column-description">
+                        <col class="settings-column-default">
+                      </colgroup>
+
+                      <thead>
+                        <tr>
+                          <th scope="col">Setting</th>
+                          <th scope="col">Description</th>
+                          <th scope="col">Default</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        <tr>
+                          <td><code>autoLockTimeout</code></td>
+                          <td>Auto-lock the vault after N minutes of inactivity. 0 disables auto-lock.</td>
+                          <td>0</td>
+                        </tr>
+
+                        <tr>
+                          <td><code>clipboardClearTimeout</code></td>
+                          <td>Clear the clipboard N seconds after copying a secret. 0 disables automatic clearing.</td>
+                          <td>0</td>
+                        </tr>
+
+                        <tr>
+                          <td><code>theme</code></td>
+                          <td>SATO interface theme: <code>vscode | dark | gray | light</code></td>
+                          <td><code>vscode</code></td>
+                        </tr>
+
+                        <tr>
+                          <td><code>confirmBeforeDelete</code></td>
+                          <td>Ask for confirmation before deleting entries or folders.</td>
+                          <td><code>true</code></td>
+                        </tr>
+
+                        <tr>
+                          <td><code>showPasswordsByDefault</code></td>
+                          <td>Reveal passwords automatically in the entry details pane.</td>
+                          <td><code>false</code></td>
+                        </tr>
+
+                        <tr>
+                          <td><code>showEmptyValuesByDefault</code></td>
+                          <td>Show empty values by default in vault and cryptographic file details.</td>
+                          <td><code>true</code></td>
+                        </tr>
+
+                        <tr>
+                          <td><code>createArchiveBackups</code></td>
+                          <td>Create a backup before modifying a supported archive.</td>
+                          <td><code>true</code></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div id="panel-settings-password-generator" class="install-tab-panel" role="tabpanel" aria-labelledby="tab-settings-password-generator" data-panel="settings-password-generator" hidden>
+                  <div class="table-responsive">
+                    <table class="table table-bordered settings-table mb-0">
+                      <colgroup>
+                        <col class="settings-column-name">
+                        <col class="settings-column-description">
+                        <col class="settings-column-default">
+                      </colgroup>
+
+                      <thead>
+                        <tr>
+                          <th scope="col">Setting</th>
+                          <th scope="col">Description</th>
+                          <th scope="col">Default</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        <tr>
+                          <td><code>passwordGeneratorLength</code></td>
+                          <td>Default password length used by the Password Generator.</td>
+                          <td>20</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div id="panel-settings-converter" class="install-tab-panel" role="tabpanel" aria-labelledby="tab-settings-converter" data-panel="settings-converter" hidden>
+                  <div class="table-responsive">
+                    <table class="table table-bordered settings-table mb-0">
+                      <colgroup>
+                        <col class="settings-column-name">
+                        <col class="settings-column-description">
+                        <col class="settings-column-default">
+                      </colgroup>
+
+                      <thead>
+                        <tr>
+                          <th scope="col">Setting</th>
+                          <th scope="col">Description</th>
+                          <th scope="col">Default</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        <tr>
+                          <td><code>base64DefaultOperation</code></td>
+                          <td>Base64 operation: <code>encode | decode</code></td>
+                          <td><code>encode</code></td>
+                        </tr>
+
+                        <tr>
+                          <td><code>base64DefaultFormat</code></td>
+                          <td>Base64 format: <code>base64url | base64 | base32 | base32hex | hex</code></td>
+                          <td><code>base64url</code></td>
+                        </tr>
+
+                        <tr>
+                          <td><code>yamlJsonDefaultOperation</code></td>
+                          <td>Conversion direction: <code>YAML→JSON | JSON→YAML</code></td>
+                          <td><code>YAML→JSON</code></td>
+                        </tr>
+
+                        <tr>
+                          <td><code>yamlJsonIndentation</code></td>
+                          <td>JSON output indentation: <code>spaces-2 | spaces-4 | tabs</code></td>
+                          <td><code>spaces-2</code></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer bg-dark text-white py-4">
+    <div class="container text-center">
+      <div class="small text-secondary">&copy; 2026
+        <a href="https://github.com/Marcus-Aprelius" target="_blank" rel="noopener noreferrer" title="GitHub profile: Marcus Aprelius Antoninus" class="text-decoration-none text-secondary fw-bold">Marcus Aprelius Antoninus.</a>All Rights Reserved.</div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const sidebar = document.querySelector(".docs-sidebar");
+
+      if (!sidebar) {
+        return;
+      }
+
+      document
+        .querySelectorAll(".docs-toc a[href^='#']")
+        .forEach((link) => {
+          link.addEventListener("click", (event) => {
+            const href = link.getAttribute("href");
+
+            if (!href) {
+              return;
+            }
+
+            const target = document.querySelector(href);
+
+            if (!target) {
+              return;
+            }
+
+            event.preventDefault();
+
+            const sidebarScrollTop = sidebar.scrollTop;
+
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start"
+            });
+
+            window.history.replaceState(null, "", href);
+            sidebar.scrollTop = sidebarScrollTop;
+          });
+        });
+    });
+  </script>
+
+  <script src="assets/js/documentation-tabs.js"></script>
+</body>
+</html>
