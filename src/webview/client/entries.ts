@@ -3,7 +3,7 @@ import type { MenuItem } from "./types";
 import { renderDetails } from "./details";
 import { byId, closestElement } from "./dom";
 import { openEntryMenu, openGroupMenu, showMenu } from "./contextMenu";
-import { app, groupIndex, resetCryptoUiState, isCryptoFileView } from "./state";
+import { app, entryIndex, groupIndex, resetCryptoUiState, isCryptoFileView } from "./state";
 import { archiveExtractionFolderName } from "../../shared/archiveFileName";
 
 import type { EntryView, GroupView } from "../../vault";
@@ -45,43 +45,68 @@ export function renderEntries(): void {
             const folderName = archiveExtractionFolderName(app.state.tree.name);
             const selectedArchive = app.state.archives?.find(archive => archive.filePath === app.state.selectedArchivePath);
             const archiveEditable = selectedArchive?.editable === true && selectedArchive.backup !== true;
+            const vsixPackage = app.state.selectedArchivePath ?.toLowerCase().endsWith(".vsix") === true;
+            const items: MenuItem[] = [];
 
-            const items: MenuItem[] = [
+            if (vsixPackage) {
+                items.push(
+                    {
+                        label: "Install VSIX Package",
+                        title: "Validate and install this VSIX package into the current VS Code environment",
+                        action: () => { vscode.postMessage({type: "installVsixPackage"}); }
+                    },
+                    {
+                        label: "Validate VSIX Package",
+                        title: "Validate the VSIX package structure without installing it",
+                        action: () => { vscode.postMessage({type: "validateVsixPackage"}); }
+                    },
+                    {sep: true}
+                );
+            }
+
+            items.push(
                 {
                     label: "Extract all to...",
-                    action: () => {vscode.postMessage({type: "extractArchiveAll"}); }
+                    action: () => { vscode.postMessage({type: "extractArchiveAll"}); }
                 },
                 {
                     label: `Extract all to "${folderName}"`,
-                    action: () => {vscode.postMessage({type: "extractArchiveToFolder"}); }
+                    action: () => { vscode.postMessage({type: "extractArchiveToFolder"}); }
                 }
-            ];
+            );
 
             if (archiveEditable) {
                 items.push(
                     {sep: true},
                     {
                         label: "Create Folder...",
-                        action: () => {vscode.postMessage({ type: "createArchiveFolder", groupId: app.selectedGroupId});
-                        }
+                        action: () => { vscode.postMessage({type: "createArchiveFolder", groupId: app.selectedGroupId}); }
                     },
                     {
                         label: "Add File...",
-                        action: () => {vscode.postMessage({type: "addArchiveFile", groupId: app.selectedGroupId});}
+                        action: () => { vscode.postMessage({type: "addArchiveFile", groupId: app.selectedGroupId}); }
                     }
                 );
             }
 
             items.push(
-                { sep: true },
-                { label: "Collapse All", action: () => {collapseAllArchiveGroups();} },
-                { label: "Expand All", action: () => {expandAllArchiveGroups();} },
-                { sep: true },
-                { label: "Reload from Disk", action: () => {vscode.postMessage({type: "reload" });} }
+                {sep: true},
+                {
+                    label: "Collapse All",
+                    action: () => { collapseAllArchiveGroups(); }
+                },
+                {
+                    label: "Expand All",
+                    action: () => { expandAllArchiveGroups(); }
+                },
+                {sep: true},
+                {
+                    label: "Reload from Disk",
+                    action: () => { vscode.postMessage({type: "reload"});}
+                }
             );
 
             showMenu(event.clientX, event.clientY, items);
-
             return;
         }
 
@@ -131,8 +156,10 @@ export function renderEntries(): void {
 
 function renderEntryRow(entry: EntryView): HTMLElement {
     const row = document.createElement("div");
+    const vcardContact = entry.values?.Type === "vCard Contact";
 
-    row.className = "entry-row" + (entry.id === app.selectedEntryId ? " active" : "");
+
+    row.className = "entry-row" + (vcardContact ? " vcard-entry-row" : "") + (entry.id === app.selectedEntryId ? " active" : "");
     row.dataset.entryId = entry.id;
 
     const info = document.createElement("div");
@@ -145,7 +172,12 @@ function renderEntryRow(entry: EntryView): HTMLElement {
 
     const sub = document.createElement("div");
     sub.className = "entry-sub";
-    sub.textContent = entry.username || entry.url || "";
+
+    if (vcardContact) {
+        sub.textContent = firstVcardPhone(entry.values?.Phone);
+    } else {
+        sub.textContent = entry.username || entry.url || "";
+    }
 
     info.appendChild(title);
     info.appendChild(sub);
@@ -182,15 +214,38 @@ function renderEntryRow(entry: EntryView): HTMLElement {
     return row;
 }
 
-export function selectEntry(entryId: string): void {
+function firstVcardPhone(
+    value: string | undefined
+): string {
+    if (!value?.trim()) {
+        return "NULL";
+    }
+
+    const firstPhone = value.split(/\r?\n/, 1)[0].trim().replace(/^tel:/i, "").replace(/\s+\([^()]+\)\s*$/, "").trim();
+    return firstPhone || "NULL";
+}
+
+export function selectEntry(
+    entryId: string
+): void {
     if (app.vaultLocked) {
         return;
     }
 
     app.selectedEntryId = entryId;
+
+    const selectedEntry = entryIndex.get(entryId);
+    const vcardContact = selectedEntry?.values?.Type === "vCard Contact";
+    const selectedDetailsTab = app.detailsTab;
+
     resetCryptoUiState();
 
+    if (vcardContact && (selectedDetailsTab === "info" || selectedDetailsTab === "preview")) {
+        app.detailsTab = selectedDetailsTab;
+    }
+
     app.showVaultEmptyValues = app.settings.showEmptyValuesByDefault;
+
     renderEntries();
     renderDetails();
 }

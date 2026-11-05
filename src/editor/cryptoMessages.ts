@@ -1,12 +1,14 @@
 import * as path from "path";
 import * as vscode from "vscode";
+
+import { describeError } from "../utils/errors";
 import { isOpenPgpEncryptedFile } from "./uriTypes";
 import { prepareCryptoUnlock } from "./dependencyChecks";
 import { collectCryptoFileInfo, findCryptoEntry } from "./cryptoFiles";
+import { collectDecodedVcardInfo, collectVcardFileInfo, convertVcardFile, exportVcardFile } from "../contacts";
 
 import type { FromWebview, VaultDocument } from "../types";
 import type { Settings } from "../webview";
-import { describeError } from "../utils/errors";
 
 import {
     buildCertificateDirectoryVault,
@@ -48,6 +50,101 @@ export interface CryptoMessageRuntime {
 
 const conversionSources = new WeakMap<vscode.WebviewPanel, CertificateVault>();
 
+async function showDecodedVcardInfo(
+    document: VaultDocument,
+    panel: vscode.WebviewPanel
+): Promise<void> {
+    const sourceUri = document.activeUri ?? document.uri;
+
+    if (!isVcardPath(sourceUri.fsPath)) {
+        return;
+    }
+
+    try {
+        const bytes = await vscode.workspace.fs.readFile(sourceUri);
+        const source = Buffer.from(bytes).toString("utf8");
+        const info = collectDecodedVcardInfo(source, sourceUri.fsPath);
+
+        await panel.webview.postMessage({type: "dbInfo", info});
+
+    } catch (error) {
+        vscode.window.showErrorMessage("SATO: failed to decode the vCard file - " + describeError(error));
+    }
+}
+
+async function convertSelectedVcard(
+    document: VaultDocument,
+    version: "3.0" | "4.0"
+): Promise<void> {
+    const sourceUri = document.activeUri ?? document.uri;
+
+    if (!isVcardPath(sourceUri.fsPath)) {
+        vscode.window.showWarningMessage("SATO: the selected file is not a vCard file.");
+        return;
+    }
+
+    try {
+        const bytes = await vscode.workspace.fs.readFile(sourceUri);
+        const source = Buffer.from(bytes).toString("utf8");
+        const converted = convertVcardFile(source, version);
+        const parsedPath = path.parse(sourceUri.fsPath);
+        const versionSuffix = version === "3.0" ? ".v3" : ".v4";
+        const defaultUri = vscode.Uri.file(path.join(parsedPath.dir, `${parsedPath.name}${versionSuffix}.vcf`));
+
+        const outputUri = await vscode.window.showSaveDialog({
+            title: `Convert to vCard ${version}`,
+            defaultUri,
+            filters: {"vCard files": ["vcf"]},
+            saveLabel: "Convert"
+        });
+
+        if (!outputUri) {
+            return;
+        }
+
+        await vscode.workspace.fs.writeFile(outputUri, Buffer.from(converted, "utf8"));
+        const action = await vscode.window.showInformationMessage(`SATO: vCard ${version} file created successfully.`, "Open File");
+
+        if (action === "Open File") {
+            await vscode.commands.executeCommand("vscode.open", outputUri);
+        }
+
+    } catch (error) {
+        vscode.window.showErrorMessage(`SATO: failed to convert to vCard ${version} - ` + describeError(error));
+    }
+}
+
+async function showVcardFileInfo(
+    document: VaultDocument,
+    panel: vscode.WebviewPanel
+): Promise<boolean> {
+    const sourceUri = document.activeUri ?? document.uri;
+
+    if (!isVcardPath(sourceUri.fsPath)) {
+        return false;
+    }
+
+    try {
+        const bytes = await vscode.workspace.fs.readFile(sourceUri);
+        const source = Buffer.from(bytes).toString("utf8");
+        const info = collectVcardFileInfo(source, sourceUri.fsPath, bytes.length);
+
+        await panel.webview.postMessage({type: "dbInfo", info});
+
+    } catch (error) {
+        vscode.window.showErrorMessage("SATO: failed to read vCard information - " + describeError(error));
+    }
+
+    return true;
+}
+
+function isVcardPath(
+    filePath: string
+): boolean {
+    const normalizedPath = filePath.replace(/\\/g, "/").toLowerCase();
+    return normalizedPath.endsWith(".vcf") || normalizedPath.endsWith(".vcf.bak");
+}
+
 export async function handleCryptoMessage(
     document: VaultDocument,
     panel: vscode.WebviewPanel,
@@ -67,14 +164,13 @@ export async function handleCryptoMessage(
     if (msg.type === "selectCryptoConversionDirectory") {
         const initialPath = msg.initialPath.trim();
 
-        const selected =
-            await vscode.window.showOpenDialog({
-                title: "SATO - Select Output Directory",
-                defaultUri: initialPath ? vscode.Uri.file(initialPath) : undefined,
-                canSelectFiles: false,
-                canSelectFolders: true,
-                canSelectMany: false
-            });
+        const selected =await vscode.window.showOpenDialog({
+            title: "SATO - Select Output Directory",
+            defaultUri: initialPath ? vscode.Uri.file(initialPath) : undefined,
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false
+        });
 
         const directoryUri = selected?.[0];
 
@@ -87,14 +183,13 @@ export async function handleCryptoMessage(
     }
 
         if (msg.type === "selectCryptoConversionSource") {
-            const selected =
-                await vscode.window.showOpenDialog({
-                    title: "SATO - Select File to Convert",
-                    canSelectFiles: true,
-                    canSelectFolders: false,
-                    canSelectMany: false,
-                    filters: {"Supported conversion sources": ["crt", "cer", "der", "pem", "pub", "rsa", "ec","spc"]}
-                });
+            const selected = await vscode.window.showOpenDialog({
+                title: "SATO - Select File to Convert",
+                canSelectFiles: true,
+                canSelectFolders: false,
+                canSelectMany: false,
+                filters: {"Supported conversion sources": ["crt", "cer", "der", "pem", "pub", "rsa", "ec","spc"]}
+            });
 
             const sourceUri = selected?.[0];
 
@@ -127,6 +222,16 @@ export async function handleCryptoMessage(
             return true;
         }
 
+    if (msg.type === "showDecodedVcardInfo") {
+        await showDecodedVcardInfo(document, panel);
+        return true;
+    }
+
+    if (msg.type === "convertVcard") {
+        await convertSelectedVcard(document, msg.version);
+        return true;
+    }
+
     const certificate = document.certificate;
 
     if (!certificate) {
@@ -149,8 +254,14 @@ export async function handleCryptoMessage(
     }
 
     if (msg.type === "getDbInfo") {
+        const vcardInfoShown = await showVcardFileInfo(document, panel);
+
+        if (vcardInfoShown) {
+            return true;
+        }
+
         const info = collectCryptoFileInfo(certificate, msg.entryId || certificate.selectedEntryId);
-        panel.webview.postMessage({type: "dbInfo", info});
+        await panel.webview.postMessage({type: "dbInfo", info});
 
         return true;
     }
@@ -202,10 +313,9 @@ export async function handleCryptoMessage(
 
         postCertificateState(certificate, panel, runtime.readSettings(), msg.entryId);
 
-        vscode.window.setStatusBarMessage(
-            isOpenPgpEncryptedFile(encryptedFile?.uri)
-                ? "SATO: OpenPGP message decrypted"
-                : "SATO: crypto container unlocked", 2500
+        vscode.window.setStatusBarMessage(isOpenPgpEncryptedFile(encryptedFile?.uri)
+            ? "SATO: OpenPGP message decrypted"
+            : "SATO: crypto container unlocked", 2500
         );
 
         return true;
@@ -236,7 +346,6 @@ export async function handleCryptoMessage(
     }
 
     if (msg.type === "revealPrivateKey") {
-        
         const entryId = msg.entryId || certificate.selectedEntryId;
         const privateKeyPem = certificate.privateKeysByEntryId?.[entryId];
 
@@ -463,6 +572,19 @@ function prepareCryptoConversion(
 
         outputFormat = firstFormat.value;
 
+    } else if (values.Type === "vCard Contact") {
+        sourceFormat = `vCard ${values.Version || "Unknown"}`;
+
+        availableOutputFormats = [
+            { value: "VCARD_TXT", label: "Text", extension: ".txt" },
+            { value: "VCARD_YAML", label: "YAML", extension: ".yaml" },
+            { value: "VCARD_JSON", label: "JSON", extension: ".json" },
+            { value: "VCARD_3", label: "vCard 3.0", extension: ".vcf" },
+            { value: "VCARD_4", label: "vCard 4.0", extension: ".vcf" }
+        ];
+
+        outputFormat = values.Version === "3.0" ? "VCARD_4" : "VCARD_3";
+
     } else if (values.Type === "Authenticode Certificate Container") {
         sourceFormat = values.Encoding || "DER";
         availableOutputFormats = spcOutputFormats();
@@ -550,6 +672,47 @@ async function convertCryptoFile(
 
             converted = convertEcKey(file.bytes, outputFormat);
 
+        } else if (entry.values?.Type === "vCard Contact") {
+            const source = Buffer.from(file.bytes).toString("utf8");
+
+            let convertedText: string;
+            let extension: | ".vcf" | ".txt" | ".yaml" | ".json";
+
+            switch (outputFormat) {
+                case "VCARD_3":
+                    convertedText = convertVcardFile(source, "3.0");
+                    extension = ".vcf";
+                    break;
+
+                case "VCARD_4":
+                    convertedText = convertVcardFile(source, "4.0");
+                    extension = ".vcf";
+                    break;
+
+                case "VCARD_TXT":
+                    convertedText = exportVcardFile(source, "TXT");
+                    extension = ".txt";
+                    break;
+
+                case "VCARD_YAML":
+                    convertedText = exportVcardFile(source, "YAML");
+                    extension = ".yaml";
+                    break;
+
+                case "VCARD_JSON":
+                    convertedText = exportVcardFile(source, "JSON");
+                    extension = ".json";
+                    break;
+
+                default:
+                    throw new Error("Unsupported vCard output format.");
+            }
+
+            converted = {
+                bytes: new Uint8Array(Buffer.from(convertedText, "utf8")),
+                extension
+            };
+
         } else {
             throw new Error("Conversion is not supported for this file type.");
         }
@@ -571,6 +734,7 @@ function convertedFileName(
     outputFormat: CryptoOutputFormat
 ): string {
     const parsed = path.parse(filePath);
+    const baseName = parsed.name.replace(/\.v[34]$/i, "");
 
     switch (outputFormat) {
         case "DER":
@@ -639,6 +803,20 @@ function convertedFileName(
         case "SPC_CERTIFICATE_CHAIN_P7B":
             return `${parsed.name}-certificate-chain.p7b`;
 
+        case "VCARD_3":
+            return `${parsed.name}.v3.vcf`;
+
+        case "VCARD_4":
+            return `${parsed.name}.v4.vcf`;
+        case "VCARD_TXT":
+            return `${baseName}.txt`;
+
+        case "VCARD_YAML":
+            return `${baseName}.yaml`;
+
+        case "VCARD_JSON":
+            return `${baseName}.json`;
+
         default:
             return parsed.base;
     }
@@ -647,7 +825,7 @@ function convertedFileName(
 function normalizeOutputFileName(
     requestedFileName: string,
     sourceFilePath: string,
-    extension: | ".pem" | ".der" | ".pub" | ".rsa" | ".ec" | ".p7b"
+    extension: | ".pem" | ".der" | ".pub" | ".rsa" | ".ec" | ".p7b" | ".vcf" | ".txt" | ".yaml" | ".json"
 ): string {
     const requested = path.basename(requestedFileName.trim());
 
@@ -759,15 +937,14 @@ async function updatePrivateKeyPassword(
             }
 
             await changeLuksPassword(file.uri.fsPath, {currentPassword, newPassword, createBackup});
+
         } else if (openPgpPrivateKey) {
-            await changeGpgPassword(
-                file.uri.fsPath,
-                {
-                    currentPassword: currentPassword || undefined,
-                    newPassword: newPassword || undefined,
-                    createBackup
-                }
-            );
+            await changeGpgPassword(file.uri.fsPath, {
+                currentPassword: currentPassword || undefined,
+                newPassword: newPassword || undefined,
+                createBackup
+            });
+
         } else if (lowerPath.endsWith(".age")) {
             if (!currentPassword || !newPassword) {
                 throw new Error("Current and new age passwords are required.");
@@ -781,8 +958,8 @@ async function updatePrivateKeyPassword(
                 throw new Error("Current and new KeyStore passwords are required.");
             }
 
-            await changeJksPassword(file.uri.fsPath, {currentPassword, newPassword, createBackup}
-            );
+            await changeJksPassword(file.uri.fsPath, {currentPassword, newPassword, createBackup});
+
         } else if (lowerPath.endsWith(".ppk")) {
             await changePpkPassword(file.uri.fsPath, options);
         } else if (isOpenSshPrivateKeyPath(file.uri.fsPath)) {

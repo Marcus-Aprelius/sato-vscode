@@ -55,6 +55,46 @@ export function openEntryMenu(
             return;
         }
 
+        const vcardContact = entry.values?.Type === "vCard Contact";
+
+        if (vcardContact) {
+            const items: MenuItem[] = [];
+
+            if (entry.values?.Summary) {
+                items.push({
+                    label: "Copy Summary",
+                    action: () => { vscode.postMessage({type: "copyText", text: entry.values?.Summary || ""}); }
+                });
+            }
+
+            if (entry.values?.["File path"]) {
+                items.push({
+                    label: "Copy File Path",
+                    action: () => {
+                        vscode.postMessage({
+                            type: "copyText",
+                            text: entry.values?.["File path"] || ""
+                        });
+                    }
+                });
+            }
+
+            items.push(
+                {sep: true},
+                {
+                    label: "Show Info",
+                    action: () => { openVcardDetailsTab("info"); }
+                },
+                {
+                    label: "Show Preview",
+                    action: () => { openVcardDetailsTab("preview"); }
+                }
+            );
+
+            showMenu(x, y, items);
+            return;
+        }
+
         const items: MenuItem[] = [];
 
         if (isPasswordEditablePrivateKey(entry)) {
@@ -148,6 +188,17 @@ export function openEntryMenu(
 }
 
 function openArchiveDetailsTab(
+    tab: "info" | "preview"
+): void {
+    if (app.detailsTab === tab) {
+        return;
+    }
+
+    app.detailsTab = tab;
+    renderDetails();
+}
+
+function openVcardDetailsTab(
     tab: "info" | "preview"
 ): void {
     if (app.detailsTab === tab) {

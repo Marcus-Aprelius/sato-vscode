@@ -1,3 +1,22 @@
+# 0.4.1
+
+## Added
+* Added **Install Extension** and **Validate Package** actions for VSIX packages
+* Added read-only vCard (`.vcf`) support:
+  * View, search, Preview, and decode contacts
+  * Convert contacts to `Text`, `YAML`, `JSON`, `vCard 3.0`, or `vCard 4.0`
+  * Generate QR codes for contact names and phone numbers
+* Added a **YAML ↔ JSON Converter** with live conversion, synchronized scrolling, and file Upload/Download
+* Added file Upload to the QR Code Converter
+* Added configurable defaults for Base64 and YAML ↔ JSON conversion
+
+## Changed
+* Updated `@vscode/vsce` to version 4.1.0
+* Code refactored
+* `README.md` updated
+
+---
+
 # 0.4.0
 
 ## Added

@@ -36,7 +36,9 @@ import {
     closeCryptoContainerUnlockModal,
     closeArchivePasswordModal,
     openArchivePasswordModal,
-    showArchivePasswordError
+    showArchivePasswordError,
+    setYamlJsonFileContent,
+    setQrTextFileContent
 } from "./modals";
 
 import { updateToolbarForMode } from "./buttons";
@@ -94,6 +96,15 @@ export function bindInboundMessages(): void {
             }
 
             setOpenPgpPrivateKeyPath(entryId, filePath);
+            return;
+        }
+
+        if (msg.type === "yamlJsonFileOpened") {
+            if (typeof msg.content !== "string" || typeof msg.filePath !== "string" || (msg.format !== "yaml" && msg.format !== "json")) {
+                return;
+            }
+
+            setYamlJsonFileContent(msg.content, msg.format, msg.filePath);
             return;
         }
 
@@ -306,6 +317,15 @@ export function bindInboundMessages(): void {
 
         if (msg.type === "dbInfo") {
             renderDbInfo(msg.info as Record<string, unknown>);
+        }
+
+        if (msg.type === "qrTextFileOpened") {
+            if (typeof msg.content !== "string") {
+                return;
+            }
+
+            setQrTextFileContent(msg.content);
+            return;
         }
     });
 }
