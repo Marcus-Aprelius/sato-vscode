@@ -140,7 +140,7 @@ export function collectCryptoFileInfo(
 
     if (!entry) {
         return {
-            title: "File Info",
+            title: "Properties",
             rows: [["Type", "Crypto file"], ["Summary", "No selected crypto entry."]]
         };
     }
@@ -173,7 +173,7 @@ export function collectCryptoFileInfo(
     addRow(rows, "Summary", values.Summary);
 
     return {
-        title: "File Info",
+        title: "Properties",
         entryId: entry.id,
         hasPrivateKey: entry.hasPrivateKey === true,
         rows

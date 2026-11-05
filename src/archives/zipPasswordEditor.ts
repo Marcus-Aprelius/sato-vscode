@@ -74,7 +74,6 @@ export async function changeZipPassword(
 
         } catch (error) {
             await fs.promises.unlink(temporaryPath).catch(() => undefined);
-
             throw error;
         }
     } finally {

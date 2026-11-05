@@ -40,7 +40,7 @@ export function openEntryMenu(
             const detailsItems: MenuItem[] = [];
 
             if (hasArchiveInfoTab(entry)) {
-                detailsItems.push({ label: "Show Info", action: () => {openArchiveDetailsTab("info");} });
+                detailsItems.push({ label: "Properties", action: () => {openArchiveDetailsTab("info");} });
             }
 
             if (hasArchivePreviewTab(entry)) {
@@ -82,7 +82,7 @@ export function openEntryMenu(
             items.push(
                 {sep: true},
                 {
-                    label: "Show Info",
+                    label: "Properties",
                     action: () => { openVcardDetailsTab("info"); }
                 },
                 {

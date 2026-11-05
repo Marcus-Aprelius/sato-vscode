@@ -3,10 +3,10 @@ export const ABOUT_STYLES = `
 
 .about-supports {
     box-sizing: border-box;
-    width: 100%;
+    width: calc(100% + 16px);
     max-width: none;
-    margin: 4px 0 0;
-    padding: 0 12px;
+    margin: 4px -8px 0 -8px;
+    padding: 0 8px;
     text-align: left;
     line-height: 1.25;
     color: var(--vscode-descriptionForeground);
@@ -21,65 +21,10 @@ export const ABOUT_STYLES = `
     align-items: start;
     text-align: left;
 }
-.about-supports strong {
-    color: var(--vscode-foreground);
-    font-weight: 600;
-}
-.about-supports span {
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
-.about-tabs {
-    display: flex;
-    gap: 0;
-    padding: 0;
-    border-bottom: 1px solid var(--vscode-panel-border);
-}
-
-.about-tab + .about-tab {
-    margin-left: 0;
-}
-.about-tab {
-    padding: 7px 12px;
-    background: transparent;
-    color: var(--vscode-descriptionForeground);
-    border: 1px solid var(--vscode-widget-border);
-    border-bottom: 2px solid transparent;
-    border-radius: 3px 3px 0 0;
-    cursor: pointer;
-    font: inherit;
-}
-
-.about-tab:hover {
-    color: var(--vscode-foreground);
-    background: var(--vscode-list-hoverBackground);
-    border-color: var(--vscode-focusBorder);
-}
-
-.about-tab.active {
-    color: var(--vscode-foreground);
-    background: var(--vscode-list-hoverBackground);
-    border-color: var(--vscode-focusBorder);
-    border-bottom-color: var(--vscode-focusBorder);
-}
-
-.about-modal {
-    position: relative;
-    top: -14px;
-    width: 550px;
-    height: 435px;
-    max-width: calc(100vw - 32px);
-    max-height: calc(100vh - 32px);
-}
-.about-modal > .modal-body {
-    flex: 1;
-    min-height: 0;
-}
-#supported-formats-content {
-    padding: 2px 8px 0 !important;
-}
-
+.about-supports strong {color: var(--vscode-foreground); font-weight: 600;}
+.about-supports span {min-width: 0; overflow-wrap: anywhere;}
+.about-modal {position: relative; top: -14px; width: 550px; height: 435px; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px);}
+.about-modal > .modal-body {flex: 1; min-height: 0;}
 .about-version {display: flex; align-items: center; justify-content: center; gap: 8px;}
 .about-version .icon-btn {flex: 0 0 auto; margin-left: 0;}
 
@@ -94,6 +39,7 @@ export const ABOUT_STYLES = `
 }
 
 .about-inline-link:hover {color: var(--vscode-textLink-activeForeground); text-decoration: underline;}
+
 .about-formats-list {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -103,11 +49,11 @@ export const ABOUT_STYLES = `
     color: var(--vscode-descriptionForeground);
 }
 
-.about-formats-list > div {
-    display: block;
-    margin: 0;
-    padding: 0;
-    white-space: nowrap;
-}
+.about-formats-list > div {display: block; margin: 0; padding: 0; white-space: nowrap;}
+.about-header-text {margin-left: -8px; margin-top: 0;}
+.about-header {position: relative; top: -6px; margin-bottom: -6px;}
+
+.format-link {color: var(--vscode-textLink-foreground); text-decoration: none;}
+.format-link:hover {text-decoration: underline;}
 
 `;

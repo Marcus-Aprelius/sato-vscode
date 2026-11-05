@@ -470,11 +470,11 @@ function openCryptoFileMenu(
     items.push(
         {sep: true},
         {
-            label: "Show Info",
+            label: "Properties",
             title: vcardContact ? "Show vCard file information" : "Show information about the selected crypto file",
             action: () => {
                 byId("dbinfo-body").innerHTML = '<div class="empty">Loading...</div>';
-                byId("dbinfo-title-label").textContent = vcardContact ? "vCard File Info" : "File Info";
+                byId("dbinfo-title-label").textContent = vcardContact ? "vCard Properties" : "Properties";
                 openModal("dbinfo-modal");
 
                 vscode.postMessage({

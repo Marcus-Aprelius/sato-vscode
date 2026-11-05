@@ -15,7 +15,6 @@ export async function editSevenZipArchive(
     validateEditOperation(operation);
     const originalStat = await fs.promises.stat(archiveFilePath);
     const rollbackPath = createRollbackPath(archiveFilePath);
-
     const backupPath = options.createBackup === false ? undefined : `${archiveFilePath}.bak`;
 
     await fs.promises.copyFile(archiveFilePath, rollbackPath);

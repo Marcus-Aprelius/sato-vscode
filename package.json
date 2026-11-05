@@ -3,7 +3,7 @@
   "displayName": "SATO Secrets",
   "description": "Browse password vaults and crypto files directly inside VS Code.",
   "publisher": "MarcusApreliusAntoninus",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "license": "MIT",
   "icon": "assets/sato.png",
   "bugs": {
@@ -502,15 +502,35 @@
         "sato.base64DefaultFormat": {
           "type": "string",
           "default": "base64url",
-          "enum": ["base64url", "base64", "base32", "base32hex", "hex"],
-          "enumDescriptions": ["Base64URL", "Base64", "Base32", "Base32Hex", "Hex"],
+          "enum": [
+            "base64url",
+            "base64",
+            "base32",
+            "base32hex",
+            "hex"
+          ],
+          "enumDescriptions": [
+            "Base64URL",
+            "Base64",
+            "Base32",
+            "Base32Hex",
+            "Hex"
+          ],
           "description": "Default format selected in the Base64 Converter."
         },
         "sato.yamlJsonIndentation": {
           "type": "string",
           "default": "spaces-2",
-          "enum": ["spaces-2", "spaces-4", "tabs"],
-          "enumDescriptions": ["Use 2 spaces", "Use 4 spaces", "Use tabs"],
+          "enum": [
+            "spaces-2",
+            "spaces-4",
+            "tabs"
+          ],
+          "enumDescriptions": [
+            "Use 2 spaces",
+            "Use 4 spaces",
+            "Use tabs"
+          ],
           "description": "Indentation used for JSON output in the YAML and JSON Converter."
         },
         "sato.showPasswordsByDefault": {
@@ -530,10 +550,18 @@
         },
         "sato.fileCategoryFilters": {
           "type": "array",
-          "default": [ "all" ],
+          "default": [
+            "all"
+          ],
           "items": {
             "type": "string",
-            "enum": ["all", "vaults", "archives", "ssh", "crypto"]
+            "enum": [
+              "all",
+              "vaults",
+              "archives",
+              "ssh",
+              "crypto"
+            ]
           },
           "minItems": 1,
           "uniqueItems": true,
@@ -542,7 +570,12 @@
         "sato.theme": {
           "type": "string",
           "default": "vscode",
-          "enum": ["vscode", "dark", "gray", "light"],
+          "enum": [
+            "vscode",
+            "dark",
+            "gray",
+            "light"
+          ],
           "enumDescriptions": [
             "Use colors from the current VS Code theme",
             "Use the SATO dark theme",
@@ -554,15 +587,27 @@
         "sato.base64DefaultOperation": {
           "type": "string",
           "default": "encode",
-          "enum": ["encode", "decode"],
-          "enumDescriptions": ["Encode", "Decode"],
+          "enum": [
+            "encode",
+            "decode"
+          ],
+          "enumDescriptions": [
+            "Encode",
+            "Decode"
+          ],
           "description": "Default operation selected in the Base64 Converter."
         },
         "sato.yamlJsonDefaultOperation": {
           "type": "string",
           "default": "yaml-to-json",
-          "enum": ["yaml-to-json", "json-to-yaml"],
-          "enumDescriptions": ["YAML to JSON", "JSON to YAML"],
+          "enum": [
+            "yaml-to-json",
+            "json-to-yaml"
+          ],
+          "enumDescriptions": [
+            "YAML to JSON",
+            "JSON to YAML"
+          ],
           "description": "Default operation selected in the YAML and JSON Converter."
         }
       }
@@ -584,16 +629,16 @@
     "@types/qrcode": "^1.5.6",
     "@types/vscode": "^1.120.0",
     "@types/yauzl": "^3.4.0",
-    "@vscode/vsce": "^4.1.0",
-    "concurrently": "^10.0.6",
+    "@vscode/vsce": "^4.1.1",
+    "concurrently": "^10.0.7",
     "esbuild": "^0.28.2",
     "typescript": "^7.0.2"
   },
   "dependencies": {
     "@vscode/codicons": "^0.0.46-24",
-    "@zip.js/zip.js": "^2.23.0",
+    "@zip.js/zip.js": "^2.25.0",
     "buttercup": "^7.7.1",
-    "hash-wasm": "^4.12.0",
+    "hash-wasm": "^4.13.0",
     "kdbxweb": "^2.1.1",
     "password-safe": "^0.0.3",
     "qrcode": "^1.5.4",

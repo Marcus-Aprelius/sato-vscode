@@ -215,9 +215,7 @@ function writeEntryStream(
                 input.destroy();
                 limiter.destroy();
                 output.destroy();
-
                 void fs.promises.unlink(destinationPath).catch(() => undefined);
-
                 reject(error);
 
                 return;
@@ -230,7 +228,6 @@ function writeEntryStream(
         limiter.once("error", finish);
         output.once("error", finish);
         output.once("finish", () => finish());
-
         input.pipe(limiter).pipe(output);
     });
 }

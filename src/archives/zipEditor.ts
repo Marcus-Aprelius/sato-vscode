@@ -208,10 +208,7 @@ async function verifyCreatedZip(
             return;
         }
 
-        await firstFile.getData(new Uint8ArrayWriter(), password
-            ? {password, checkCrc32: true, checkAuthenticationCode: true}
-            : {checkCrc32: true, checkAuthenticationCode: true}
-        );
+        await firstFile.getData(new Uint8ArrayWriter(), password ? {password, checkCrc32: true, checkAuthenticationCode: true} : {checkCrc32: true, checkAuthenticationCode: true});
 
     } finally {
         await reader.close();

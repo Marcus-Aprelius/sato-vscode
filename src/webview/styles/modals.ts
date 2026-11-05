@@ -189,7 +189,7 @@ export const MODAL_STYLES = `
 }
 
 .settings-tab-content {flex: 1;}
-.settings-modal {width: min(460px, 92vw); height: 390px; max-height: 90vh;}
+.settings-modal {width: min(460px, 92vw); height: 440px; max-height: 90vh;}
 .settings-modal .settings-tab-content {flex: 1; min-height: 0; overflow-y: auto; padding-top: 0;}
 .settings-modal .settings-tab-content > h3 {margin: 6px 0 6px;}
 .settings-modal .settings-tab-content > h3:first-child {margin-top: 0;}
@@ -248,28 +248,6 @@ export const MODAL_STYLES = `
 .converter-title img {margin-top: 3px;}
 
 .about-modal > .modal-title {border-bottom: none;}
-.about-tabs {display: flex; gap: 0; padding: 0; border-bottom: 1px solid var(--vscode-panel-border);}
-
-.about-tab {
-    padding: 7px 12px;
-    background: transparent;
-    color: var(--vscode-descriptionForeground);
-    border: 1px solid var(--vscode-widget-border);
-    border-bottom: 2px solid transparent;
-    border-radius: 3px 3px 0 0;
-    cursor: pointer;
-    font: inherit;
-}
-
-.about-tab + .about-tab {margin-left: 0;}
-.about-tab:hover {color: var(--vscode-foreground); background: var(--vscode-list-hoverBackground); border-color: var(--vscode-focusBorder);}
-
-.about-tab.active {
-    color: var(--vscode-foreground);
-    background: var(--vscode-list-hoverBackground);
-    border-color: var(--vscode-focusBorder);
-    border-bottom-color: var(--vscode-focusBorder);
-}
 
 .converter-modal-body {flex: 1; min-width: 0; min-height: 0; overflow: hidden;}
 
@@ -438,5 +416,146 @@ export const MODAL_STYLES = `
 .unlock-password-row {display: grid; grid-template-columns: minmax(0, 1fr) 36px; gap: 8px; align-items: center;}
 .unlock-password-input {min-width: 0;}
 .unlock-password-row .archive-password-toggle {width: 32px; height: 32px; margin: 0;}
+
+.about-modal {
+    width: min(840px, 96vw);
+    height: min(630px, 90vh);
+}
+
+.about-combined-content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+    min-height: 0;
+    padding: 8px 10px 6px;
+    overflow-y: auto;
+}
+
+.about-summary {
+    display: grid;
+    grid-template-columns: 128px minmax(0, 1fr);
+    align-items: start;
+    gap: 2px;
+    width: 100%;
+    min-width: 0;
+    position: relative;
+    top: -4px;
+    margin-bottom: -4px;
+}
+
+.about-combined-logo {
+    width: 120px;
+    height: 120px;
+    justify-self: start;
+    object-fit: contain;
+    transform: translate(-14px, -4px);
+}
+
+.about-summary-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+    margin-left: -12px;
+}
+
+.about-description {
+    width: 100%;
+    max-width: none;
+    line-height: 1.35;
+    color: var(--vscode-foreground);
+}
+
+.about-version {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.about-copyright {
+    color: var(--vscode-descriptionForeground);
+}
+
+.about-copyright a {
+    color: var(--vscode-textLink-foreground);
+    text-decoration: none;
+}
+
+.about-copyright a:hover {
+    text-decoration: underline;
+}
+
+.about-combined-separator {
+    flex: 0 0 1px;
+    width: calc(100% + 8px);
+    height: 1px;
+    margin: -10px -4px 0;
+    background: var(
+        --vscode-widget-border,
+        var(--vscode-panel-border)
+    );
+}
+
+.about-formats-title {
+    flex: 0 0 auto;
+    margin: 3px 0 4px;
+    color: var(--vscode-foreground);
+    font-weight: 600;
+    text-align: center;
+}
+
+.about-combined-formats {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: calc(100% + 24px);
+    margin: 0 -20px;
+}
+
+.about-combined-formats .about-supports-row {
+    display: grid;
+    grid-template-columns: 66px minmax(0, 1fr);
+    align-items: start;
+    gap: 1px;
+    width: 100%;
+}
+
+.about-combined-formats .about-supports-row span {
+    min-width: 0;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.about-combined-formats .about-supports-row span {
+    min-width: 0;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 560px) {
+    .about-summary {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .about-combined-logo {
+        justify-self: center;
+        transform: translateY(-4px);
+    }
+
+    .about-summary-details {
+        align-items: center;
+        margin-left: 0;
+        text-align: center;
+    }
+
+    .about-combined-formats .about-supports-row {
+        grid-template-columns: 1fr;
+        gap: 3px;
+    }
+}
 
 `;

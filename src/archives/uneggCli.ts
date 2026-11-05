@@ -29,11 +29,7 @@ export async function runUnegg(
     }
 
     return new Promise((resolve, reject) => {
-        const child = spawn(
-            command,
-            [...args],
-            { shell: false, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] }
-        );
+        const child = spawn(command, [...args], { shell: false, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
 
         let stdout = "";
         let stderr = "";
@@ -93,9 +89,7 @@ export async function testUneggPassword(
     password: string
 ): Promise<boolean> {
     const resolution = await resolveSplitArchivePrimaryPath(archivePath);
-    const temporaryDirectory = await fs.promises.mkdtemp(
-        path.join(os.tmpdir(), "sato-unegg-test-")
-    );
+    const temporaryDirectory = await fs.promises.mkdtemp(path.join(os.tmpdir(), "sato-unegg-test-"));
 
     try {
         const result = await runUnegg(["-q", "-C", temporaryDirectory, "-p", password, resolution.primaryPath]);

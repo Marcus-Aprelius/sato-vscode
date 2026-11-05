@@ -325,9 +325,9 @@ export function renderModals(
         </div>
 
         <div class="settings-tabs">
-            <button type="button" class="settings-tab active" id="settings-tab-general">General</button>
-            <button type="button" class="settings-tab" id="settings-tab-password-generator">Password Generator</button>
+            <button type="button" class="settings-tab" id="settings-tab-general">General</button>
             <button type="button" class="settings-tab" id="settings-tab-converter">Converter</button>
+            <button type="button" class="settings-tab" id="settings-tab-password-generator">Generator</button>
         </div>
 
         <div class="modal-body settings-tab-content" id="settings-content-general">
@@ -356,6 +356,7 @@ export function renderModals(
             <label class="checkbox"><input type="checkbox" id="s-confirmdel">Confirm before delete</label>
             <label class="checkbox"><input type="checkbox" id="s-showpw">Show passwords by default</label>
             <label class="checkbox"><input type="checkbox" id="s-showempty">Show empty values by default</label>
+            <label class="checkbox"><input type="checkbox" id="s-showstatus">Show status bar</label>
             <label class="checkbox"><input type="checkbox" id="s-archive-backups">Create archive backups</label>
 
         </div>
@@ -436,58 +437,70 @@ export function renderModals(
             <div>
                 <img class="toolbar-logo" src="${toolbarLogoSrc}" alt="SATO" title="SATO by Marcus Aprelius"/>[SATO] Secure Access Task Operator
             </div>
+
             <button type="button" class="converter-close-button" id="about-header-close" title="Close" aria-label="Close">
                 <span class="codicon codicon-close" aria-hidden="true"></span>
             </button>
         </div>
 
-        <div class="about-tabs">
-        <button type="button" class="about-tab" id="about-tab-supported-formats">Supported Formats</button>
-        <button type="button" class="about-tab active" id="about-tab-about">About</button>
-        </div>
+        <div class="modal-body about-combined-content">
+            <div class="about-summary">
+                <img class="about-logo about-combined-logo" src="${logoSrc}" alt="SATO logo"/>
 
-        <div class="modal-body" id="about-content" style="align-items:center; text-align:center; gap:8px; padding:16px;">
-        <img class="about-logo" src="${logoSrc}" alt="SATO logo" />
-            <div>
-                VS Code extension for viewing<br>
-                <button type="button" class="about-inline-link" id="about-open-supported-formats">secure storage and cryptographic files</button>
+                <div class="about-summary-details">
+                    <div class="about-description">VSCode/VSCodium extension to manage vaults, archives, crypto files.</div>
+
+                    <div class="about-version">
+                        <span>
+                            Version: <span id="about-version-value">${escapeHtml(versionLabel)}</span>
+                        </span>
+
+                        <button type="button" class="icon-btn" id="about-version-copy" title="Copy Version" aria-label="Copy Version">
+                            <span class="codicon codicon-copy" aria-hidden="true"></span>
+                        </button>
+                    </div>
+
+                    <div class="about-copyright">
+                        © 2026
+                        <a href="https://github.com/Marcus-Aprelius/sato-vscode" target="_blank" rel="noopener noreferrer">Marcus-Aprelius</a>
+                    </div>
+                </div>
             </div>
 
-            <div class="about-spacer"></div>
-            <div class="about-version">
-                <span>
-                    Version: <span id="about-version-value">${escapeHtml(versionLabel)}</span>
-                </span>
+            <div class="about-combined-separator" aria-hidden="true"></div>
+            <div class="about-formats-title">Supported Formats</div>
+            <div class="about-supports about-combined-formats">
+                <div class="about-supports-row">
+                    <strong>Vaults:</strong>
+                    <span>${vaultFormats}</span>
+                </div>
 
-                <button type="button" class="icon-btn" id="about-version-copy" title="Copy Version" aria-label="Copy Version">
-                    <span class="codicon codicon-copy"></span>
-                </button>
-            </div>
-            <div class="about-spacer"></div>
-            <div style="margin-top:12px;">
-                © 2026
-                <a href="https://github.com/Marcus-Aprelius/sato-vscode"
-                    target="_blank" rel="noopener noreferrer" style="color: var(--vscode-textLink-foreground); text-decoration:none;">
-                    Marcus-Aprelius
-                </a>
-            </div>
-        </div>
+                <div class="about-supports-row">
+                    <strong>Archives:</strong>
+                    <span>${archiveFormats}</span>
+                </div>
 
-        <div class="modal-body" id="supported-formats-content" style="display:none; align-items:stretch; justify-content:flex-start; padding:4px 12px 4px 18px;">
-            <div class="about-supports">
+                <div class="about-supports-row">
+                    <strong>SSH:</strong>
+                    <span>${sshFormats}</span>
+                </div>
 
-                <div class="about-supports-row"><strong>Vaults:</strong><span>${vaultFormats}</span></div>
-                <div class="about-supports-row"><strong>Archives:</strong><span>${archiveFormats}</span></div>
-                <div class="about-supports-row"><strong>SSH:</strong><span>${sshFormats}</span></div>
-                <div class="about-supports-row"><strong>Crypto:</strong><span>${cryptoFormats}</span></div>
-                <div class="about-supports-row"><strong>Backups:</strong><span>${backupFormat} (read-only)</span></div>
+                <div class="about-supports-row">
+                    <strong>Crypto:</strong>
+                    <span>${cryptoFormats}</span>
+                </div>
 
+                <div class="about-supports-row">
+                    <strong>Backups:</strong>
+                    <span>${backupFormat} (read-only)</span>
+                </div>
             </div>
         </div>
 
         <div class="modal-footer">
             <button type="button" class="btn primary" id="about-close">Close</button>
         </div>
+    </div>
     </div>
 
     <div class="modal converter-modal" id="converter-modal">
@@ -767,8 +780,35 @@ export function renderModals(
 
 }
 
+const FORMAT_WIKI_PAGES: Record<string, string> = {
+    '7z':'7z', 'gz':'Gzip', 'xz':'XZ_Utils', 'zip':'ZIP_(file_format)', 'rar':'RAR_(file_format)', 'gzip':'Gzip',
+    'tar':'Tar_(computing)', 'zst':'Zstd', 'bz2':'Bzip2', 'cab':'Cabinet_(file_format)', 'deb':'Deb_(file_format)',
+    'rpm':'RPM_Package_Manager', 'jar':'JAR_(file_format)', 'war':'WAR_(file_format)', 'chm':'Microsoft_Compiled_HTML_Help',
+    'dmg':'Apple_Disk_Image', 'iso':'ISO_image', 'pem':'Privacy-Enhanced_Mail', 'crt':'X.509#Certificate_filename_extensions', 
+    'csr':'Certificate_signing_request', 'pfx':'PKCS_12', 'p12':'PKCS_12', 'arj':'ARJ', 'lha':'LHA_(file_format)', 'epub':'EPUB',
+    'lzh':'LHA_(file_format)', 'gpg':'GNU_Privacy_Guard', 'pgp':'GNU_Privacy_Guard','jks':'Java_KeyStore', 'vcf':'VCard', 
+    'kdbx':'KeePass', 'lzma':'LZMA', 'zipx':'ZIP_(file_format)', 'alz':'ALZip', 'egg':'ALZip', 'cpio':'Cpio', 'ear':'EAR_(file_format)',
+    'tzst':'Zstd', 'z':'Compress_(software)', 'tar.xz':'XZ_Utils', 'txz':'XZ_Utils', 'sb2':'Scratch_(programming_language)#Filetypes',
+    'sb3':'Scratch_(programming_language)#Filetypes', 'xpi':'XPInstall', 'pbix': 'Microsoft_Power_BI', 'taz':'Gzip', 'tar.zst':'Zstd',
+    'tar.z':'Compress_(software)', 'tar.bz2':'Bzip2', 'tbz2':'Bzip2', 'tar.gz':'Gzip', 'tgz':'Gzip', 'luks':'Linux_Unified_Key_Setup',
+    'p7b':'X.509#Certificate_filename_extensions', 'cer':'X.509#Certificate_filename_extensions', 'der':'X.509#Certificate_filename_extensions',
+    'p10':'X.509#Certificate_filename_extensions', 'p7c':'X.509#Certificate_filename_extensions', 'p7s':'X.509#Certificate_filename_extensions',
+    'p7m':'X.509#Certificate_filename_extensions', 'p8':'X.509#Certificate_filename_extensions', 'pk8':'X.509#Certificate_filename_extensions',
+    'tc':'TrueCrypt', 'hc':'VeraCrypt'
+};
+
 function formatExtensionList(
     extensions: readonly string[]
 ): string {
-    return extensions.map(extension => escapeHtml(`.${extension}`)).join(" ");
+    return extensions.map(extension => {
+        const escapedExt = escapeHtml(`.${extension}`);
+        const wikiPage = FORMAT_WIKI_PAGES[extension];
+        
+        if (wikiPage) {
+            const url = `https://en.wikipedia.org/wiki/${wikiPage}`;
+            return `<a href="${url}" class="format-link" target="_blank">${escapedExt}</a>`;
+        }
+        
+        return escapedExt;
+    }).join(" ");
 }

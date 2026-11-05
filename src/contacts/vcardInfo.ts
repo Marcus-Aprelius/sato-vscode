@@ -63,7 +63,7 @@ export function collectVcardFileInfo(
     addRow(rows, "Warnings", warnings.length > 0 ? warnings.join("\n") : "None");
     addRow(rows, "File path", filePath);
 
-    return {title: "vCard File Info", rows};
+    return {title: "vCard Properties", rows};
 }
 
 function formatDecodedContact(

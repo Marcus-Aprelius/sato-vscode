@@ -35,7 +35,6 @@ export async function extractEncryptedZipArchive(
         for (const entry of entries) {
             if (selectedPaths && !selectedPaths.has(entry.filename)) {
                 skippedEntries.push(entry.filename);
-
                 continue;
             }
 
@@ -89,7 +88,6 @@ async function extractEncryptedEntry(
 
     } catch (error) {
         await fs.promises.unlink(destinationPath).catch(() => undefined);
-
         throw error;
     }
 }
@@ -99,7 +97,6 @@ async function pathExists(
 ): Promise<boolean> {
     try {
         await fs.promises.access(filePath);
-
         return true;
 
     } catch {

@@ -71,7 +71,6 @@ async function findDebMember(
         }
 
         const lowerName = entry.name.toLowerCase();
-
         return (lowerName === baseName || lowerName.startsWith(`${baseName}.`));
     });
 

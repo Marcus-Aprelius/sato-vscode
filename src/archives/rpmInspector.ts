@@ -52,8 +52,7 @@ function readRpmPackageDetails(
         "Vendor: %{VENDOR}", "License: %{LICENSE}", "Summary: %{SUMMARY}", "Description: %{DESCRIPTION}",
         "Packager: %{PACKAGER}", "Build time: %{BUILDTIME:date}", "Installed size: %{SIZE} bytes"].join("\n") + "\n";
 
-    const result = spawnSync(
-        "rpm",
+    const result = spawnSync("rpm",
         ["-qp", "--queryformat", queryFormat, filePath],
         {encoding: "utf8", timeout: 30000, maxBuffer: 8 * 1024 * 1024, windowsHide: true}
     );
@@ -68,21 +67,15 @@ function readRpmPackageDetails(
         return undefined;
     }
 
-    const requiresResult = spawnSync(
-        "rpm",
-        ["-qp", "--requires", filePath],
+    const requiresResult = spawnSync("rpm", ["-qp", "--requires", filePath],
         {encoding: "utf8", timeout: 30000, maxBuffer: 8 * 1024 * 1024, windowsHide: true}
     );
 
-    const providesResult = spawnSync(
-        "rpm",
-        ["-qp", "--provides", filePath],
+    const providesResult = spawnSync("rpm", ["-qp", "--provides", filePath],
         {encoding: "utf8", timeout: 30000, maxBuffer: 8 * 1024 * 1024, windowsHide: true}
     );
 
-    const signatureResult = spawnSync(
-        "rpm",
-        ["-K", filePath],
+    const signatureResult = spawnSync("rpm", ["-K", filePath],
         {encoding: "utf8", timeout: 30000, maxBuffer: 8 * 1024 * 1024, windowsHide: true}
     );
 

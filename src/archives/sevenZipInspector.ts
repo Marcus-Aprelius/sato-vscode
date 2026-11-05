@@ -278,10 +278,7 @@ async function findExtractedTar(
 function isSingleCompressedFormat(
     format: ArchiveFormat
 ): boolean {
-    return (
-        format === "gzip" || format === "bzip2" || format === "xz" ||
-        format === "zstd" || format === "lzma" || format === "compress"
-    );
+    return (format === "gzip" || format === "bzip2" || format === "xz" || format === "zstd" || format === "lzma" || format === "compress");
 }
 
 async function inspectSingleCompressedArchive(
