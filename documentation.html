@@ -39,7 +39,7 @@
   <main class="main" style="padding-top:92px;">
     <section class="pt-2 pb-5">
       <div class="container" style="max-width: 1620px;">
-        <h1 class="display-5 text-dark text-center fw-bold mb-3">Documentation <span class="fs-4 text-secondary">[v.0.4.1]</span></h1>
+        <h1 class="display-5 text-dark text-center fw-bold mb-3">Documentation <span class="fs-4 text-secondary">[v.0.4.2]</span></h1>
 
         <div class="docs-layout">
           <div class="docs-sidebar-column">
@@ -103,11 +103,11 @@
                 </div>
 
                 <div id="panel-vscode" class="install-tab-panel is-active" role="tabpanel" aria-labelledby="tab-vscode" data-panel="vscode">
-                  <div class="docs-code">code --install-extension sato-vscode-ext-0.4.1.vsix --force</div>
+                  <div class="docs-code">code --install-extension sato-vscode-ext-0.4.2.vsix --force</div>
                 </div>
 
                 <div id="panel-vscodium" class="install-tab-panel" role="tabpanel" aria-labelledby="tab-vscodium" data-panel="vscodium" hidden>
-                  <div class="docs-code">codium --install-extension sato-vscode-ext-0.4.1.vsix --force</div>
+                  <div class="docs-code">codium --install-extension sato-vscode-ext-0.4.2.vsix --force</div>
                 </div>
               </div>
 
@@ -153,6 +153,7 @@
               <h2>3. Work with SATO</h2>
               <p>SATO uses a simplified interface that adapts to the opened file type. The context menu also changes according to the file type.</p>
             </section>
+
             <section id="password-vault-management">
               <h3>3.1. Password Vault Management</h3>
               <p>The vault view uses a three-pane interface:</p>
@@ -185,6 +186,7 @@
               <h2>4. SATO's Internal Tools</h2>
               <p>SATO includes offline-friendly tools that are available directly from the extension interface.</p>
             </section>
+
             <section id="converters">
               <h2>5. Converters</h2>
               <p>The Converter changes supported files from one format to another and is organized into several tabs.</p>
@@ -194,22 +196,26 @@
               <p>The Converter is available for supported certificate and cryptographic formats. If the action is inactive or absent, conversion is not supported for that file or has not yet been implemented.</p>
               <img class="docs-image" src="assets/img/docs/sato-doc-3.png" alt="SATO certificate converter tab" loading="lazy">
             </section>
+
             <section id="extractor">
               <h3>5.2. Extractor</h3>
               <p>The Extractor retrieves keys from supported files. The Extractor is similar to the Converter but is separated into a dedicated workflow.</p>
               <img class="docs-image" src="assets/img/docs/sato-doc-4.png" alt="SATO key extractor tab" loading="lazy">
             </section>
+
             <section id="base64-converter">
               <h3>5.3. Base64 Converter</h3>
               <p>Encodes or decodes information using Base64. Live Mode converts information in real time, and the result can also be converted to a QR code.</p>
               <div class="docs-note">Encoding transforms data but does not encrypt or protect it.</div>
               <img class="docs-image" src="assets/img/docs/sato-doc-5.png" alt="SATO Base64 converter tab" loading="lazy">
             </section>
+
             <section id="qr-code-converter">
               <h3>5.4. QR Code Converter</h3>
               <p>Converts information into a QR code for further use. Avoid encoding sensitive information in QR codes that could be scanned or photographed.</p>
               <img class="docs-image" src="assets/img/docs/sato-doc-6.png" alt="SATO QR Code converter tab" loading="lazy">
             </section>
+
             <section id="yaml-json-converter">
               <h3>5.5. YAML ↔ JSON Converter</h3>
               <p>The built-in YAML ↔ JSON converter supports uploaded files and pasted text. Conversion runs locally, and input data is not sent anywhere.</p>
@@ -231,8 +237,8 @@
               <div class="install-tabs" data-install-tabs>
                 <div class="install-tab-list" role="tablist" aria-label="SATO settings categories">
                   <button id="tab-settings-general" class="install-tab-button is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-settings-general" data-tab="settings-general">General</button>
-                  <button id="tab-settings-password-generator" class="install-tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-settings-password-generator" data-tab="settings-password-generator" tabindex="-1">Password Generator</button>
                   <button id="tab-settings-converter" class="install-tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-settings-converter" data-tab="settings-converter" tabindex="-1">Converter</button>
+                  <button id="tab-settings-password-generator" class="install-tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-settings-password-generator" data-tab="settings-password-generator" tabindex="-1">Generator</button>
                 </div>
 
                 <div id="panel-settings-general" class="install-tab-panel is-active" role="tabpanel" aria-labelledby="tab-settings-general" data-panel="settings-general">
@@ -255,13 +261,13 @@
                       <tbody>
                         <tr>
                           <td><code>autoLockTimeout</code></td>
-                          <td>Auto-lock the vault after N minutes of inactivity. 0 disables auto-lock.</td>
+                          <td>Auto-lock the vault after N minutes of inactivity. 0 disables auto-lock</td>
                           <td>0</td>
                         </tr>
 
                         <tr>
                           <td><code>clipboardClearTimeout</code></td>
-                          <td>Clear the clipboard N seconds after copying a secret. 0 disables automatic clearing.</td>
+                          <td>Clear the clipboard N seconds after copying a secret. 0 disables automatic clearing</td>
                           <td>0</td>
                         </tr>
 
@@ -273,25 +279,31 @@
 
                         <tr>
                           <td><code>confirmBeforeDelete</code></td>
-                          <td>Ask for confirmation before deleting entries or folders.</td>
+                          <td>Ask for confirmation before deleting entries or folders</td>
                           <td><code>true</code></td>
                         </tr>
 
                         <tr>
                           <td><code>showPasswordsByDefault</code></td>
-                          <td>Reveal passwords automatically in the entry details pane.</td>
+                          <td>Reveal passwords automatically in the entry details pane</td>
                           <td><code>false</code></td>
                         </tr>
 
                         <tr>
                           <td><code>showEmptyValuesByDefault</code></td>
-                          <td>Show empty values by default in vault and cryptographic file details.</td>
+                          <td>Show empty values by default in vault and cryptographic file details</td>
+                          <td><code>true</code></td>
+                        </tr>
+
+                        <tr>
+                          <td><code>showStatusBar</code></td>
+                          <td>Show or hide vault, archive, contact, or cryptographic metadata in the status bar</td>
                           <td><code>true</code></td>
                         </tr>
 
                         <tr>
                           <td><code>createArchiveBackups</code></td>
-                          <td>Create a backup before modifying a supported archive.</td>
+                          <td>Create a backup before modifying a supported archive</td>
                           <td><code>true</code></td>
                         </tr>
                       </tbody>
@@ -319,7 +331,7 @@
                       <tbody>
                         <tr>
                           <td><code>passwordGeneratorLength</code></td>
-                          <td>Default password length used by the Password Generator.</td>
+                          <td>Default password length used by the Password Generator</td>
                           <td>20</td>
                         </tr>
                       </tbody>
@@ -368,6 +380,7 @@
                           <td>JSON output indentation: <code>spaces-2 | spaces-4 | tabs</code></td>
                           <td><code>spaces-2</code></td>
                         </tr>
+
                       </tbody>
                     </table>
                   </div>

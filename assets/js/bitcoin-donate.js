@@ -12,15 +12,21 @@ let activeNetwork = "onchain";
 let updateCooldownTimer = 0;
 const updateCooldownSeconds = 60;
 
+function formatWithSpaces(value) {
+    return Number(value).toLocaleString("en-US").replace(/,/g, " ");
+}
+
 async function copyText(text, button) {
     try {
         await navigator.clipboard.writeText(text);
         const icon = button?.querySelector("i");
+
         if (icon) {
             const old = icon.className;
             icon.className = "fa-solid fa-check text-success";
             window.setTimeout(() => { icon.className = old; }, 1200);
         }
+
     } catch (error) {
         console.error("Unable to copy address:", error);
         window.alert("Unable to copy the address. Please copy it manually.");
@@ -31,16 +37,71 @@ function selectAmount(amount) {
     selectedUsd = Number(amount);
     document.querySelectorAll(".amount-btn").forEach((button) => button.classList.toggle("active", Number(button.dataset.amount) === selectedUsd));
     const custom = document.getElementById("custom-amount-input");
+
     if (custom) custom.value = "";
     generateCryptoQR();
 }
 
 function handleCustomAmount(value) {
     const amount = Math.min(1000, Math.max(0, Number(value)));
+
     if (!Number.isFinite(amount) || amount <= 0) return;
+
     selectedUsd = amount;
     document.querySelectorAll(".amount-btn").forEach((button) => button.classList.remove("active"));
     generateCryptoQR();
+}
+
+function renderUsdRate() {
+    const usdBtcRate = document.getElementById("usd-btc-rate");
+
+    if (!usdBtcRate || !Number.isFinite(currentBtcPrice) || currentBtcPrice <= 0) {
+        return;
+    }
+
+    if (currentUnit === "sats") {
+        const satsPerUsd = Math.round(100000000 / currentBtcPrice);
+
+        usdBtcRate.innerHTML = `
+            <strong>1 USD</strong> =
+            <a href="https://coincodex.com/convert/usd/satoshi-sats/" target="_blank" rel="noopener noreferrer" class="text-primary text-decoration-none" title="View 1 USD in Satoshi">${formatWithSpaces(satsPerUsd)} Satoshi</a>
+        `;
+        return;
+    }
+
+    const btcPerUsd = 1 / currentBtcPrice;
+    const formattedBtcPerUsd = btcPerUsd.toFixed(10).replace(/0+$/, "").replace(/\.$/, "");
+
+    usdBtcRate.innerHTML = `
+        <strong>1 USD</strong> =
+        <a href="https://www.coingecko.com/en/coins/bitcoin" target="_blank" rel="noopener noreferrer" class="text-primary text-decoration-none" title="View Bitcoin price on CoinGecko">${formattedBtcPerUsd} BTC</a>
+    `;
+}
+
+function renderUsdRate() {
+    const usdBtcRate = document.getElementById("usd-btc-rate");
+
+    if (!usdBtcRate || !Number.isFinite(currentBtcPrice) || currentBtcPrice <= 0) {
+        return;
+    }
+
+    if (currentUnit === "sats") {
+        const satsPerUsd = Math.round(100000000 / currentBtcPrice);
+
+        usdBtcRate.innerHTML = `
+            <strong>1 USD</strong> =
+            <a href="https://coincodex.com/convert/usd/satoshi-sats/" target="_blank" rel="noopener noreferrer" class="text-primary text-decoration-none" title="View 1 USD in Satoshi">${formatWithSpaces(satsPerUsd)} Satoshi</a>
+        `;
+        return;
+    }
+
+    const btcPerUsd = 1 / currentBtcPrice;
+    const formattedBtcPerUsd = btcPerUsd.toFixed(10).replace(/0+$/, "").replace(/\.$/, "");
+
+    usdBtcRate.innerHTML = `
+        <strong>1 USD</strong> =
+        <a href="https://www.coingecko.com/en/coins/bitcoin" target="_blank" rel="noopener noreferrer" class="text-primary text-decoration-none" title="View Bitcoin price on CoinGecko">${formattedBtcPerUsd} BTC</a>
+    `;
 }
 
 function setUnit(unit) {
@@ -49,6 +110,7 @@ function setUnit(unit) {
     document.getElementById("btn-unit-sats")?.classList.toggle("active", currentUnit === "sats");
     document.getElementById("unit-switch-group")?.classList.toggle("sats-active", currentUnit === "sats");
     generateCryptoQR();
+    renderUsdRate();
 }
 
 function switchNetwork(network) {
@@ -61,6 +123,7 @@ function switchNetwork(network) {
 
 async function fetchBtcPrice({ manual = false } = {}) {
     const text = document.getElementById("btc-price-text");
+    const usdBtcRate = document.getElementById("usd-btc-rate");
     const updateButton = document.getElementById("update-btn");
     const updateIcon = updateButton?.querySelector("i");
 
@@ -75,7 +138,11 @@ async function fetchBtcPrice({ manual = false } = {}) {
     }
 
     if (text && manual) {
-        text.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-primary me-1"></i>Updating rate...';
+        text.textContent = "Updating rate...";
+    }
+
+    if (usdBtcRate && manual) {
+        usdBtcRate.textContent = "1 USD = Updating...";
     }
 
     try {
@@ -96,22 +163,32 @@ async function fetchBtcPrice({ manual = false } = {}) {
 
         const data = await response.json();
         const updatedPrice = Number(data?.bitcoin?.usd);
+
         if (!Number.isFinite(updatedPrice) || updatedPrice <= 0) {
             throw new Error("Invalid BTC price");
         }
 
         currentBtcPrice = updatedPrice;
+
         if (text) {
-            text.innerHTML = `<i class="fa-solid fa-chart-line text-success me-1"></i>1 BTC = <a href="https://www.coingecko.com/en/coins/bitcoin" target="_blank" rel="noopener noreferrer" class="text-primary text-decoration-none" title="View Bitcoin price on CoinGecko">$${currentBtcPrice.toLocaleString("en-US")} USD</a>`;
+            text.innerHTML = `<strong>1 BTC</strong> = <a href="https://www.coingecko.com/en/coins/bitcoin" target="_blank" rel="noopener noreferrer" class="text-primary text-decoration-none" title="View Bitcoin price on CoinGecko">$${formatWithSpaces(currentBtcPrice)} USD</a>`;
         }
 
+        renderUsdRate();
         generateCryptoQR();
         return true;
+
     } catch (error) {
         console.error("Unable to load BTC price:", error);
+
         if (text) {
-            text.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-danger me-1"></i>Rate update failed';
+            text.textContent = "Rate update failed";
         }
+
+        if (usdBtcRate) {
+            usdBtcRate.textContent = "1 USD = Rate unavailable";
+        }
+
         return false;
 
     } finally {
@@ -136,6 +213,7 @@ function startUpdateCooldown(seconds = updateCooldownSeconds) {
     renderCountdown();
     updateCooldownTimer = window.setInterval(() => {
         remaining -= 1;
+
         if (remaining <= 0) {
             window.clearInterval(updateCooldownTimer);
             updateCooldownTimer = 0;
@@ -149,10 +227,12 @@ function startUpdateCooldown(seconds = updateCooldownSeconds) {
 
 async function manualUpdateRate() {
     const updated = await fetchBtcPrice({ manual: true });
+
     if (updated) {
         startUpdateCooldown();
     } else {
         const updateButton = document.getElementById("update-btn");
+
         if (updateButton) {
             updateButton.disabled = false;
             updateButton.innerHTML = '<i class="fa-solid fa-rotate me-1"></i>Retry';
@@ -193,6 +273,7 @@ function showWalletQr(button) {
     const margin = 10;
     const left = Math.max(margin, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - margin));
     let top = rect.bottom + margin;
+
     if (top + height > window.innerHeight - margin) top = rect.top - height - margin;
     popup.style.left = `${left}px`;
     popup.style.top = `${Math.max(margin, top)}px`;
@@ -213,9 +294,11 @@ function generateCryptoQR() {
     const image = document.getElementById("qr-image");
     const wallet = WALLETS[activeNetwork];
     const uri = activeNetwork === "onchain" ? `bitcoin:${wallet}?amount=${btcAmount.toFixed(8)}` : `lightning:${wallet}`;
+
     if (amount) {
-        amount.textContent = currentUnit === "sats" ? satoshis.toLocaleString("en-US") : btcAmount.toFixed(8);
+        amount.textContent = currentUnit === "sats" ? formatWithSpaces(satoshis) : btcAmount.toFixed(8);
     }
+
     if (image) {
         image.alt = activeNetwork === "onchain" ? "Bitcoin On-Chain payment QR code" : "Lightning Network payment QR code";
         image.src = qrUrl(uri, 180);
@@ -225,8 +308,11 @@ function generateCryptoQR() {
 document.addEventListener("DOMContentLoaded", () => {
     const onchain = document.getElementById("onchain-address");
     const lightning = document.getElementById("lightning-address");
+
     if (onchain) onchain.textContent = WALLETS.onchain;
-    if (lightning) { lightning.textContent = shortenWallet(WALLETS.lightning); lightning.title = WALLETS.lightning; }
+    if (lightning) {
+        lightning.textContent = shortenWallet(WALLETS.lightning); lightning.title = WALLETS.lightning;
+    }
 
     document.querySelectorAll(".wallet-qr-button").forEach((button) => {
         button.addEventListener("mouseenter", () => showWalletQr(button));
