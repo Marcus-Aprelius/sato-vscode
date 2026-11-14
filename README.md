@@ -321,22 +321,22 @@ Additionally, SATO provides a collection of useful converters and generators tha
 
 ## Extension Settings
 
-| Setting                         | Description                                                                                 | Default value  |
-|---------------------------------|---------------------------------------------------------------------------------------------|----------------|
-| `sato.autoLockTimeout`          | Auto-lock the vault after N minutes of inactivity. `0` disables auto-lock                   | `0`            |
-| `sato.clipboardClearTimeout`    | Clear the clipboard N seconds after copying a secret. `0` disables clipboard auto-clear     | `0`            |
-| `sato.passwordGeneratorLength`  | Default password length used by the Password Generator                                      | `20`           |
-| `sato.confirmBeforeDelete`      | Ask for confirmation before deleting entries or folders                                     | `true`         |
-| `sato.showPasswordsByDefault`   | Reveal passwords automatically in the entry details pane                                    | `false`        |
-| `sato.showEmptyValuesByDefault` | Show empty values by default in vault and cryptographic file details                        | `true`         |
-| `sato.showStatusBar`            | Show or hide vault, archive, contact, or cryptographic metadata in the status bar           | `true`         |
-| `sato.theme`                    | SATO interface theme: `vscode`, `dark`, `gray`, `light`                                     | `vscode`       |
-| `sato.createArchiveBackups`     | Create a backup before modifying a supported archive                                        | `true`         |
-| `sato.fileCategoryFilters`      | File categories displayed in the first column: `all`, `vaults`, `archives`, `ssh`, `crypto` | `all`          |
-| `sato.base64DefaultOperation`   | Base64 Converter operation: `encode`, `decode`                                              | `encode`       |
-| `sato.base64DefaultFormat`      | Base64 Converter format: `base64url`, `base64`, `base32`, `base32hex`, `hex`                | `base64url`    |
-| `sato.yamlJsonDefaultOperation` | YAML ↔ JSON conversion direction: `yaml-to-json`, `json-to-yaml`                            | `yaml-to-json` |
-| `sato.yamlJsonIndentation`      | JSON output indentation: `spaces-2`, `spaces-4`, `tabs`                                     | `spaces-2`     |
+| Setting                         | Description                                                                                       | Default value  |
+|---------------------------------|---------------------------------------------------------------------------------------------------|----------------|
+| `sato.autoLockTimeout`          | Automatically lock the vault after N minutes of inactivity. `0` disables automatic lock           | `0`            |
+| `sato.clipboardClearTimeout`    | Clear the clipboard N seconds after copying a secret. `0` disables automatic clearing             | `0`            |
+| `sato.passwordGeneratorLength`  | Set the default password length used by the Password Generator                                    | `20`           |
+| `sato.confirmBeforeDelete`      | Ask for confirmation before deleting entries or folders                                           | `true`         |
+| `sato.showPasswordsByDefault`   | Reveal passwords automatically in the entry details pane                                          | `false`        |
+| `sato.showEmptyValuesByDefault` | Show empty values by default in vault and cryptographic file details                              | `true`         |
+| `sato.showStatusBar`            | Show vault, archive, contact, and cryptographic metadata in the status bar                        | `true`         |
+| `sato.theme`                    | SATO interface theme: `vscode`, `dark`, `gray`, `light`                                           | `vscode`       |
+| `sato.createArchiveBackups`     | Create a backup before modifying a supported archive                                              | `true`         |
+| `sato.fileCategoryFilters`      | Set the file category displayed in the first column: `all`, `vaults`, `archives`, `ssh`, `crypto` | `all`          |
+| `sato.base64DefaultOperation`   | Set the default Base64 Converter operation: `encode`, `decode`                                    | `encode`       |
+| `sato.base64DefaultFormat`      | Set the default Base64 Converter format: `base64url`, `base64`, `base32`, `base32hex`, `hex`      | `base64url`    |
+| `sato.yamlJsonDefaultOperation` | Set the default YAML ↔ JSON conversion direction: `yaml-to-json`, `json-to-yaml`                  | `yaml-to-json` |
+| `sato.yamlJsonIndentation`      | JSON output indentation: `spaces-2`, `spaces-4`, `tabs`                                           | `spaces-2`     |
 
 ---     
 

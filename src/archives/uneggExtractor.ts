@@ -88,11 +88,7 @@ async function copySelectedFiles(
 
     await walk(sourceDirectory);
 
-    return {
-        destinationDirectory: path.resolve(destinationDirectory),
-        extractedFiles,
-        skippedEntries
-    };
+    return {destinationDirectory: path.resolve(destinationDirectory), extractedFiles, skippedEntries};
 }
 
 async function pathExists(

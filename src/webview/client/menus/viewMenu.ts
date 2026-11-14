@@ -90,7 +90,7 @@ export function openViewMenu(
             title: app.settings.showStatusBar ? "Hide status bar" : "Show status bar",
 
             action: () => {
-                const next = {...app.settings, showStatusBar: !app.settings .showStatusBar};
+                const next = {...app.settings, showStatusBar: !app.settings.showStatusBar};
                 app.settings = next;
                 vscode.postMessage({type: "updateSettings", settings: next});
                 renderStatus();

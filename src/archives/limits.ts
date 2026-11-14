@@ -10,7 +10,6 @@ export const ARCHIVE_LIMITS = {
 export class ArchiveLimitError extends Error {
     constructor(message: string) {
         super(message);
-
         this.name = "ArchiveLimitError";
     }
 }

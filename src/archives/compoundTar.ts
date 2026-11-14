@@ -5,10 +5,7 @@ import type { ArchiveFormat } from "./types";
 export function isCompoundTarFormat(
     format: ArchiveFormat
 ): boolean {
-    return (
-        format === "tar-gzip" || format === "tar-bzip2" || format === "tar-xz" ||
-        format === "tar-zstd" ||format === "tar-compress"
-    );
+    return (format === "tar-gzip" || format === "tar-bzip2" || format === "tar-xz" || format === "tar-zstd" ||format === "tar-compress");
 }
 
 export function compoundTarFileName(

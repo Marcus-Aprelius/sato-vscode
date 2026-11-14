@@ -75,7 +75,7 @@ export function openFileMenu(
     }
 
     items.push({
-        label: "Show Info",
+        label: "Properties",
         title: vcard ? "Show vCard file information" : crypto
             ? "Show current crypto file information" : readOnly
                 ? `Show ${format || "vault"} information` : "Show current database information",
@@ -86,7 +86,7 @@ export function openFileMenu(
             }
 
             byId("dbinfo-body").innerHTML = '<div class="empty">Loading...</div>';
-            byId("dbinfo-title-label").textContent = vcard ? "vCard File Info" : crypto ? "File Info" : readOnly ? "Vault Info" : "Database Info";
+            byId("dbinfo-title-label").textContent = vcard ? "vCard Properties" : crypto ? "Properties" : readOnly ? "Vault Info" : "Database Info";
             openModal("dbinfo-modal");
             vscode.postMessage({type: "getDbInfo", entryId: vcard ? null : app.selectedEntryId});}
     });

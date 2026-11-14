@@ -192,9 +192,7 @@ async function resolveSelectedTarPaths(
             continue;
         }
 
-        throw new Error(
-            `Archive entry was not found: ${selectedPath}`
-        );
+        throw new Error(`Archive entry was not found: ${selectedPath}`);
     }
 
     return resolvedPaths;

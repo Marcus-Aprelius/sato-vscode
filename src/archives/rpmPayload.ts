@@ -15,15 +15,10 @@ export async function extractRpmCpioPayload(
         return directCpio;
     }
 
-    const compressedCpio = await findFile(
-        destinationDirectory,
-        fileName =>
-            fileName.endsWith(".cpio.zst") ||
-            fileName.endsWith(".cpio.zstd") ||
-            fileName.endsWith(".cpio.xz") ||
-            fileName.endsWith(".cpio.gz") ||
-            fileName.endsWith(".cpio.bz2") ||
-            fileName.endsWith(".cpio.lzma")
+    const compressedCpio = await findFile(destinationDirectory, fileName =>
+            fileName.endsWith(".cpio.zst") || fileName.endsWith(".cpio.zstd") ||
+            fileName.endsWith(".cpio.xz") || fileName.endsWith(".cpio.gz") ||
+            fileName.endsWith(".cpio.bz2") || fileName.endsWith(".cpio.lzma")
     );
 
     if (!compressedCpio) {
@@ -79,10 +74,7 @@ async function decompressZstandardPayload(
     const result = await runCommand("zstd", ["--decompress", "--force", "--quiet", "-o", outputPath, compressedPath]);
 
     if (result.errorCode === "ENOENT") {
-        throw new Error(
-            "This RPM package uses a Zstandard-compressed CPIO payload. " +
-            "Install the zstd package or update 7-Zip, then restart VS Code."
-        );
+        throw new Error("This RPM package uses a Zstandard-compressed CPIO payload. Install the zstd package or update 7-Zip, then restart VS Code.");
     }
 
     if (result.exitCode !== 0) {
@@ -93,22 +85,9 @@ async function decompressZstandardPayload(
 function runCommand(
     command: string,
     args: readonly string[]
-): Promise<{
-    exitCode: number;
-    stdout: string;
-    stderr: string;
-    errorCode?: string;
-}> {
+): Promise<{exitCode: number; stdout: string; stderr: string; errorCode?: string;}> {
     return new Promise(resolve => {
-        const child = spawn(
-            command,
-            [...args],
-            {
-                shell: false,
-                windowsHide: true,
-                stdio: ["ignore", "pipe", "pipe"]
-            }
-        );
+        const child = spawn(command, [...args], {shell: false, windowsHide: true, stdio: ["ignore", "pipe", "pipe"]});
 
         let stdout = "";
         let stderr = "";
@@ -116,7 +95,6 @@ function runCommand(
 
         child.stdout.setEncoding("utf8");
         child.stderr.setEncoding("utf8");
-
         child.stdout.on("data", chunk => {stdout += String(chunk); });
         child.stderr.on("data", chunk => {stderr += String(chunk); });
         child.once("error", error => {errorCode = (error as NodeJS.ErrnoException).code; });

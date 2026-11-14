@@ -1,3 +1,23 @@
+# 0.4.2
+
+## Added
+* Item `Show Status Bar` added to Settings
+* Wikipedia links for available formats in `Help`/`About` window
+
+## Changed
+* Redesigned the About dialog to display extension information and supported formats in a unified view
+* Updated the Help menu with `Documentation`, `Donate`, `Check for updates`, and `About` actions
+* Refactored and cleaned up the codebase
+* Menu item `File Info` renamed to `Properties`
+* The order of tabs in the `Settings` has been changed
+* Version update:
+  * `vscode/vsce`: `4.1.1`
+  * `hash-wasm`: `4.13.0`
+  * `concurrently`: `10.0.7`
+  * `@zip.js/zip.js`: `2.25.0`
+
+---
+
 # 0.4.1
 
 ## Added

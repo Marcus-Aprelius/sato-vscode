@@ -13,6 +13,7 @@ export function openSettingsModal(): void {
     byId<HTMLInputElement>("s-confirmdel").checked = !!app.settings.confirmBeforeDelete;
     byId<HTMLInputElement>("s-showpw").checked = !!app.settings.showPasswordsByDefault;
     byId<HTMLInputElement>("s-showempty").checked = !!app.settings.showEmptyValuesByDefault;
+    byId<HTMLInputElement>("s-showstatus").checked = app.settings.showStatusBar !== false;
     byId<HTMLInputElement>("s-archive-backups").checked = app.settings.createArchiveBackups === true;
 
     themeBeforeSettings = app.settings.theme || "vscode";
@@ -39,7 +40,7 @@ export function bindSettingsActions(): void {
             confirmBeforeDelete: byId<HTMLInputElement>("s-confirmdel").checked,
             showPasswordsByDefault: byId<HTMLInputElement>("s-showpw").checked,
             showEmptyValuesByDefault: byId<HTMLInputElement>("s-showempty").checked,
-            showStatusBar: app.settings.showStatusBar !== false,
+            showStatusBar: byId<HTMLInputElement>("s-showstatus").checked,
             createArchiveBackups: byId<HTMLInputElement>("s-archive-backups").checked,
             base64DefaultFormat: byId<HTMLSelectElement>("s-base64-default-format").value as | "base64url" | "base64" | "base32" | "base32hex" | "hex",
             yamlJsonIndentation: byId<HTMLSelectElement>("s-yaml-json-indentation").value as | "spaces-2" | "spaces-4" | "tabs",

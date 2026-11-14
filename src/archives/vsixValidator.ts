@@ -100,21 +100,15 @@ export async function validateVsixPackage(
     const manifestId = contents.manifestText ? readManifestAttribute(contents.manifestText, "Identity", "Id") : undefined;
 
     if (packageJson?.version && manifestVersion && packageJson.version !== manifestVersion) {
-        errors.push("Version mismatch: " +
-            `extension/package.json contains ${packageJson.version}, ` + `but extension.vsixmanifest contains ${manifestVersion}.`
-        );
+        errors.push("Version mismatch: " + `extension/package.json contains ${packageJson.version}, ` + `but extension.vsixmanifest contains ${manifestVersion}.`);
     }
 
     if (packageJson?.publisher && manifestPublisher && packageJson.publisher !== manifestPublisher) {
-        errors.push( "Publisher mismatch: " +
-            `extension/package.json contains "${packageJson.publisher}", ` + `but extension.vsixmanifest contains "${manifestPublisher}".`
-        );
+        errors.push( "Publisher mismatch: " + `extension/package.json contains "${packageJson.publisher}", ` + `but extension.vsixmanifest contains "${manifestPublisher}".`);
     }
 
     if (packageJson?.name && manifestId && packageJson.name !== manifestId) {
-        warnings.push("Extension name differs between package.json and " +
-            `extension.vsixmanifest: "${packageJson.name}" and "${manifestId}".`
-        );
+        warnings.push("Extension name differs between package.json and " + `extension.vsixmanifest: "${packageJson.name}" and "${manifestId}".`);
     }
 
     return {

@@ -84,9 +84,7 @@ async function resolveCpioPaths(
             continue;
         }
 
-        throw new Error(
-            `RPM package entry was not found: ${selectedPath}`
-        );
+        throw new Error(`RPM package entry was not found: ${selectedPath}`);
     }
 
     return resolvedPaths;

@@ -32,7 +32,6 @@ export async function testEncryptedZipPassword(
 
         try {
             await encryptedEntry.getData(new Uint8ArrayWriter(), {password, checkPasswordOnly: true, checkAuthenticationCode: true});
-
             return true;
 
         } catch (error) {

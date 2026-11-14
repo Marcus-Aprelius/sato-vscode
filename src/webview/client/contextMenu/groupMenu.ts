@@ -130,7 +130,7 @@ export function openGroupMenu(
             items.push(
                 {sep: true},
                 {
-                    label: "Show Info",
+                    label: "Properties",
                     action: () => {
                         byId("dbinfo-title-label").textContent = vsixPackage ? "VSIX Package Info" : "Archive Info";
                         byId("dbinfo-body").innerHTML = '<div class="empty">Loading...</div>';

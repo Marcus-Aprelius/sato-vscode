@@ -818,10 +818,10 @@ async function showArchiveEntryInfo(
         ["Archive path", archive.inspection.filePath]
     ].filter((row): row is [string, string] => row[1] !== "");
 
-    const sent = await panel.webview.postMessage({type: "dbInfo", info: {title: "Archive File Info", rows}});
+    const sent = await panel.webview.postMessage({type: "dbInfo", info: {title: "Archive Properties", rows}});
 
     if (!sent) {
-        console.error("SATO: failed to send Archive File Info to the webview.");
+        console.error("SATO: failed to send Archive Properties to the webview.");
     }
 }
 

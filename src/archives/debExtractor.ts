@@ -15,13 +15,10 @@ export async function extractDebPackage(
     destinationDirectory: string,
     selectedPaths?: ReadonlySet<string>
 ): Promise<ZipExtractionResult> {
-    const temporaryDirectory = await fs.promises.mkdtemp(
-        path.join(os.tmpdir(), "sato-deb-extract-")
-    );
+    const temporaryDirectory = await fs.promises.mkdtemp(path.join(os.tmpdir(), "sato-deb-extract-"));
 
     try {
         await extractDebContainer(packagePath, temporaryDirectory);
-
         const controlArchivePath = await findDebMember(temporaryDirectory, "control.tar");
         const dataArchivePath = await findDebMember(temporaryDirectory, "data.tar");
 
@@ -35,14 +32,13 @@ export async function extractDebPackage(
 
         const controlSelection = selectedPaths ? stripSelectedPrefix(selectedPaths, "Control") : new Set<string>();
         const payloadSelection = selectedPaths ? stripSelectedPrefix(selectedPaths, "Payload") : new Set<string>();
-
         const extractAll = selectedPaths === undefined;
         const extractedFiles: string[] = [];
         const skippedEntries: string[] = [];
 
         if (extractAll || controlSelection.size > 0) {
-            const controlResult = await extractDebMember(controlArchivePath, inspection, "Control", path.join(destinationDirectory, "Control"), extractAll
-                ? undefined : controlSelection
+            const controlResult = await extractDebMember(controlArchivePath, inspection, "Control", path.join(destinationDirectory, "Control"),
+                extractAll ? undefined : controlSelection
             );
 
             extractedFiles.push(...controlResult.extractedFiles);
@@ -50,8 +46,8 @@ export async function extractDebPackage(
         }
 
         if (extractAll || payloadSelection.size > 0) {
-            const payloadResult = await extractDebMember(dataArchivePath, inspection, "Payload", path.join(destinationDirectory, "Payload"), extractAll
-                ? undefined : payloadSelection
+            const payloadResult = await extractDebMember(dataArchivePath, inspection, "Payload", path.join(destinationDirectory, "Payload"),
+                extractAll ? undefined : payloadSelection
             );
 
             extractedFiles.push(...payloadResult.extractedFiles);

@@ -30,18 +30,13 @@ export async function runSevenZip(
     }
 
     return new Promise((resolve, reject) => {
-        const child = spawn(
-            command,
-            [...args],
-            { cwd: options.cwd, shell: false, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] }
-        );
+        const child = spawn(command, [...args], { cwd: options.cwd, shell: false, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
 
         let stdout = "";
         let stderr = "";
 
         child.stdout.setEncoding("utf8");
         child.stderr.setEncoding("utf8");
-
         child.stdout.on("data", chunk => {stdout += String(chunk);});
         child.stderr.on("data", chunk => {stderr += String(chunk);});
         child.once("error", error => {reject(error);});

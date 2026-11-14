@@ -176,7 +176,6 @@ function readPlainZipEntry(
                                 (streamError, stream) => {
                                     if (streamError || !stream) {
                                         reject(streamError || new Error("Failed to read the ZIP entry."));
-
                                         return;
                                     }
 
